@@ -1,0 +1,8 @@
+name = "crm-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# Biến công khai. Secret (SUPABASE_SERVICE_ROLE_KEY) đặt bằng `wrangler secret put`,
+# khi chạy local thì đặt trong apps/api/.dev.vars (xem .dev.vars.example).
+[vars]
+ALLOWED_ORIGINS = "http://localhost:5173"

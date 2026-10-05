@@ -1,0 +1,10 @@
+[build]
+  base = "apps/web"
+  command = "pnpm build"
+  publish = "dist"
+
+# SPA: mọi đường dẫn trả về index.html để React Router xử lý (F5 ở /app/... không bị 404)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,699 @@
+<title>CRM Business Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app shell — sidebar trái, header trên, vùng nội dung; board 3 cột ngang cuộn riêng */
+:root{
+  --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --bg:#F7F6FA; --surface:#FFFFFF; --surface-2:#F2F0F6; --border:#E6E2EE; --text:#1B1724; --muted:#6B6578; --faint:#9A94A6;
+  --primary:#7F59AF; --primary-hover:#6C4C95; --primary-soft:#F1ECF8; --primary-text:#593E7B; --on-primary:#FFFFFF;
+  --accent:#EA4B8B; --accent-soft:#FCE2EC; --accent-text:#732544;
+  --info:#63C5EA; --info-soft:#E6F6FC; --info-text:#28505F;
+  --warning:#FFB224; --warning-soft:#FFF3DC; --warning-text:#62450E;
+  --success:#22A06B; --success-soft:#DCF0E7; --success-text:#114E34;
+  --danger:#E5484D; --danger-soft:#FBE2E3; --danger-text:#702326;
+  --col-todo:#EEEBF3; --col-doing:#EAF6FB; --col-done:#E9F5EF;
+  --shadow:0 1px 2px rgba(27,23,36,.06),0 1px 3px rgba(27,23,36,.05);
+  --shadow-lg:0 12px 32px rgba(27,23,36,.16);
+  --scrim:rgba(27,23,36,.45);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131019; --surface:#1C1824; --surface-2:#252030; --border:#322C3E; --text:#EEEAF4; --muted:#ADA6BA; --faint:#7D7689;
+  --primary:#8E69BE; --primary-hover:#9F83C3; --primary-soft:#2C2240; --primary-text:#CDB8EA; --on-primary:#FFFFFF;
+  --accent-soft:#3D1D2C; --accent-text:#F5A5C5;
+  --info-soft:#173039; --info-text:#9DDCF3;
+  --warning-soft:#3A2C10; --warning-text:#FFD992;
+  --success-soft:#14322A; --success-text:#91D0B5;
+  --danger-soft:#3C1A1C; --danger-text:#F2A4A6;
+  --col-todo:#1F1B28; --col-doing:#16262E; --col-done:#16261F;
+  --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 12px 32px rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131019; --surface:#1C1824; --surface-2:#252030; --border:#322C3E; --text:#EEEAF4; --muted:#ADA6BA; --faint:#7D7689;
+  --primary:#8E69BE; --primary-hover:#9F83C3; --primary-soft:#2C2240; --primary-text:#CDB8EA; --on-primary:#FFFFFF;
+  --accent-soft:#3D1D2C; --accent-text:#F5A5C5;
+  --info-soft:#173039; --info-text:#9DDCF3;
+  --warning-soft:#3A2C10; --warning-text:#FFD992;
+  --success-soft:#14322A; --success-text:#91D0B5;
+  --danger-soft:#3C1A1C; --danger-text:#F2A4A6;
+  --col-todo:#1F1B28; --col-doing:#16262E; --col-done:#16261F;
+  --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 12px 32px rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- login ---------- */
+.login{min-height:100%;display:grid;grid-template-columns:minmax(0,44%) minmax(0,1fr)}
+.brand{position:relative;overflow:hidden;background:#7F59AF;color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
+.brand .logo{display:flex;align-items:center;gap:12px;font-weight:600;font-size:17px}
+.logo-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:#7F59AF;display:grid;place-items:center;font-weight:700;font-size:18px}
+.brand h2{font-size:30px;font-weight:600;max-width:20ch}
+.brand p{color:#EBE4F2;margin-top:14px;max-width:44ch}
+.brand .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.brand .chips span{border-radius:99px;padding:4px 12px;font-size:13px;background:rgba(255,255,255,.16)}
+.brand .chips span.doing{background:#63C5EA;color:#111827}
+.brand .foot{font-size:13px;color:#D6CAE5;position:relative}
+.blob{position:absolute;border-radius:50%}
+.blob.a{width:280px;height:280px;right:-90px;top:-90px;background:rgba(234,75,139,.35)}
+.blob.b{width:320px;height:320px;right:40px;bottom:-130px;background:rgba(159,131,195,.45)}
+.blob.c{width:64px;height:64px;right:100px;bottom:100px;background:rgba(255,178,36,.8)}
+.brand>div{position:relative;z-index:1}
+.login-form{display:grid;place-items:center;padding:32px 16px;background:var(--surface)}
+.login-form form{width:100%;max-width:360px;display:grid;gap:16px}
+.login-form h1{font-size:24px;font-weight:600}
+.login-form .sub{color:var(--muted);margin-top:4px}
+.demo-hint{background:var(--primary-soft);color:var(--primary-text);border-radius:10px;padding:10px 12px;font-size:13px}
+.field{display:grid;gap:6px}
+.field label{font-weight:500;font-size:13px}
+.input{height:40px;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:0 12px;width:100%}
+textarea.input{height:auto;padding:10px 12px;resize:vertical}
+.input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.err{color:var(--danger-text);font-size:13px}
+.input.bad{border-color:var(--danger)}
+
+/* ---------- buttons, badges ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 16px;border-radius:10px;font-weight:500;white-space:nowrap;transition:background .15s}
+.btn-primary{background:var(--primary);color:var(--on-primary)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{border:1px solid var(--border);background:var(--surface)}
+.btn-secondary:hover{background:var(--surface-2)}
+.btn-ghost{color:var(--muted)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-sm{height:32px;padding:0 12px;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:500;white-space:nowrap}
+.t-neutral{background:var(--surface-2);color:var(--muted)}
+.t-primary{background:var(--primary-soft);color:var(--primary-text)}
+.t-accent{background:var(--accent-soft);color:var(--accent-text)}
+.t-info{background:var(--info-soft);color:var(--info-text)}
+.t-warning{background:var(--warning-soft);color:var(--warning-text)}
+.t-success{background:var(--success-soft);color:var(--success-text)}
+.t-danger{background:var(--danger-soft);color:var(--danger-text)}
+.avatar{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:600;background:var(--primary-soft);color:var(--primary-text);flex:none}
+.avatar.lg{width:36px;height:36px;font-size:13px}
+.avatars{display:flex}.avatars .avatar{border:2px solid var(--surface);margin-left:-8px}.avatars .avatar:first-child{margin-left:0}
+
+/* ---------- shell ---------- */
+.shell{height:100%;display:grid;grid-template-columns:248px minmax(0,1fr)}
+.side{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.side-head{height:56px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid var(--border);font-weight:600}
+.side-head .logo-mark{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:14px}
+.nav{flex:1;overflow-y:auto;padding:16px 12px;display:grid;gap:20px;align-content:start}
+.nav-group p{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 12px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:8px 12px;border-radius:9px;color:var(--muted);font-weight:500;text-align:left}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.on{background:var(--primary-soft);color:var(--primary-text)}
+.nav-item.on svg{color:var(--primary)}
+.nav-item.off{color:var(--faint);cursor:not-allowed}
+.nav-item.off:hover{background:none;color:var(--faint)}
+.nav-item .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.soon{font-size:10px;background:var(--surface-2);color:var(--faint);border-radius:4px;padding:1px 6px;flex:none}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.top{height:56px;flex:none;display:flex;align-items:center;gap:12px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.search{position:relative;flex:1;max-width:420px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{height:36px;width:100%;border:1px solid var(--border);background:var(--surface-2);border-radius:10px;padding:0 12px 0 36px}
+.search input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:4px}
+.icon-btn{position:relative;width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.dot{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+.me{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-radius:10px}
+.me:hover{background:var(--surface-2)}
+.me .nm{font-weight:500}
+.menu-btn{display:none}
+.content{flex:1;overflow:auto;padding:24px}
+.demo-bar{background:var(--warning-soft);color:var(--warning-text);font-size:13px;padding:6px 24px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.demo-bar button{text-decoration:underline;font-weight:500}
+
+/* ---------- overview ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.page-head .eyebrow{color:var(--muted);font-size:13px}
+.page-head h1{font-size:24px;font-weight:600;margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.stat .k{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.stat .k i{width:8px;height:8px;border-radius:50%}
+.stat .v{font-size:28px;font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);gap:12px}
+.panel-head h2{font-size:15px;font-weight:600}
+.two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface-2)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t span{font-size:12px;color:var(--muted)}
+.status-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;display:flex}
+.legend{display:grid;gap:14px;padding:18px}
+.legend .l{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+
+/* ---------- workspace ---------- */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.dash{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:left;display:grid;gap:14px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow)}
+.dash:hover{border-color:var(--primary);box-shadow:var(--shadow-lg)}
+.dash-top{display:flex;align-items:center;gap:12px}
+.dash-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;flex:none}
+.dash h3{font-size:16px;font-weight:600}
+.dash .meta{font-size:12px;color:var(--muted)}
+.dash .counts{display:flex;gap:6px;flex-wrap:wrap}
+.dash .foot{display:flex;justify-content:space-between;align-items:center}
+.dash.new{border:1.5px dashed var(--border);box-shadow:none;place-items:center;align-content:center;color:var(--muted);min-height:170px}
+.dash.new:hover{color:var(--primary-text);border-color:var(--primary);background:var(--primary-soft)}
+.note{margin-top:20px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+
+/* ---------- board ---------- */
+.board-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.crumb{color:var(--muted);font-size:13px;display:flex;gap:6px;align-items:center}
+.crumb button:hover{color:var(--primary-text);text-decoration:underline}
+.board-head h1{font-size:22px;font-weight:600}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .input{height:34px;max-width:240px}
+.chip{height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.chip.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-text)}
+.board{display:grid;grid-template-columns:repeat(3,minmax(280px,1fr));gap:16px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.col{border-radius:12px;display:flex;flex-direction:column;min-height:200px}
+.col[data-s="todo"]{background:var(--col-todo)}
+.col[data-s="in_progress"]{background:var(--col-doing)}
+.col[data-s="done"]{background:var(--col-done)}
+.col-head{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;font-size:12px;font-weight:700;letter-spacing:.05em}
+.col-head .cnt{margin-left:auto;font-weight:600;letter-spacing:0;background:var(--surface);color:var(--muted);border-radius:99px;padding:0 8px;font-size:12px}
+.col-body{display:grid;gap:8px;padding:4px 10px 10px;min-height:80px;align-content:start}
+.col.over .col-body{outline:2px dashed var(--primary);outline-offset:-4px;border-radius:10px}
+.add-task{display:flex;align-items:center;gap:6px;padding:8px 12px;margin:0 10px 10px;border-radius:9px;color:var(--muted);font-weight:500}
+.add-task:hover{background:var(--surface);color:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;display:grid;gap:10px;cursor:grab;box-shadow:var(--shadow);text-align:left;width:100%}
+.card:hover{border-color:var(--primary)}
+.card.dragging{opacity:.4}
+.card .title{font-weight:500;line-height:1.4}
+.card .badges{display:flex;flex-wrap:wrap;gap:6px}
+.card .foot{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.card .foot .who{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.card .foot .who span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .foot .m{display:inline-flex;align-items:center;gap:3px}
+.card .foot svg.i{width:14px;height:14px}
+.card.is-done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
+.progress{height:4px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--info)}
+.progress.full i{background:var(--success)}
+.placeholder{height:56px;border-radius:10px;border:2px dashed var(--primary);background:var(--primary-soft)}
+.col-empty{color:var(--faint);font-size:13px;text-align:center;padding:16px 8px}
+
+/* ---------- drawer & modal ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:41;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer-head{display:flex;gap:12px;align-items:flex-start;padding:18px 20px;border-bottom:1px solid var(--border)}
+.drawer-head h2{font-size:18px;font-weight:600;flex:1;min-width:0}
+.drawer-body{flex:1;overflow-y:auto;padding:20px;display:grid;gap:22px;align-content:start}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface-2);border-radius:10px;padding:3px;gap:3px}
+.seg button{height:32px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.seg button.on[data-s="todo"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.seg button.on[data-s="in_progress"]{background:var(--info);color:#111827}
+.seg button.on[data-s="done"]{background:var(--success);color:#fff}
+.props{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px 16px;align-items:center;font-size:13px}
+.props dt{color:var(--muted)}
+.props dd{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec h3{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between}
+.check{display:flex;align-items:center;gap:10px;padding:6px 4px;border-radius:8px;width:100%;text-align:left}
+.check:hover{background:var(--surface-2)}
+.box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--faint);display:grid;place-items:center;flex:none}
+.check.ok .box{background:var(--success);border-color:var(--success);color:#fff}
+.check.ok span{color:var(--muted);text-decoration:line-through}
+.box svg.i{width:12px;height:12px;stroke-width:3}
+.acts{display:grid;gap:12px;font-size:13px}
+.act{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px}
+.act time{color:var(--faint)}
+.act b{font-weight:600}
+.modal-wrap{position:fixed;inset:0;z-index:41;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border-radius:14px;width:min(480px,100%);box-shadow:var(--shadow-lg);max-height:calc(100% - 32px);overflow:auto}
+.modal-head{padding:18px 20px 0;display:flex;justify-content:space-between;gap:12px}
+.modal-head h2{font-size:18px;font-weight:600}
+.modal-body{padding:16px 20px;display:grid;gap:14px}
+.modal-foot{padding:14px 20px 18px;display:flex;justify-content:flex-end;gap:8px}
+.auto{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.auto b{color:var(--text);font-weight:600}
+.new-dept{border:1px solid var(--border);border-radius:12px;padding:12px 14px 14px;margin:0;display:grid;gap:12px;background:var(--surface-2)}
+.new-dept legend{font-weight:600;font-size:13px;padding:0 6px}
+.new-dept .input{background:var(--surface)}
+.row-btns{display:flex;justify-content:flex-end;gap:8px}
+.hint{font-size:12px;color:var(--muted)}
+.link-btn{display:inline-flex;align-items:center;gap:6px;color:var(--primary-text);font-weight:500;font-size:13px;justify-self:start}
+.link-btn:hover{text-decoration:underline}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 16px;border-radius:10px;z-index:60;font-weight:500;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
+.empty{display:grid;place-items:center;text-align:center;padding:48px 16px;gap:8px;color:var(--muted)}
+.empty .ico{width:48px;height:48px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin-bottom:6px}
+.empty h3{color:var(--text);font-size:16px}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+  .login{grid-template-columns:minmax(0,1fr)}.brand{display:none}
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;inset:0 auto 0 0;width:260px;z-index:50;transform:translateX(-100%);transition:transform .2s;padding-top:env(safe-area-inset-top,0px)}
+  .side.open{transform:none}
+  .menu-btn{display:grid}
+  .top{padding:0 16px}.content{padding:16px}.demo-bar{padding:6px 16px}
+  .me .nm{display:none}
+  .search{display:none}
+}
+@media (max-width:520px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.props{grid-template-columns:minmax(0,1fr)}.props dt{margin-bottom:-8px}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script>
+(() => {
+const ICONS = {
+  home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  grid:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  checkSquare:'M9 11l3 3 8-8M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11',
+  folder:'M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z',
+  barChart:'M4 20V10M10 20V4M16 20v-7M22 20H2', trending:'M3 17l6-6 4 4 8-8M15 7h6v6',
+  users:'M16 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20v-1a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
+  building:'M4 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M16 9h3a1 1 0 0 1 1 1v11M2 21h20M8 7h4M8 11h4M8 15h4',
+  network:'M12 3v5M12 8H6v4M12 8h6v4M4 12h4v4H4zM16 12h4v4h-4zM10 3h4v5h-4z',
+  clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7v5l3 2',
+  calendar:'M4 6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 10h16M8 3v4M16 3v4',
+  wallet:'M3 7a2 2 0 0 1 2-2h14v4M3 7v11a2 2 0 0 0 2 2h16V9H5a2 2 0 0 1-2-2M17 14.5h.01',
+  target:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10',
+  userPlus:'M15 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6',
+  package:'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
+  file:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M9 13h6M9 17h6',
+  approval:'M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18',
+  settings:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1',
+  search:'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3',
+  bell:'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0',
+  menu:'M4 6h16M4 12h16M4 18h16', x:'M18 6 6 18M6 6l12 12', plus:'M12 5v14M5 12h14',
+  chevron:'M9 6l6 6-6 6', check:'M5 12l5 5L20 7', msg:'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12',
+  clip:'M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7',
+  list:'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01', logout:'M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9',
+  info:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 16v-4M12 8h.01'
+};
+const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[n]}"/></svg>`;
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- dữ liệu mẫu ---------- */
+const DAY = 86400000;
+const today = new Date(); today.setHours(0,0,0,0);
+const d = (n) => new Date(today.getTime() + n*DAY);
+const USERS = {
+  an:{name:'Nguyễn Văn An', role:'Trưởng phòng Marketing'}, binh:{name:'Trần Thị Bình', role:'Content'},
+  chau:{name:'Lê Minh Châu', role:'Designer'}, dung:{name:'Phạm Thu Dung', role:'Performance'},
+  em:{name:'Hoàng Đức Em', role:'Sales'}, giang:{name:'Vũ Ngọc Giang', role:'Trưởng phòng Kinh doanh'},
+  hai:{name:'Đỗ Thanh Hải', role:'Sales'}
+};
+const ME = 'an';
+const DEPTS = [
+  {id:'mkt', name:'Marketing', color:'#7F59AF', members:['an','binh','chau','dung']},
+  {id:'sales', name:'Kinh doanh', color:'#EA4B8B', members:['giang','em','hai']},
+  {id:'hr', name:'Nhân sự', color:'#22A06B', members:[]},
+  {id:'it', name:'Công nghệ', color:'#2E86AB', members:[]},
+  {id:'fin', name:'Tài chính', color:'#C68A1C', members:[]}
+];
+const dashboards = [{deptId:'mkt'},{deptId:'sales'}];
+const DEPT_COLORS = ['#7F59AF','#EA4B8B','#2E86AB','#22A06B','#C68A1C','#6C4C95','#C74076'];
+let seq = 100;
+const T = (id, dept, title, status, assignee, priority, due, check, extra={}) => ({
+  id, dept, title, status, assignee, priority, due, collaborators:extra.collab||[], comments:extra.comments||0,
+  files:extra.files||0, checklist:check.map(([t,ok])=>({t,ok})), desc:extra.desc||'', pos:extra.pos||0,
+  activities:extra.acts||[{at:'08:30', who:'an', text:'tạo công việc'}]
+});
+const tasks = [
+  T(1,'mkt','Landing Page chiến dịch Tết 2027','in_progress','an','high',d(5),[['Wireframe',1],['UI Design',1],['Nội dung',1],['Development',1],['Tracking',1],['Testing',0],['Publish',0]],{collab:['chau','binh'],comments:6,files:3,pos:1,desc:'Trang đích cho chiến dịch Tết, gắn form thu lead và pixel đo lường.',acts:[{at:'09:00',who:'an',text:'tạo công việc'},{at:'09:15',who:'an',text:'giao cho <b>Nguyễn Văn An</b>'},{at:'10:30',who:'an',text:'chuyển: Việc cần làm → Việc đang làm'}]}),
+  T(2,'mkt','Viết 5 bài blog chuẩn SEO tháng 10','in_progress','binh','normal',d(9),[['Chọn từ khoá',1],['Bài 1',1],['Bài 2',0],['Bài 3',0],['Bài 4',0],['Bài 5',0]],{comments:2,pos:2}),
+  T(3,'mkt','Báo cáo hiệu quả quảng cáo Q3','todo','dung','urgent',d(-2),[['Số liệu Google Ads',1],['Số liệu Meta',0],['Tổng hợp',0]],{collab:['an'],comments:3,files:1,pos:1}),
+  T(4,'mkt','Thiết kế bộ banner Facebook','todo','chau','high',d(1),[],{comments:1,pos:2}),
+  T(5,'mkt','Lên kế hoạch sự kiện ra mắt sản phẩm','todo','an','normal',d(14),[['Địa điểm',0],['Khách mời',0],['Ngân sách',0]],{collab:['binh','dung'],pos:3}),
+  T(6,'mkt','Cập nhật brand guideline','todo','chau','low',null,[],{pos:4}),
+  T(7,'mkt','Email marketing khách hàng cũ','done','binh','normal',d(-3),[['Soạn nội dung',1],['Duyệt',1],['Gửi',1]],{comments:4,pos:1}),
+  T(8,'mkt','Nghiên cứu đối thủ cạnh tranh','done','dung','normal',d(-6),[],{files:2,pos:2}),
+  T(9,'sales','Gọi lại 30 khách hàng tiềm năng','in_progress','em','high',d(2),[],{pos:1}),
+  T(10,'sales','Chuẩn bị báo giá dự án ABC','todo','hai','urgent',d(0),[['Bóc tách khối lượng',1],['Đơn giá',0]],{pos:1}),
+  T(11,'sales','Cập nhật CRM tuần 40','todo','giang','normal',d(3),[],{pos:2}),
+  T(12,'sales','Ký hợp đồng khách hàng XYZ','done','giang','high',d(-1),[],{pos:1}),
+];
+
+/* ---------- trạng thái giao diện ---------- */
+const S = {screen:'login', view:'overview', deptId:null, q:'', mine:false, overdue:false, taskId:null, modal:null, sideOpen:false, errors:{}, dragId:null};
+const COLS = [
+  {s:'todo', label:'VIỆC CẦN LÀM', dot:'var(--faint)'},
+  {s:'in_progress', label:'VIỆC ĐANG LÀM', dot:'var(--info)'},
+  {s:'done', label:'ĐÃ HOÀN THÀNH', dot:'var(--success)'}
+];
+const STATUS_LABEL = {todo:'Việc cần làm', in_progress:'Việc đang làm', done:'Đã hoàn thành'};
+const PRIO = {low:['Thấp','neutral'], normal:['Bình thường','info'], high:['Cao','warning'], urgent:['Khẩn cấp','danger']};
+
+const initials = (n) => { const p = n.trim().split(/\s+/); return ((p[0]||'')[0] + (p.length>1 ? p[p.length-1][0] : '')).toUpperCase(); };
+const av = (id, cls='') => `<span class="avatar ${cls}" title="${esc(USERS[id].name)}">${initials(USERS[id].name)}</span>`;
+const fmt = (dt) => dt ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}` : '';
+const nowHM = () => { const n = new Date(); return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; };
+const isOverdue = (t) => t.due && t.status !== 'done' && t.due < today;
+function dueBadge(t){
+  if (!t.due) return '';
+  if (t.status === 'done') return `<span class="badge t-success">${ic('check')}${fmt(t.due)}</span>`;
+  const diff = Math.round((t.due - today)/DAY);
+  if (diff < 0) return `<span class="badge t-danger">Quá hạn ${fmt(t.due)}</span>`;
+  if (diff === 0) return `<span class="badge t-warning">Hạn hôm nay</span>`;
+  if (diff <= 2) return `<span class="badge t-warning">Hạn ${fmt(t.due)}</span>`;
+  return `<span class="badge t-neutral">${ic('calendar')}${fmt(t.due)}</span>`;
+}
+const prioBadge = (p) => `<span class="badge t-${PRIO[p][1]}">${PRIO[p][0]}</span>`;
+const dept = (id) => DEPTS.find(x => x.id === id);
+const hasDash = (id) => dashboards.some(x => x.deptId === id);
+
+/* ---------- màn hình ---------- */
+function loginView(){
+  const e = S.errors;
+  return `<div class="login">
+    <aside class="brand">
+      <div class="logo"><span class="logo-mark">C</span>CRM Business</div>
+      <div><h2>Quản lý công việc và nhân sự ở cùng một nơi.</h2>
+        <p>Dashboard phòng ban, giao việc rõ người phụ trách, theo dõi tiến độ và quy trình nhân sự của toàn công ty.</p>
+        <div class="chips"><span>Việc cần làm</span><span class="doing">Việc đang làm</span><span>Đã hoàn thành</span></div></div>
+      <p class="foot">Hệ thống nội bộ, chỉ dành cho nhân viên.</p>
+      <span class="blob a"></span><span class="blob b"></span><span class="blob c"></span>
+    </aside>
+    <div class="login-form"><form id="loginForm" novalidate>
+      <div><h1>Đăng nhập</h1><p class="sub">Dùng tài khoản công ty để tiếp tục.</p></div>
+      <p class="demo-hint">Bản demo: điền sẵn tài khoản mẫu, bấm <b>Đăng nhập</b> để vào.</p>
+      <div class="field"><label for="em">Email</label><input id="em" class="input ${e.email?'bad':''}" type="email" value="an.nguyen@congty.vn" autocomplete="email">${e.email?`<span class="err">${e.email}</span>`:''}</div>
+      <div class="field"><label for="pw">Mật khẩu</label><input id="pw" class="input ${e.pw?'bad':''}" type="password" value="demo1234" autocomplete="current-password">${e.pw?`<span class="err">${e.pw}</span>`:''}</div>
+      <button class="btn btn-primary" type="submit">Đăng nhập</button>
+    </form></div></div>`;
+}
+
+const NAV = [
+  ['Công việc', [['overview','home','Tổng quan',1],['workspace','grid','Workspace',1],['','checkSquare','Việc của tôi'],['','folder','Dự án'],['','barChart','Khối lượng việc'],['','trending','Tổng quan điều hành']]],
+  ['Nhân sự', [['','users','Nhân viên'],['','building','Phòng ban'],['','network','Sơ đồ tổ chức'],['','clock','Chấm công'],['','calendar','Nghỉ phép'],['','wallet','Bảng lương'],['','target','KPI'],['','userPlus','Tuyển dụng'],['','package','Tài sản'],['','file','Tài liệu'],['','approval','Phê duyệt']]],
+  ['Hệ thống', [['','settings','Cài đặt']]]
+];
+function shell(inner){
+  const active = S.view === 'board' ? 'workspace' : S.view;
+  const nav = NAV.map(([g, items]) => `<div class="nav-group"><p>${g}</p>${items.map(([v,i,l,ready]) => ready
+      ? `<button class="nav-item ${active===v?'on':''}" data-go="${v}">${ic(i)}<span class="lbl">${l}</span></button>`
+      : `<span class="nav-item off" aria-disabled="true">${ic(i)}<span class="lbl">${l}</span><span class="soon">Sắp có</span></span>`).join('')}</div>`).join('');
+  return `<div class="shell">
+    ${S.sideOpen ? '<div class="scrim" data-act="closeSide"></div>' : ''}
+    <aside class="side ${S.sideOpen?'open':''}"><div class="side-head"><span class="logo-mark">C</span>CRM Business</div><nav class="nav" aria-label="Điều hướng chính">${nav}</nav></aside>
+    <div class="main">
+      <header class="top">
+        <button class="icon-btn menu-btn" data-act="openSide" aria-label="Mở menu">${ic('menu')}</button>
+        <label class="search">${ic('search')}<input id="gsearch" type="search" placeholder="Tìm công việc, nhân viên, dự án..." aria-label="Tìm kiếm"></label>
+        <div class="top-right">
+          <button class="icon-btn" aria-label="Thông báo" data-act="notify">${ic('bell')}<span class="dot"></span></button>
+          <button class="me" data-act="logout" title="Đăng xuất">${av(ME)}<span class="nm">${USERS[ME].name}</span>${ic('logout')}</button>
+        </div>
+      </header>
+      <div class="demo-bar">${ic('info')}<span>Bản demo giao diện với dữ liệu mẫu. Thay đổi chỉ lưu tạm trong trang.</span><button data-act="reset">Làm mới dữ liệu</button></div>
+      <main class="content" id="content">${inner}</main>
+    </div></div>`;
+}
+
+function overviewView(){
+  const all = tasks;
+  const c = {todo:0,in_progress:0,done:0};
+  all.forEach(t => c[t.status]++);
+  const over = all.filter(isOverdue).length;
+  const mine = all.filter(t => t.assignee === ME && t.status !== 'done').sort((a,b) => (a.due||Infinity) - (b.due||Infinity));
+  const total = all.length;
+  const hour = new Date().getHours();
+  const greet = hour < 11 ? 'Chào buổi sáng' : hour < 14 ? 'Chào buổi trưa' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+  const wd = new Intl.DateTimeFormat('vi-VN',{weekday:'long'}).format(today);
+  const stat = (k, v, col) => `<div class="stat"><span class="k"><i style="background:${col}"></i>${k}</span><span class="v num">${v}</span></div>`;
+  const pct = (n) => total ? (n/total*100).toFixed(1) : 0;
+  return `<div class="page-head"><div><p class="eyebrow">${wd.charAt(0).toUpperCase()+wd.slice(1)}, ${fmt(today)}/${today.getFullYear()}</p><h1>${greet}, ${USERS[ME].name}</h1></div>
+      <button class="btn btn-primary" data-go="workspace">${ic('grid')}Vào Workspace</button></div>
+    <div class="stats">${stat('Việc cần làm', c.todo, 'var(--faint)')}${stat('Việc đang làm', c.in_progress, 'var(--info)')}${stat('Đã hoàn thành', c.done, 'var(--success)')}${stat('Quá hạn', over, 'var(--danger)')}</div>
+    <div class="two">
+      <section class="panel"><div class="panel-head"><h2>Việc của tôi</h2><span class="badge t-primary num">${mine.length} việc đang mở</span></div>
+        ${mine.length ? mine.map(t => `<button class="row" data-open="${t.id}"><span class="status-dot" style="background:${t.status==='in_progress'?'var(--info)':'var(--faint)'}"></span>
+          <span class="t"><b>${esc(t.title)}</b><span>${dept(t.dept).name} · ${STATUS_LABEL[t.status]}</span></span>${prioBadge(t.priority)}${dueBadge(t)}</button>`).join('')
+          : `<div class="empty"><h3>Không có việc nào</h3></div>`}
+      </section>
+      <section class="panel"><div class="panel-head"><h2>Tiến độ toàn bộ công việc</h2><span class="num" style="color:var(--muted);font-size:13px">${total} việc</span></div>
+        <div class="legend">
+          <div class="bar" role="img" aria-label="Tỉ lệ trạng thái"><span style="width:${pct(c.todo)}%;background:var(--faint)"></span><span style="width:${pct(c.in_progress)}%;background:var(--info)"></span><span style="width:${pct(c.done)}%;background:var(--success)"></span></div>
+          ${COLS.map(col => `<div class="l"><span style="display:flex;gap:8px;align-items:center"><span class="status-dot" style="background:${col.dot}"></span>${STATUS_LABEL[col.s]}</span><b class="num">${c[col.s]} · ${Math.round(pct(c[col.s]))}%</b></div>`).join('')}
+          <div class="l"><span style="display:flex;gap:8px;align-items:center"><span class="status-dot" style="background:var(--danger)"></span>Quá hạn</span><b class="num">${over}</b></div>
+        </div></section>
+    </div>`;
+}
+
+function workspaceView(){
+  const cards = dashboards.map(db => {
+    const dp = dept(db.deptId); const ts = tasks.filter(t => t.dept === dp.id);
+    const open = ts.filter(t => t.status !== 'done').length, over = ts.filter(isOverdue).length, doing = ts.filter(t => t.status==='in_progress').length;
+    return `<button class="dash" data-board="${dp.id}">
+      <div class="dash-top"><span class="dash-icon" style="background:${dp.color}">${initials(dp.name)}</span><div><h3>${dp.name}</h3><p class="meta">Dashboard phòng ${dp.name}</p></div></div>
+      <div class="counts"><span class="badge t-neutral num">${open} đang mở</span><span class="badge t-info num">${doing} đang làm</span>${over?`<span class="badge t-danger num">${over} quá hạn</span>`:''}</div>
+      <div class="foot"><span class="avatars">${dp.members.slice(0,4).map(m => av(m)).join('')}</span>${ic('chevron')}</div></button>`;
+  }).join('');
+  const missing = DEPTS.filter(x => !hasDash(x.id)).map(x => x.name);
+  return `<div class="page-head"><div><p class="eyebrow">Công việc</p><h1>Workspace</h1></div></div>
+    <div class="dash-grid">${cards}
+      <button class="dash new" data-act="newDash">${ic('plus')}<b>Tạo Dashboard</b><span style="font-size:12px">Cho phòng ban chưa có</span></button></div>
+    <p class="note">${ic('info')}<span>Workspace chỉ hiện Dashboard đã tạo. Có thể tạo phòng ban mới ngay trong hộp thoại Tạo Dashboard. ${missing.length ? `Phòng ban chưa có Dashboard: ${missing.join(', ')}.` : 'Mọi phòng ban đều đã có Dashboard.'}</span></p>`;
+}
+
+function filtered(deptId){
+  const q = S.q.trim().toLowerCase();
+  return tasks.filter(t => t.dept === deptId && (!q || t.title.toLowerCase().includes(q) || USERS[t.assignee].name.toLowerCase().includes(q))
+    && (!S.mine || t.assignee === ME || t.collaborators.includes(ME)) && (!S.overdue || isOverdue(t)));
+}
+function cardView(t){
+  const done = t.checklist.filter(x => x.ok).length, n = t.checklist.length;
+  return `<article class="card ${t.status==='done'?'is-done':''}" draggable="true" data-card="${t.id}" tabindex="0" aria-label="${esc(t.title)}">
+    <p class="title">${esc(t.title)}</p>
+    <div class="badges">${prioBadge(t.priority)}${dueBadge(t)}</div>
+    ${n ? `<div class="progress ${done===n?'full':''}"><i style="width:${done/n*100}%"></i></div>` : ''}
+    <div class="foot"><span class="who">${av(t.assignee)}<span>${USERS[t.assignee].name}</span></span>
+      ${n ? `<span class="m num">${ic('list')}${done}/${n}</span>` : ''}${t.comments ? `<span class="m num">${ic('msg')}${t.comments}</span>` : ''}${t.files ? `<span class="m num">${ic('clip')}${t.files}</span>` : ''}</div>
+  </article>`;
+}
+function boardView(){
+  const dp = dept(S.deptId); const ts = filtered(dp.id);
+  const cols = COLS.map(col => {
+    const list = ts.filter(t => t.status === col.s).sort((a,b) => a.pos - b.pos);
+    return `<section class="col" data-s="${col.s}" aria-label="${col.label}">
+      <div class="col-head"><span class="status-dot" style="background:${col.dot}"></span>${col.label}<span class="cnt num">${list.length}</span></div>
+      <div class="col-body" data-col="${col.s}">${list.map(cardView).join('') || `<p class="col-empty">${S.q||S.mine||S.overdue ? 'Không có việc khớp bộ lọc' : 'Kéo thả công việc vào đây'}</p>`}</div>
+      ${col.s === 'todo' ? `<button class="add-task" data-act="newTask">${ic('plus')}Thêm công việc</button>` : ''}
+    </section>`;
+  }).join('');
+  return `<div class="board-head"><div style="flex:1;min-width:0"><p class="crumb"><button data-go="workspace">Workspace</button>${ic('chevron')}<span>${dp.name}</span></p><h1>Dashboard ${dp.name}</h1></div>
+      <span class="avatars">${dp.members.map(m => av(m)).join('')}</span>
+      <button class="btn btn-primary" data-act="newTask">${ic('plus')}Thêm công việc</button></div>
+    <div class="toolbar"><input id="bq" class="input" type="search" placeholder="Tìm theo tên việc, người phụ trách" value="${esc(S.q)}" aria-label="Tìm trong board">
+      <button class="chip ${S.mine?'on':''}" data-act="mine">${ic('checkSquare')}Việc của tôi</button>
+      <button class="chip ${S.overdue?'on':''}" data-act="overdue">Quá hạn</button>
+      <span style="font-size:12px;color:var(--faint)">Kéo thẻ giữa các cột để đổi trạng thái</span></div>
+    <div class="board" id="board">${cols}</div>`;
+}
+
+function drawerView(){
+  const t = tasks.find(x => x.id === S.taskId); if (!t) return '';
+  const done = t.checklist.filter(x => x.ok).length;
+  return `<div class="scrim" data-act="closeTask"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Chi tiết công việc">
+    <div class="drawer-head"><h2>${esc(t.title)}</h2><button class="icon-btn" data-act="closeTask" aria-label="Đóng">${ic('x')}</button></div>
+    <div class="drawer-body">
+      <div class="seg" role="group" aria-label="Trạng thái">${COLS.map(c => `<button class="${t.status===c.s?'on':''}" data-s="${c.s}" data-move="${c.s}">${STATUS_LABEL[c.s]}</button>`).join('')}</div>
+      <dl class="props">
+        <dt>Phòng ban</dt><dd>${dept(t.dept).name}</dd>
+        <dt>Người phụ trách</dt><dd>${av(t.assignee)}${USERS[t.assignee].name}</dd>
+        <dt>Người phối hợp</dt><dd>${t.collaborators.length ? `<span class="avatars">${t.collaborators.map(c => av(c)).join('')}</span>${t.collaborators.map(c => USERS[c].name).join(', ')}` : '<span style="color:var(--faint)">Chưa có</span>'}</dd>
+        <dt>Deadline</dt><dd>${t.due ? dueBadge(t) : '<span style="color:var(--faint)">Chưa đặt</span>'}</dd>
+        <dt>Ưu tiên</dt><dd>${prioBadge(t.priority)}</dd>
+        ${t.completedAt ? `<dt>Hoàn thành</dt><dd>${t.completedAt} bởi ${USERS[t.completedBy].name}</dd>` : ''}
+      </dl>
+      ${t.desc ? `<div class="sec"><h3>Mô tả</h3><p style="color:var(--muted)">${esc(t.desc)}</p></div>` : ''}
+      <div class="sec"><h3><span>Checklist</span>${t.checklist.length ? `<span class="num" style="color:var(--muted);font-weight:500">${done}/${t.checklist.length} · ${Math.round(done/t.checklist.length*100)}%</span>` : ''}</h3>
+        ${t.checklist.length ? `<div class="progress ${done===t.checklist.length?'full':''}" style="margin-bottom:8px"><i style="width:${done/t.checklist.length*100}%"></i></div>` + t.checklist.map((c,i) => `<button class="check ${c.ok?'ok':''}" data-check="${i}"><span class="box">${c.ok?ic('check'):''}</span><span>${esc(c.t)}</span></button>`).join('') : '<p style="color:var(--faint);font-size:13px">Chưa có mục nào</p>'}
+      </div>
+      <div class="sec"><h3>Lịch sử hoạt động</h3><div class="acts">${t.activities.slice().reverse().map(a => `<div class="act"><time class="num">${a.at}</time><span><b>${USERS[a.who].name}</b> ${a.text}</span></div>`).join('')}</div></div>
+    </div></aside>`;
+}
+
+function modalView(){
+  if (S.modal === 'dash'){
+    const avail = DEPTS.filter(x => !hasDash(x.id)); const e = S.errors;
+    const showNew = S.newDept || !avail.length;
+    const sel = avail.some(x => x.id === S.dashSel) ? S.dashSel : avail[0]?.id;
+    const newForm = `<fieldset class="new-dept"><legend>Phòng ban mới</legend>
+        <div class="field"><label for="dn">Tên phòng ban</label><input id="dn" class="input ${e.dname?'bad':''}" placeholder="Ví dụ: Chăm sóc khách hàng" value="${esc(S.draftName||'')}">${e.dname?`<span class="err">${e.dname}</span>`:''}</div>
+        <div class="field"><label for="dm">Trưởng phòng</label><select id="dm" class="input"><option value="">Chọn sau</option>${Object.entries(USERS).map(([k,u]) => `<option value="${k}" ${S.draftMgr===k?'selected':''}>${u.name}</option>`).join('')}</select></div>
+        <div class="row-btns">${avail.length ? '<button type="button" class="btn btn-ghost btn-sm" data-act="cancelDept">Huỷ</button>' : ''}<button type="button" class="btn btn-secondary btn-sm" data-act="saveDept">${ic('plus')}Lưu phòng ban</button></div>
+        <p class="hint">Tạo phòng ban không tự tạo Dashboard. Sau khi lưu, phòng ban mới được chọn sẵn ở danh sách bên trên.</p></fieldset>`;
+    return `<div class="scrim" data-act="closeModal"></div><div class="modal-wrap"><form class="modal" id="dashForm" novalidate role="dialog" aria-modal="true" aria-labelledby="mdt">
+      <div class="modal-head"><h2 id="mdt">Tạo Dashboard</h2><button type="button" class="icon-btn" data-act="closeModal" aria-label="Đóng">${ic('x')}</button></div>
+      <div class="modal-body">
+        ${avail.length ? `<div class="field"><label for="dsel">Phòng ban</label><select id="dsel" class="input">${avail.map(x => `<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}${x.isNew?' (mới tạo)':''}</option>`).join('')}</select>
+            <span class="hint">Chỉ hiện phòng ban chưa có Dashboard.</span></div>`
+          : `<p class="auto">Mọi phòng ban hiện có đều đã có Dashboard. Tạo phòng ban mới để tiếp tục.</p>`}
+        ${showNew ? newForm : `<button type="button" class="link-btn" data-act="newDept">${ic('plus')}Chưa có phòng ban cần tìm? Tạo phòng ban mới</button>`}
+        <p class="auto">Board mới có sẵn 3 cột: <b>Việc cần làm</b>, <b>Việc đang làm</b>, <b>Đã hoàn thành</b>.</p>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" data-act="closeModal">Huỷ</button><button class="btn btn-primary" type="submit" ${avail.length?'':'disabled'}>Tạo Dashboard</button></div></form></div>`;
+  }
+  if (S.modal === 'task'){
+    const dp = dept(S.deptId); const e = S.errors;
+    return `<div class="scrim" data-act="closeModal"></div><div class="modal-wrap"><form class="modal" id="taskForm" novalidate role="dialog" aria-modal="true" aria-labelledby="mtt">
+      <div class="modal-head"><h2 id="mtt">Thêm công việc</h2><button type="button" class="icon-btn" data-act="closeModal" aria-label="Đóng">${ic('x')}</button></div>
+      <div class="modal-body">
+        <div class="field"><label for="tt">Tên công việc</label><input id="tt" class="input ${e.title?'bad':''}" placeholder="Ví dụ: Thiết kế poster sự kiện">${e.title?`<span class="err">${e.title}</span>`:''}</div>
+        <div class="field"><label for="ta">Người phụ trách chính</label><select id="ta" class="input ${e.assignee?'bad':''}"><option value="">Chọn một người</option>${dp.members.map(m => `<option value="${m}">${USERS[m].name}</option>`).join('')}</select>${e.assignee?`<span class="err">${e.assignee}</span>`:''}</div>
+        <div class="grid2"><div class="field"><label for="tp">Ưu tiên</label><select id="tp" class="input">${Object.entries(PRIO).map(([k,v]) => `<option value="${k}" ${k==='normal'?'selected':''}>${v[0]}</option>`).join('')}</select></div>
+          <div class="field"><label for="td">Deadline</label><input id="td" class="input" type="date"></div></div>
+        <p class="auto">Phòng ban: <b>${dp.name}</b> (tự gán theo Dashboard). Công việc mới nằm ở cột Việc cần làm.</p>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" data-act="closeModal">Huỷ</button><button class="btn btn-primary" type="submit">Thêm công việc</button></div></form></div>`;
+  }
+  return '';
+}
+
+let toastTimer;
+function toast(msg){
+  document.querySelector('.toast')?.remove();
+  const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role','status'); el.textContent = msg;
+  document.body.appendChild(el); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.remove(), 2600);
+}
+
+const app = document.getElementById('app');
+function render(){
+  if (S.screen === 'login'){ app.innerHTML = loginView(); return; }
+  const scroll = document.getElementById('content')?.scrollTop || 0;
+  const inner = S.view === 'overview' ? overviewView() : S.view === 'workspace' ? workspaceView() : boardView();
+  app.innerHTML = shell(inner) + drawerView() + modalView();
+  const c = document.getElementById('content'); if (c) c.scrollTop = scroll;
+}
+
+/* ---------- nghiệp vụ demo ---------- */
+function moveTask(t, to, beforeId){
+  const from = t.status;
+  const others = tasks.filter(x => x.dept === t.dept && x.status === to && x.id !== t.id).sort((a,b) => a.pos - b.pos);
+  const idx = beforeId == null ? others.length : others.findIndex(x => x.id === beforeId);
+  const prev = others[idx-1], next = others[idx];
+  t.pos = prev && next ? (prev.pos + next.pos)/2 : prev ? prev.pos + 1 : next ? next.pos - 1 : 1;
+  if (from === to) return;
+  t.status = to;
+  t.activities.push({at:nowHM(), who:ME, text:`chuyển: ${STATUS_LABEL[from]} → ${STATUS_LABEL[to]}`});
+  if (to === 'done'){ t.completedAt = `${nowHM()} ${fmt(today)}`; t.completedBy = ME; toast(`Đã hoàn thành: ${t.title}`); }
+  else { if (from === 'done') { t.completedAt = null; t.completedBy = null; t.activities.push({at:nowHM(), who:ME, text:'mở lại công việc'}); } toast(`Đã chuyển sang ${STATUS_LABEL[to]}`); }
+}
+
+app.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (e.target.id === 'loginForm'){
+    const em = document.getElementById('em').value.trim(), pw = document.getElementById('pw').value;
+    S.errors = {}; if (!em) S.errors.email = 'Vui lòng nhập email'; else if (!/^\S+@\S+\.\S+$/.test(em)) S.errors.email = 'Email không hợp lệ';
+    if (!pw) S.errors.pw = 'Vui lòng nhập mật khẩu';
+    if (Object.keys(S.errors).length) return render();
+    S.screen = 'app'; S.view = 'overview'; render();
+  }
+  if (e.target.id === 'dashForm'){
+    if (document.activeElement?.id === 'dn'){ document.querySelector('[data-act=saveDept]').click(); return; }
+    const id = document.getElementById('dsel')?.value; if (!id) return;
+    if (hasDash(id)) { S.modal = null; S.view='board'; S.deptId=id; toast('Phòng ban đã có Dashboard, đã mở Dashboard hiện có'); return render(); }
+    dashboards.push({deptId:id}); const dp0 = dept(id); dp0.isNew = false; if (!dp0.members.includes(ME)) dp0.members.push(ME);
+    S.modal = null; S.newDept = false; S.view = 'board'; S.deptId = id; toast(`Đã tạo Dashboard ${dept(id).name}`); render();
+  }
+  if (e.target.id === 'taskForm'){
+    const title = document.getElementById('tt').value.trim(), assignee = document.getElementById('ta').value;
+    const pr = document.getElementById('tp').value, dv = document.getElementById('td').value;
+    S.errors = {}; if (!title) S.errors.title = 'Vui lòng nhập tên công việc'; if (!assignee) S.errors.assignee = 'Mỗi công việc cần đúng một người phụ trách chính';
+    if (Object.keys(S.errors).length){ render(); const f = document.getElementById('tt'); f.value = title; document.getElementById('ta').value = assignee; return; }
+    const top = Math.min(0, ...tasks.filter(t => t.dept === S.deptId && t.status === 'todo').map(t => t.pos));
+    const due = dv ? new Date(dv + 'T00:00:00') : null;
+    tasks.push(T(++seq, S.deptId, title, 'todo', assignee, pr, due, [], {pos: top - 1, acts:[{at:nowHM(),who:ME,text:'tạo công việc'},{at:nowHM(),who:ME,text:`giao cho <b>${USERS[assignee].name}</b>`}]}));
+    S.modal = null; S.errors = {}; toast('Đã thêm công việc'); render();
+  }
+});
+
+app.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-go],[data-act],[data-board],[data-open],[data-card],[data-move],[data-check]'); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go){ S.view = ds.go; S.sideOpen = false; S.taskId = null; return render(); }
+  if (ds.board){ S.view = 'board'; S.deptId = ds.board; S.q=''; S.mine=false; S.overdue=false; return render(); }
+  if (ds.open){ const t = tasks.find(x => x.id == ds.open); S.view = 'board'; S.deptId = t.dept; S.taskId = t.id; return render(); }
+  if (ds.card){ S.taskId = Number(ds.card); return render(); }
+  if (ds.move){ const t = tasks.find(x => x.id === S.taskId); moveTask(t, ds.move, null); return render(); }
+  if (ds.check != null){ const t = tasks.find(x => x.id === S.taskId); const c = t.checklist[ds.check]; c.ok = !c.ok;
+    t.activities.push({at:nowHM(), who:ME, text:`${c.ok?'hoàn thành':'bỏ đánh dấu'} mục checklist "${esc(c.t)}"`}); return render(); }
+  switch (ds.act){
+    case 'openSide': S.sideOpen = true; break; case 'closeSide': S.sideOpen = false; break;
+    case 'closeTask': S.taskId = null; break;
+    case 'newDash': S.modal = 'dash'; S.newDept = false; S.dashSel = null; S.errors = {}; S.draftName = ''; S.draftMgr = ''; break;
+    case 'newDept': S.dashSel = document.getElementById('dsel')?.value || null; S.newDept = true; break;
+    case 'cancelDept': S.newDept = false; S.errors = {}; S.draftName = ''; S.draftMgr = ''; break;
+    case 'saveDept': {
+      const name = document.getElementById('dn').value.trim().replace(/\s+/g,' '); const mgr = document.getElementById('dm').value;
+      S.draftName = name; S.draftMgr = mgr; S.errors = {};
+      if (!name) S.errors.dname = 'Vui lòng nhập tên phòng ban';
+      else if (DEPTS.some(x => x.name.toLowerCase() === name.toLowerCase())) S.errors.dname = 'Phòng ban này đã tồn tại';
+      if (S.errors.dname) break;
+      const id = 'd' + (++seq);
+      DEPTS.push({id, name, color: DEPT_COLORS[DEPTS.length % DEPT_COLORS.length], members: mgr ? [mgr] : [], isNew:true});
+      S.dashSel = id; S.newDept = false; S.draftName = ''; S.draftMgr = '';
+      toast(`Đã tạo phòng ban ${name}. Bấm Tạo Dashboard để tạo board.`); break;
+    } case 'newTask': S.modal = 'task'; S.errors = {}; break;
+    case 'closeModal': S.modal = null; S.errors = {}; S.newDept = false; break;
+    case 'mine': S.mine = !S.mine; break; case 'overdue': S.overdue = !S.overdue; break;
+    case 'notify': toast('Bạn có 1 thông báo: Trần Thị Bình đã nhắc bạn trong một bình luận'); return;
+    case 'logout': S.screen = 'login'; S.errors = {}; break;
+    case 'reset': location.reload(); return;
+  }
+  render();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && (S.taskId || S.modal || S.sideOpen)){ S.taskId = null; S.modal = null; S.sideOpen = false; render(); }
+  if (e.key === 'Enter' && e.target.matches('[data-card]')){ S.taskId = Number(e.target.dataset.card); render(); }
+});
+app.addEventListener('input', (e) => {
+  if (e.target.id === 'bq'){ S.q = e.target.value; const pos = e.target.selectionStart; render(); const f = document.getElementById('bq'); f.focus(); f.setSelectionRange(pos,pos); }
+});
+
+/* ---------- kéo thả ---------- */
+let placeholder = null;
+app.addEventListener('dragstart', (e) => {
+  const card = e.target.closest('[data-card]'); if (!card) return;
+  S.dragId = Number(card.dataset.card); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.dataset.card);
+  requestAnimationFrame(() => card.classList.add('dragging'));
+});
+app.addEventListener('dragend', () => { S.dragId = null; placeholder?.remove(); placeholder = null; document.querySelectorAll('.dragging,.over').forEach(x => x.classList.remove('dragging','over')); });
+app.addEventListener('dragover', (e) => {
+  const body = e.target.closest('.col')?.querySelector('.col-body'); if (!body || S.dragId == null) return;
+  e.preventDefault();
+  document.querySelectorAll('.col.over').forEach(x => x !== body.parentElement && x.classList.remove('over'));
+  body.parentElement.classList.add('over');
+  if (!placeholder){ placeholder = document.createElement('div'); placeholder.className = 'placeholder'; }
+  const cards = [...body.querySelectorAll('[data-card]:not(.dragging)')];
+  const after = cards.find(c => { const r = c.getBoundingClientRect(); return e.clientY < r.top + r.height/2; });
+  body.querySelector('.col-empty')?.remove();
+  after ? body.insertBefore(placeholder, after) : body.appendChild(placeholder);
+});
+app.addEventListener('drop', (e) => {
+  const body = e.target.closest('.col')?.querySelector('.col-body'); if (!body || S.dragId == null) return;
+  e.preventDefault();
+  const next = placeholder?.nextElementSibling?.closest?.('[data-card]');
+  const t = tasks.find(x => x.id === S.dragId);
+  moveTask(t, body.dataset.col, next ? Number(next.dataset.card) : null);
+  S.dragId = null; placeholder = null; render();
+});
+
+render();
+})();
+</script>
