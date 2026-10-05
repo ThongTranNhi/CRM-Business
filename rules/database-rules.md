@@ -2,6 +2,9 @@
 
 ## Migration
 
+- KHÔNG tạo/sửa bảng bằng tay trên Supabase Table Editor. Mọi thay đổi viết migration trong repo trước, rồi mới áp lên Supabase (ADR 008).
+- Trước khi tạo bảng: kiểm tra migration cũ, không tạo trùng bảng/cột đã có.
+
 - Mọi thay đổi schema = file mới trong `supabase/migrations/` (`YYYYMMDDHHMMSS_mo_ta.sql`).
 - KHÔNG sửa migration đã chạy. Sai thì viết migration mới để sửa.
 - Sau khi đổi schema: chạy `scripts/generate-types.sh`. Không viết type DB bằng tay.

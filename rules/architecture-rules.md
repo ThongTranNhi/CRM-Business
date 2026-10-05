@@ -20,7 +20,6 @@ layouts/             AppLayout, AuthLayout, Header, Sidebar, UserMenu, nav-items
 features/<module>/   api/ hooks/ components/ pages/ schemas/ types.ts index.ts
 components/ui/       Button, Input, Badge, Avatar, Card, EmptyState, Skeleton, Icon...
 lib/                 supabase.ts, cn.ts, format-date.ts, api-client.ts...
-lib/mock/            dữ liệu mẫu dùng chung khi VITE_USE_MOCK=true (ADR 007)
 styles/              global.css
 ```
 

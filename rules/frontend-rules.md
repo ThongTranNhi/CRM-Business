@@ -3,7 +3,7 @@
 ## Đặc tả giao diện
 
 Nội dung từng trang, nút bấm và liên kết giữa các trang: `docs/ui-ux/frontend-spec.md` (bắt buộc đọc trước khi làm trang mới).
-Module chưa có API dùng dữ liệu mẫu theo ADR 007.
+Không dùng dữ liệu giả: mỗi tính năng làm đủ migration → API → giao diện (ADR 008).
 
 ## Luồng dữ liệu
 

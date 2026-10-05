@@ -2,14 +2,14 @@
 
 > Tài liệu này là **đề bài** để xây dựng toàn bộ giao diện `apps/web`.
 > Đọc kèm: `CLAUDE.md`, `rules/frontend-rules.md`, `rules/ui-ux-rules.md`, `docs/ui-ux/colors.md`,
-> `docs/requirements/business-rules.md`, `docs/features/work-management/*`, ADR 007.
+> `docs/requirements/business-rules.md`, `docs/features/work-management/*`, ADR 008.
 > Giao diện tham chiếu: `docs/ui-ux/demo/crm-demo.html` (mở bằng trình duyệt).
 > Chỗ nào tài liệu này mâu thuẫn với quy tắc nghiệp vụ (BR-xx) → **DỪNG và HỎI**.
 
 ## 0. Mục tiêu
 
 1. **Mọi trang trong menu đều có nội dung thật**, không còn mục "Sắp có".
-2. **Mọi nút bấm đều làm một việc rõ ràng**: mở trang, mở modal/drawer, gọi API (thật hoặc mẫu) rồi cập nhật giao diện. Không có nút "chết".
+2. **Mọi nút bấm đều làm một việc rõ ràng**: mở trang, mở modal/drawer, gọi API rồi cập nhật giao diện. Không có nút "chết".
 3. **Các trang liên kết với nhau**: dữ liệu ở trang này bấm vào được để đi tới chi tiết ở trang kia (mục 6).
 4. Chạy được trọn các **luồng nghiệp vụ** ở mục 7 từ đầu đến cuối chỉ bằng cách bấm.
 
@@ -17,9 +17,11 @@
 
 ### 1.1 Nguồn dữ liệu
 
-- Module **đã có API** (auth, users/employees): gọi API thật.
-- Module **chưa có API**: dùng **dữ liệu mẫu** theo ADR 007 (`VITE_USE_MOCK=true`). Component KHÔNG biết dữ liệu là thật hay mẫu.
-- Hợp đồng dữ liệu (type) đặt ở `features/<module>/types.ts`, bám đúng thiết kế endpoint trong `docs/features/*` và `docs/api/*`. Khi API thật xong chỉ thay hàm trong `api/`, không sửa component.
+- **Chỉ dùng dữ liệu thật** từ Supabase qua API (ADR 008). Không có dữ liệu giả trong code.
+- Mỗi trang làm trọn lát dọc: **migration → API → giao diện**. Bảng phát sinh thêm thì viết migration mới trong repo trước, không tạo bằng tay trên Supabase.
+- Type đặt ở `features/<module>/types.ts`, bám đúng response của API.
+- Module chưa làm tới: trang vẫn có route và mục menu, hiển thị `EmptyState` "Tính năng đang được xây dựng".
+- Dữ liệu để bấm thử: `supabase/seed.sql` (chỉ dev).
 
 ### 1.2 Hành vi bắt buộc
 
@@ -48,39 +50,39 @@ Mọi trang trong `/app` dùng component `PageHeader`: breadcrumb (nếu là tra
 
 Quy ước: route phẳng `/app/<module>`, tên module theo `rules/architecture-rules.md`. **Bỏ tiền tố `/app/hrm/`** đang có trong `nav-items.ts`, và gộp hai mục "Tất cả nhân viên" / "Nhân viên" thành một.
 
-| Route                         | Trang                                     | Module (feature)        | Ai thấy                                     | Dữ liệu    |
-| ----------------------------- | ----------------------------------------- | ----------------------- | ------------------------------------------- | ---------- |
-| `/auth/login`                 | Đăng nhập                                 | auth                    | Khách                                       | Thật       |
-| `/auth/register`              | Đăng ký                                   | auth                    | Khách                                       | Thật       |
-| `/app/change-password`        | Đổi mật khẩu                              | auth                    | Mọi người                                   | Thật       |
-| `/app`                        | Tổng quan cá nhân                         | overview                | Mọi người (nội dung theo role)              | Mẫu        |
-| `/app/workspace`              | Workspace                                 | workspace               | Mọi người (chỉ Dashboard được xem)          | Mẫu        |
-| `/app/workspace/:dashboardId` | Board phòng ban (`?task=` mở chi tiết)    | department-dashboards   | Thành viên phòng / được mời / Super Admin   | Mẫu        |
-| `/app/my-tasks`               | Việc của tôi                              | my-tasks                | Mọi người                                   | Mẫu        |
-| `/app/projects`               | Danh sách dự án                           | projects                | Mọi người (theo phòng)                      | Mẫu        |
-| `/app/projects/:id`           | Chi tiết dự án                            | projects                | Thành viên dự án / phòng                    | Mẫu        |
-| `/app/workload`               | Khối lượng việc                           | workload                | Super Admin, Trưởng phòng, Trưởng nhóm      | Mẫu        |
-| `/app/overview`               | Tổng quan điều hành                       | overview                | Super Admin, Trưởng phòng (phần phòng mình) | Mẫu        |
-| `/app/employees`              | Nhân viên                                 | employees               | Super Admin, HR Admin, Trưởng phòng         | Thật       |
-| `/app/employees/:id`          | Hồ sơ nhân viên (tab)                     | employees               | Như trên + chính người đó                   | Thật + Mẫu |
-| `/app/profile`                | Hồ sơ của tôi                             | employees               | Mọi người                                   | Thật       |
-| `/app/departments`            | Phòng ban                                 | departments             | Mọi người xem; Super Admin/HR sửa           | Mẫu        |
-| `/app/departments/:id`        | Chi tiết phòng ban                        | departments             | Mọi người xem; Super Admin/HR sửa           | Mẫu        |
-| `/app/org-chart`              | Sơ đồ tổ chức                             | org-chart               | Mọi người                                   | Mẫu        |
-| `/app/attendance`             | Chấm công                                 | attendance              | Mọi người (tab Đội nhóm cho quản lý/HR)     | Mẫu        |
-| `/app/leave`                  | Nghỉ phép                                 | leave                   | Mọi người                                   | Mẫu        |
-| `/app/payroll`                | Bảng lương (HR) / Phiếu lương (nhân viên) | payroll                 | Super Admin, HR; nhân viên chỉ phiếu mình   | Mẫu        |
-| `/app/payroll/:periodId`      | Chi tiết kỳ lương                         | payroll                 | Super Admin, HR                             | Mẫu        |
-| `/app/kpi`                    | KPI & Đánh giá                            | kpi, performance        | Mọi người (theo phạm vi)                    | Mẫu        |
-| `/app/recruitment`            | Tuyển dụng (`?candidate=`)                | recruitment             | Super Admin, HR, Trưởng phòng               | Mẫu        |
-| `/app/onboarding`             | Nhận việc / Nghỉ việc (tab)               | onboarding, offboarding | Super Admin, HR, Trưởng phòng               | Mẫu        |
-| `/app/assets`                 | Tài sản                                   | assets                  | Super Admin, HR; nhân viên xem tài sản mình | Mẫu        |
-| `/app/documents`              | Tài liệu                                  | documents               | Theo quyền từng tài liệu                    | Mẫu        |
-| `/app/approvals`              | Phê duyệt (`?request=`)                   | approvals               | Mọi người                                   | Mẫu        |
-| `/app/notifications`          | Tất cả thông báo                          | notifications           | Mọi người                                   | Mẫu        |
-| `/app/reports`                | Báo cáo                                   | reports                 | Super Admin, HR, Trưởng phòng               | Mẫu        |
-| `/app/settings`               | Cài đặt (tab)                             | settings, audit-log     | Super Admin (một số tab cho HR)             | Mẫu        |
-| `/app/403`, `*`               | Không có quyền / Không tìm thấy           | —                       | —                                           | —          |
+| Route                         | Trang                                     | Module (feature)        | Ai thấy                                     | API      |
+| ----------------------------- | ----------------------------------------- | ----------------------- | ------------------------------------------- | -------- |
+| `/auth/login`                 | Đăng nhập                                 | auth                    | Khách                                       | Đã có    |
+| `/auth/register`              | Đăng ký                                   | auth                    | Khách                                       | Đã có    |
+| `/app/change-password`        | Đổi mật khẩu                              | auth                    | Mọi người                                   | Đã có    |
+| `/app`                        | Tổng quan cá nhân                         | overview                | Mọi người (nội dung theo role)              | Cần làm  |
+| `/app/workspace`              | Workspace                                 | workspace               | Mọi người (chỉ Dashboard được xem)          | Cần làm  |
+| `/app/workspace/:dashboardId` | Board phòng ban (`?task=` mở chi tiết)    | department-dashboards   | Thành viên phòng / được mời / Super Admin   | Cần làm  |
+| `/app/my-tasks`               | Việc của tôi                              | my-tasks                | Mọi người                                   | Cần làm  |
+| `/app/projects`               | Danh sách dự án                           | projects                | Mọi người (theo phòng)                      | Cần làm  |
+| `/app/projects/:id`           | Chi tiết dự án                            | projects                | Thành viên dự án / phòng                    | Cần làm  |
+| `/app/workload`               | Khối lượng việc                           | workload                | Super Admin, Trưởng phòng, Trưởng nhóm      | Cần làm  |
+| `/app/overview`               | Tổng quan điều hành                       | overview                | Super Admin, Trưởng phòng (phần phòng mình) | Cần làm  |
+| `/app/employees`              | Nhân viên                                 | employees               | Super Admin, HR Admin, Trưởng phòng         | Đã có    |
+| `/app/employees/:id`          | Hồ sơ nhân viên (tab)                     | employees               | Như trên + chính người đó                   | Một phần |
+| `/app/profile`                | Hồ sơ của tôi                             | employees               | Mọi người                                   | Đã có    |
+| `/app/departments`            | Phòng ban                                 | departments             | Mọi người xem; Super Admin/HR sửa           | Cần làm  |
+| `/app/departments/:id`        | Chi tiết phòng ban                        | departments             | Mọi người xem; Super Admin/HR sửa           | Cần làm  |
+| `/app/org-chart`              | Sơ đồ tổ chức                             | org-chart               | Mọi người                                   | Cần làm  |
+| `/app/attendance`             | Chấm công                                 | attendance              | Mọi người (tab Đội nhóm cho quản lý/HR)     | Cần làm  |
+| `/app/leave`                  | Nghỉ phép                                 | leave                   | Mọi người                                   | Cần làm  |
+| `/app/payroll`                | Bảng lương (HR) / Phiếu lương (nhân viên) | payroll                 | Super Admin, HR; nhân viên chỉ phiếu mình   | Cần làm  |
+| `/app/payroll/:periodId`      | Chi tiết kỳ lương                         | payroll                 | Super Admin, HR                             | Cần làm  |
+| `/app/kpi`                    | KPI & Đánh giá                            | kpi, performance        | Mọi người (theo phạm vi)                    | Cần làm  |
+| `/app/recruitment`            | Tuyển dụng (`?candidate=`)                | recruitment             | Super Admin, HR, Trưởng phòng               | Cần làm  |
+| `/app/onboarding`             | Nhận việc / Nghỉ việc (tab)               | onboarding, offboarding | Super Admin, HR, Trưởng phòng               | Cần làm  |
+| `/app/assets`                 | Tài sản                                   | assets                  | Super Admin, HR; nhân viên xem tài sản mình | Cần làm  |
+| `/app/documents`              | Tài liệu                                  | documents               | Theo quyền từng tài liệu                    | Cần làm  |
+| `/app/approvals`              | Phê duyệt (`?request=`)                   | approvals               | Mọi người                                   | Cần làm  |
+| `/app/notifications`          | Tất cả thông báo                          | notifications           | Mọi người                                   | Cần làm  |
+| `/app/reports`                | Báo cáo                                   | reports                 | Super Admin, HR, Trưởng phòng               | Cần làm  |
+| `/app/settings`               | Cài đặt (tab)                             | settings, audit-log     | Super Admin (một số tab cho HR)             | Cần làm  |
+| `/app/403`, `*`               | Không có quyền / Không tìm thấy           | —                       | —                                           | —        |
 
 ## 3. Khung ứng dụng
 
@@ -100,7 +102,7 @@ Quy ước: route phẳng `/app/<module>`, tên module theo `rules/architecture-
 | Ô tìm kiếm          | Gõ ≥ 2 ký tự → dropdown kết quả nhóm **Công việc / Nhân viên / Dự án / Phòng ban** (tối đa 5 mỗi nhóm). Bấm kết quả → đi đúng trang (task mở drawer). Phím `/` để focus           |
 | Nút **+ Tạo nhanh** | Menu: Công việc mới (chọn Dashboard → modal tạo task) · Đơn nghỉ phép · Yêu cầu phê duyệt · Dự án mới (nếu có quyền)                                                              |
 | Chuông thông báo    | Chấm accent khi có chưa đọc. Bấm → dropdown 10 thông báo mới nhất; bấm 1 dòng → đánh dấu đã đọc + đi tới đối tượng; "Đánh dấu tất cả đã đọc"; "Xem tất cả" → `/app/notifications` |
-| Menu tài khoản      | Tên, vai trò, phòng ban → **Hồ sơ của tôi** · **Đổi mật khẩu** · **Đăng xuất** (ConfirmDialog không cần). Khi `VITE_USE_MOCK=true`: thêm mục **Đổi vai trò (dev)** để thử 5 role  |
+| Menu tài khoản      | Tên, vai trò, phòng ban → **Hồ sơ của tôi** · **Đổi mật khẩu** · **Đăng xuất** (ConfirmDialog không cần). Thử các role bằng tài khoản thử (seed dev), không có nút đổi role       |
 
 ### 3.3 Component dùng chung cần thêm vào `components/ui`
 
@@ -135,7 +137,7 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 
 - Card Dashboard → Board. Ghi chú "phòng chưa có Dashboard" có link tên phòng → `/app/departments/:id`.
 - Board: avatar thành viên → `/app/employees/:id`; tên dự án trên card/chi tiết → `/app/projects/:id`; nút **[Cài đặt board]** ⧉ (Trưởng phòng/Super Admin): đổi tên, mô tả, thêm/bớt thành viên được mời (`board_members`), lưu trữ Dashboard (ConfirmDialog).
-- Chi tiết task (drawer): người phụ trách/phối hợp → hồ sơ; **[Sao chép link]** copy URL `?task=`; **[Lưu trữ]** ✓ ConfirmDialog (BR-19); bình luận có @mention (gợi ý tên thành viên) → tạo thông báo cho người được nhắc; upload file (Supabase Storage khi có, mẫu thì chỉ lưu tên).
+- Chi tiết task (drawer): người phụ trách/phối hợp → hồ sơ; **[Sao chép link]** copy URL `?task=`; **[Lưu trữ]** ✓ ConfirmDialog (BR-19); bình luận có @mention (gợi ý tên thành viên) → tạo thông báo cho người được nhắc; upload file lên Supabase Storage (bucket private, signed URL).
 - Tạo task: modal như demo; trường Dự án chỉ liệt kê dự án cùng phòng.
 
 ### 4.4 Việc của tôi `/app/my-tasks`
@@ -261,7 +263,7 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 ### 4.21 Thông báo `/app/notifications`
 
 - Danh sách theo ngày; lọc **Tất cả / Chưa đọc**, theo loại (Công việc, Phê duyệt, Nhân sự, Hệ thống). Mỗi dòng có biểu tượng, nội dung, thời gian; bấm → đối tượng + đánh dấu đã đọc. **[Đánh dấu tất cả đã đọc]** ✓.
-- Các sự kiện tạo thông báo (dữ liệu mẫu cũng phải sinh ra): được giao việc, được nhắc trong bình luận, việc sắp đến hạn (1 ngày), việc quá hạn, có đơn chờ duyệt, đơn được duyệt/từ chối, được cấp tài sản.
+- Các sự kiện tạo thông báo (API tạo bản ghi `notifications` trong cùng service): được giao việc, được nhắc trong bình luận, việc sắp đến hạn (1 ngày), việc quá hạn, có đơn chờ duyệt, đơn được duyệt/từ chối, được cấp tài sản.
 
 ### 4.22 Báo cáo `/app/reports`
 
@@ -283,7 +285,7 @@ Tab (URL `?tab=`):
 
 ## 5. Phân quyền hiển thị (tóm tắt)
 
-Dùng `role` từ `/api/auth/me` (hook `useCurrentUser`). Tạo helper `can(action)` trong `features/auth`, đọc ma trận ở `docs/architecture/permission-model.md`. Không viết `if (role === ...)` rải rác trong component. Backend (và lớp mẫu) vẫn phải từ chối thao tác không có quyền.
+Dùng `role` từ `/api/auth/me` (hook `useCurrentUser`). Tạo helper `can(action)` trong `features/auth`, đọc ma trận ở `docs/architecture/permission-model.md`. Không viết `if (role === ...)` rải rác trong component. Backend vẫn phải từ chối thao tác không có quyền.
 
 ## 6. Bản đồ liên kết chéo
 
@@ -319,17 +321,20 @@ Dùng `role` từ `/api/auth/me` (hook `useCurrentUser`). Tạo helper `can(acti
 3. **Tuyển dụng → Nhận việc**: Thêm ứng viên → kéo qua các bước → Đã nhận → [Chuyển thành nhân viên] → checklist Nhận việc → [Cấp tài sản] laptop → Tài sản hiện "Đang cấp" cho người đó → hồ sơ nhân viên có tab Tài sản.
 4. **Nghỉ việc**: [Bắt đầu nghỉ việc] → bàn giao việc (đổi người phụ trách từng việc) → thu hồi tài sản → khoá tài khoản → hoàn tất.
 5. **Dự án**: [Tạo dự án] → tab Công việc [Thêm công việc] → kéo xong trên board → tiến độ dự án tăng.
-6. **Đổi vai trò (dev)** sang Nhân viên → các mục quản trị biến mất, vào thẳng `/app/payroll/:periodId` → trang 403.
+6. **Phân quyền**: đăng nhập tài khoản thử role Nhân viên → các mục quản trị biến mất, vào thẳng `/app/payroll/:periodId` → trang 403.
 
 ## 8. Thứ tự làm (mỗi đợt = 1 nhiệm vụ, xong mới sang đợt sau)
 
-| Đợt | Nội dung                                                                                                                                                          | Xong khi                                                   |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 1   | Lớp dữ liệu mẫu (ADR 007, thêm `VITE_USE_MOCK` vào `.env.example` và `vite-env.d.ts`), component dùng chung (3.3), Sidebar/Header/route/403 theo mục 2–3, `can()` | Mọi mục menu mở được trang (khung + EmptyState), không lỗi |
-| 2   | Workspace, Board, chi tiết task, Việc của tôi, Dự án                                                                                                              | Luồng 1 và 5 chạy được                                     |
-| 3   | Tổng quan cá nhân, Tổng quan điều hành, Khối lượng việc, Thông báo, tìm kiếm & Tạo nhanh ở Header                                                                 | Mọi liên kết ở mục 6 liên quan tới công việc hoạt động     |
-| 4   | Nhân viên (mở rộng tab), Phòng ban, Sơ đồ tổ chức, Chấm công, Nghỉ phép, Phê duyệt                                                                                | Luồng 2 chạy được                                          |
-| 5   | Tuyển dụng, Nhận việc/Nghỉ việc, Tài sản, Tài liệu                                                                                                                | Luồng 3 và 4 chạy được                                     |
-| 6   | Bảng lương, KPI & Đánh giá, Báo cáo, Cài đặt                                                                                                                      | Luồng 6 chạy được, không còn mục "Sắp có"                  |
+Mỗi đợt gồm đủ **migration → API → giao diện → tài liệu** cho các module của đợt (ADR 008).
 
-Mỗi đợt: `pnpm lint` + `pnpm typecheck` pass, tự bấm thử các luồng của đợt, chụp màn hình desktop và mobile, cập nhật bảng "Dữ liệu" ở mục 2 nếu module nào chuyển sang API thật, commit + push.
+| Đợt | Nội dung                                                                                                                                                                                                                                                            | Xong khi                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 1   | Component dùng chung (3.3); Sidebar/Header/route/403 theo mục 2–3; `useCurrentUser` + `can()`; trang chưa làm hiện EmptyState; `supabase/seed.sql` (phòng ban, nhân viên mẫu); API + UI **Phòng ban** (danh sách, chi tiết, tạo, sửa, đổi trưởng phòng, thành viên) | Mọi mục menu mở được; Phòng ban chạy thật với database  |
+| 2   | Bảng + API + UI **Workspace, Dashboard, Board, Task** (checklist, bình luận, activity, kéo thả lưu DB) — theo `docs/features/work-management/*`                                                                                                                     | Luồng 1 chạy được với database thật                     |
+| 3   | **Việc của tôi, Dự án, Thông báo**, tìm kiếm và Tạo nhanh ở Header                                                                                                                                                                                                  | Luồng 5 chạy; thông báo sinh ra khi giao việc, nhắc tên |
+| 4   | **Tổng quan cá nhân, Tổng quan điều hành, Khối lượng việc**; Hồ sơ nhân viên tab Công việc; Sơ đồ tổ chức                                                                                                                                                           | Mọi liên kết mục 6 liên quan tới công việc hoạt động    |
+| 5   | **Phê duyệt** (quy trình cấu hình được), **Nghỉ phép**, **Chấm công**; Cài đặt tab Loại nghỉ phép, Quy trình phê duyệt                                                                                                                                              | Luồng 2 chạy được                                       |
+| 6   | **Tuyển dụng, Nhận việc/Nghỉ việc, Tài sản, Tài liệu**                                                                                                                                                                                                              | Luồng 3 và 4 chạy được                                  |
+| 7   | **Bảng lương, KPI & Đánh giá, Báo cáo**, Cài đặt các tab còn lại, Nhật ký hệ thống                                                                                                                                                                                  | Luồng 6 chạy được; không còn trang "đang được xây dựng" |
+
+Mỗi đợt: migration áp lên Supabase thành công; `pnpm lint` + `pnpm typecheck` pass; test cho service mới; tự bấm thử các luồng của đợt bằng tài khoản thử; chụp màn hình desktop và mobile; cập nhật cột "API" ở mục 2; commit + push.

@@ -1,6 +1,6 @@
 # ADR 007: Front end làm trước với lớp dữ liệu mẫu tách riêng
 
-- **Trạng thái:** Đã chấp nhận
+- **Trạng thái:** Đã thay thế bởi [ADR 008](008-vertical-slices-real-database.md) — không áp dụng
 - **Ngày:** 2026-10-06
 
 ## Bối cảnh
