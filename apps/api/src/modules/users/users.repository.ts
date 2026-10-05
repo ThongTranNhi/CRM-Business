@@ -1,19 +1,71 @@
 import type { Env } from '../../config/env';
-import { supabaseRequest } from '../../lib/supabase';
-import type { AdminEmployeeUpdate, DirectoryEmployee, Profile, ProfileUpdate } from './users.types';
+import { AppError } from '../../lib/app-error';
+import { DIRECTORY_ERRORS } from '../../lib/directory-errors';
+import { rangeParams, toPage, type Page } from '../../lib/pagination';
+import { callRpc, supabaseList, supabaseRequest } from '../../lib/supabase';
+import type {
+  AdminEmployeeUpdate,
+  DirectoryEmployee,
+  DirectoryQuery,
+  EmployeeOption,
+  Profile,
+  ProfileUpdate,
+} from './users.types';
 
-interface AccountRow {
-  id: string;
-  status: string;
-  role: string;
-}
-interface ProfileRow {
+const employeeCodeExists = () =>
+  new AppError('EMPLOYEE_CODE_EXISTS', 'Mã nhân viên đã được sử dụng', 409);
+
+interface EmployeeRow {
   id: string;
   full_name: string;
   employee_code: string | null;
   job_title: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  department_manager_id: string | null;
+  department_manager_name: string | null;
   avatar_path: string | null;
-  departments: { name: string; manager_employee_id: string } | null;
+  auth_user_id: string | null;
+  username: string | null;
+  role: string | null;
+  account_status: string | null;
+  archived_at?: string | null;
+}
+const EMPLOYEE_SELECT =
+  'id,full_name,employee_code,job_title,department_id,department_name,department_manager_id,department_manager_name,avatar_path,auth_user_id,username,role,account_status';
+
+// Trưởng phòng do CEO / Master quản lý trực tiếp: chưa có liên kết quản lý cá nhân cấp CEO.
+function managerNameOf(row: EmployeeRow): string | null {
+  if (!row.department_manager_id) return null;
+  return row.department_manager_id === row.id ? 'CEO / Master' : row.department_manager_name;
+}
+
+function toProfile(row: EmployeeRow): Profile {
+  return {
+    id: row.id,
+    fullName: row.full_name,
+    employeeCode: row.employee_code,
+    jobTitle: row.job_title,
+    departmentName: row.department_name,
+    managerName: managerNameOf(row),
+    avatarPath: row.avatar_path,
+    avatarUrl: null,
+  };
+}
+
+function toDirectoryEmployee(row: EmployeeRow): DirectoryEmployee {
+  return {
+    ...toProfile(row),
+    departmentId: row.department_id,
+    username: row.username,
+    role: row.role,
+    status: row.account_status,
+    archivedAt: row.archived_at ?? null,
+    managedDepartment:
+      row.department_id && row.department_manager_id === row.id
+        ? { id: row.department_id, name: row.department_name ?? '' }
+        : null,
+  };
 }
 
 export async function findAccount(env: Env, userId: string) {
@@ -22,181 +74,155 @@ export async function findAccount(env: Env, userId: string) {
     auth_user_id: `eq.${userId}`,
     limit: '1',
   });
-  const rows = await supabaseRequest<AccountRow[]>(env, `/rest/v1/app_accounts?${params}`);
+  const rows = await supabaseRequest<{ id: string; status: string; role: string }[]>(
+    env,
+    `/rest/v1/app_accounts?${params}`,
+  );
   return rows[0] ?? null;
 }
 
-export async function findProfile(env: Env, accountId: string): Promise<Profile | null> {
+export async function findProfile(env: Env, userId: string): Promise<Profile | null> {
   const params = new URLSearchParams({
-    select:
-      'id,full_name,employee_code,job_title,avatar_path,departments!employees_department_id_fkey(name,manager_employee_id)',
-    account_id: `eq.${accountId}`,
-    archived_at: 'is.null',
+    select: EMPLOYEE_SELECT,
+    auth_user_id: `eq.${userId}`,
     employment_status: 'eq.active',
     limit: '1',
   });
-  const rows = await supabaseRequest<ProfileRow[]>(env, `/rest/v1/employees?${params}`);
-  const row = rows[0];
-  if (!row) return null;
-  let managerName: string | null = null;
-  if (row.departments) {
-    if (row.departments.manager_employee_id === row.id) managerName = 'CEO / Master';
-    else {
-      const managerParams = new URLSearchParams({
-        select: 'full_name',
-        id: `eq.${row.departments.manager_employee_id}`,
-        limit: '1',
-      });
-      const managers = await supabaseRequest<{ full_name: string }[]>(
-        env,
-        `/rest/v1/employees?${managerParams}`,
-      );
-      managerName = managers[0]?.full_name ?? null;
-    }
-  }
-  return {
-    id: row.id,
-    fullName: row.full_name,
-    employeeCode: row.employee_code,
-    jobTitle: row.job_title,
-    departmentName: row.departments?.name ?? null,
-    managerName,
-    avatarPath: row.avatar_path,
-    avatarUrl: null,
-  };
+  const rows = await supabaseRequest<EmployeeRow[]>(env, `/rest/v1/active_employees?${params}`);
+  return rows[0] ? toProfile(rows[0]) : null;
 }
 
 export async function saveProfile(env: Env, userId: string, input: ProfileUpdate) {
-  await supabaseRequest(env, '/rest/v1/rpc/update_own_profile', {
-    method: 'POST',
-    body: JSON.stringify({
+  await callRpc(env, {
+    name: 'update_own_profile',
+    args: {
       target_auth_user_id: userId,
       new_employee_code: input.employeeCode,
       new_avatar_path: input.avatarPath ?? null,
       replace_avatar: input.avatarPath !== undefined,
-    }),
-  });
-}
-
-export async function signAvatar(env: Env, path: string): Promise<string> {
-  const encoded = path.split('/').map(encodeURIComponent).join('/');
-  const result = await supabaseRequest<{ signedURL: string }>(
-    env,
-    `/storage/v1/object/sign/profile-avatars/${encoded}`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ expiresIn: 300 }),
     },
-  );
-  return new URL(`/storage/v1${result.signedURL}`, env.SUPABASE_URL).toString();
+    errors: { '23505': employeeCodeExists },
+  });
 }
 
-interface DirectoryRow {
-  id: string;
-  full_name: string;
-  employee_code: string | null;
-  job_title: string | null;
-  department_id: string | null;
-  avatar_path: string | null;
-  departments: { name: string; manager_employee_id: string } | null;
-  app_accounts: {
-    username: string | null;
-    role: string;
-    status: string;
-    auth_user_id: string;
-  } | null;
-}
-const DIRECTORY_SELECT =
-  'id,full_name,employee_code,job_title,department_id,avatar_path,departments!employees_department_id_fkey(name,manager_employee_id),app_accounts!employees_account_id_fkey(username,role,status,auth_user_id)';
-function mapEmployee(row: DirectoryRow): DirectoryEmployee {
-  return {
-    id: row.id,
-    fullName: row.full_name,
-    employeeCode: row.employee_code,
-    jobTitle: row.job_title,
-    departmentId: row.department_id,
-    departmentName: row.departments?.name ?? null,
-    managerName: null,
-    username: row.app_accounts?.username ?? null,
-    role: row.app_accounts?.role ?? null,
-    status: row.app_accounts?.status ?? null,
-    avatarPath: row.avatar_path,
-    avatarUrl: null,
-  };
-}
-export async function listDirectory(env: Env, page: number) {
-  const params = new URLSearchParams({
-    select: DIRECTORY_SELECT,
-    archived_at: 'is.null',
+/** Người đang làm và đã khoá đọc từ active_employees; người đã xoá đọc từ employee_directory. */
+const DIRECTORY_SOURCES = {
+  active: {
+    view: 'active_employees',
+    filter: ['is_locked', 'is.false'],
     order: 'created_at.desc,id',
-    limit: '26',
-    offset: String((page - 1) * 25),
+  },
+  locked: {
+    view: 'active_employees',
+    filter: ['is_locked', 'is.true'],
+    order: 'created_at.desc,id',
+  },
+  deleted: {
+    view: 'employee_directory',
+    filter: ['archived_at', 'not.is.null'],
+    order: 'archived_at.desc,id',
+  },
+} as const;
+
+// Giá trị đặt trong ngoặc kép để dấu chấm / khoảng trắng (vd. username "test.hr") không phá cú pháp `or`.
+const searchFilter = (q: string) =>
+  `(full_name.ilike."*${q}*",employee_code.ilike."*${q}*",username.ilike."*${q}*")`;
+
+export async function listDirectory(
+  env: Env,
+  query: DirectoryQuery,
+): Promise<Page<DirectoryEmployee>> {
+  const source = DIRECTORY_SOURCES[query.status];
+  const params = new URLSearchParams({
+    select: query.status === 'deleted' ? `${EMPLOYEE_SELECT},archived_at` : EMPLOYEE_SELECT,
+    [source.filter[0]]: source.filter[1],
+    order: source.order,
+    ...rangeParams(query),
   });
-  const rows = await supabaseRequest<DirectoryRow[]>(env, `/rest/v1/employees?${params}`);
-  return {
-    data: rows.slice(0, 25).map(mapEmployee),
-    meta: { page, pageSize: 25, hasMore: rows.length > 25 },
-  };
+  if (query.q) params.set('or', searchFilter(query.q));
+  const { rows, total } = await supabaseList<EmployeeRow>(env, `/rest/v1/${source.view}?${params}`);
+  return toPage(rows.map(toDirectoryEmployee), total, query);
 }
+
+/** Gồm cả người đã xoá để trang hồ sơ có nút [Khôi phục]. */
 export async function directoryEmployee(env: Env, employeeId: string) {
   const params = new URLSearchParams({
-    select: DIRECTORY_SELECT,
+    select: `${EMPLOYEE_SELECT},archived_at`,
     id: `eq.${employeeId}`,
-    archived_at: 'is.null',
     limit: '1',
   });
-  const rows = await supabaseRequest<DirectoryRow[]>(env, `/rest/v1/employees?${params}`);
+  const rows = await supabaseRequest<EmployeeRow[]>(env, `/rest/v1/employee_directory?${params}`);
   const row = rows[0];
   if (!row) return null;
-  const result = mapEmployee(row);
-  if (row.departments) {
-    if (row.departments.manager_employee_id === row.id) result.managerName = 'CEO / Master';
-    else {
-      const managerParams = new URLSearchParams({
-        select: 'full_name',
-        id: `eq.${row.departments.manager_employee_id}`,
-        limit: '1',
-      });
-      const managers = await supabaseRequest<{ full_name: string }[]>(
-        env,
-        `/rest/v1/employees?${managerParams}`,
-      );
-      result.managerName = managers[0]?.full_name ?? null;
-    }
-  }
-  if (
-    row.avatar_path &&
-    row.app_accounts &&
-    row.avatar_path.startsWith(`${row.app_accounts.auth_user_id}/`)
-  ) {
-    result.avatarUrl = await signAvatar(env, row.avatar_path);
-  }
-  return result;
+  return { employee: toDirectoryEmployee(row), authUserId: row.auth_user_id };
 }
-export const listDepartments = (env: Env) =>
+
+export async function listEmployeeOptions(env: Env, q: string | undefined) {
+  const params = new URLSearchParams({
+    select: 'id,full_name,job_title,department_name',
+    order: 'full_name,id',
+    limit: '20',
+  });
+  if (q) params.set('or', searchFilter(q));
+  const rows = await supabaseRequest<
+    { id: string; full_name: string; job_title: string | null; department_name: string | null }[]
+  >(env, `/rest/v1/active_employees?${params}`);
+  return rows.map((row): EmployeeOption => ({
+    id: row.id,
+    fullName: row.full_name,
+    jobTitle: row.job_title,
+    departmentName: row.department_name,
+  }));
+}
+
+export const listDepartmentOptions = (env: Env) =>
   supabaseRequest<{ id: string; name: string }[]>(
     env,
-    '/rest/v1/departments?select=id,name&archived_at=is.null&order=name&limit=100',
+    '/rest/v1/active_departments?select=id,name&order=name&limit=100',
   );
+
 export const editEmployee = (
   env: Env,
   actorId: string,
-  employeeId: string,
-  input: AdminEmployeeUpdate,
+  change: { employeeId: string } & AdminEmployeeUpdate,
 ) =>
-  supabaseRequest(env, '/rest/v1/rpc/crm_admin_update_employee', {
-    method: 'POST',
-    body: JSON.stringify({
+  callRpc(env, {
+    name: 'crm_admin_update_employee',
+    args: {
       actor_uuid: actorId,
-      employee_uuid: employeeId,
-      employee_name: input.fullName,
-      employee_job_title: input.jobTitle,
-      employee_department_id: input.departmentId,
-      account_status: input.status,
-    }),
+      employee_uuid: change.employeeId,
+      employee_name: change.fullName,
+      employee_job_title: change.jobTitle,
+      employee_department_id: change.departmentId,
+      account_status: change.status,
+    },
+    errors: DIRECTORY_ERRORS,
   });
+
+export const deleteEmployee = (
+  env: Env,
+  actorId: string,
+  target: { employeeId: string; newManagerId: string | null },
+) =>
+  callRpc(env, {
+    name: 'crm_delete_employee',
+    args: {
+      actor_uuid: actorId,
+      employee_uuid: target.employeeId,
+      new_manager_uuid: target.newManagerId,
+    },
+    errors: DIRECTORY_ERRORS,
+  });
+
+export const restoreEmployee = (env: Env, actorId: string, employeeId: string) =>
+  callRpc(env, {
+    name: 'crm_restore_employee',
+    args: { actor_uuid: actorId, employee_uuid: employeeId },
+    errors: DIRECTORY_ERRORS,
+  });
+
 export const beginPasswordReset = (env: Env, actorId: string, employeeId: string) =>
-  supabaseRequest<string>(env, '/rest/v1/rpc/crm_begin_password_reset', {
-    method: 'POST',
-    body: JSON.stringify({ actor_uuid: actorId, employee_uuid: employeeId }),
+  callRpc<string>(env, {
+    name: 'crm_begin_password_reset',
+    args: { actor_uuid: actorId, employee_uuid: employeeId },
   });

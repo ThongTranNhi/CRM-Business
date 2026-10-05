@@ -4,6 +4,7 @@ import { AppError, unauthenticated } from '../../lib/app-error';
 import { supabaseRequest } from '../../lib/supabase';
 import {
   authRequest,
+  findEmployeeSummary,
   findLocalIdentity,
   findUsernameAccount,
   sessionContext,
@@ -60,6 +61,21 @@ export async function getSessionContext(env: Env, userId: string, sessionId: str
   const state = await sessionContext(env, userId, sessionId);
   if (!state || state.status !== 'active') throw unauthenticated();
   return state;
+}
+
+/** GET /api/auth/me: trạng thái phiên + tên, phòng ban để hiển thị menu tài khoản và can(). */
+export async function getCurrentUser(env: Env, userId: string, sessionId: string) {
+  const [state, employee] = await Promise.all([
+    getSessionContext(env, userId, sessionId),
+    findEmployeeSummary(env, userId),
+  ]);
+  return {
+    ...state,
+    employeeId: employee?.employeeId ?? null,
+    fullName: employee?.fullName ?? state.username,
+    departmentId: employee?.departmentId ?? null,
+    departmentName: employee?.departmentName ?? null,
+  };
 }
 
 export async function setLocalPassword(env: Env, userId: string, password: string) {

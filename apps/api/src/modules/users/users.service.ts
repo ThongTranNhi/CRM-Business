@@ -1,60 +1,93 @@
+import type { Role } from '../../config/constants';
 import type { Env } from '../../config/env';
 import { forbidden, notFound } from '../../lib/app-error';
+import { signStorageUrl, signStorageUrls } from '../../lib/storage';
 import {
   beginPasswordReset,
+  deleteEmployee as deleteEmployeeRecord,
   directoryEmployee,
   editEmployee,
   findAccount,
   findProfile,
-  listDepartments,
+  listDepartmentOptions,
   listDirectory,
+  listEmployeeOptions,
+  restoreEmployee as restoreEmployeeRecord,
   saveProfile,
-  signAvatar,
 } from './users.repository';
-import type { AdminEmployeeUpdate, ProfileUpdate } from './users.types';
+import type {
+  AdminEmployeeUpdate,
+  AvatarOwner,
+  DirectoryQuery,
+  ProfileUpdate,
+} from './users.types';
 import { setLocalPassword } from '../auth/auth.service';
 
-async function requireAdmin(env: Env, actorId: string) {
+const AVATAR_BUCKET = 'profile-avatars';
+
+async function requireRole(env: Env, actorId: string, roles: readonly Role[]) {
   const account = await requireActiveAccount(env, actorId);
-  if (account.role !== 'super_admin') throw forbidden();
+  if (!roles.some((role) => role === account.role)) throw forbidden();
 }
-export async function getEmployeeDirectory(env: Env, actorId: string, page: number) {
+const requireAdmin = (env: Env, actorId: string) => requireRole(env, actorId, ['super_admin']);
+
+export async function getEmployeeDirectory(env: Env, actorId: string, query: DirectoryQuery) {
   await requireAdmin(env, actorId);
-  return listDirectory(env, page);
+  return listDirectory(env, query);
 }
 export async function getEmployeeDetail(env: Env, actorId: string, employeeId: string) {
   await requireAdmin(env, actorId);
-  const employee = await directoryEmployee(env, employeeId);
-  if (!employee) throw notFound();
-  return employee;
+  const found = await directoryEmployee(env, employeeId);
+  if (!found) throw notFound();
+  const { employee, authUserId } = found;
+  const avatarUrls = await getAvatarUrls(env, [{ ...employee, authUserId }]);
+  return { ...employee, avatarUrl: avatarUrls.get(employee.id) ?? null };
 }
 export async function getDepartmentOptions(env: Env, actorId: string) {
   await requireAdmin(env, actorId);
-  return listDepartments(env);
+  return listDepartmentOptions(env);
+}
+/** Ô chọn người: chỉ người chưa bị xoá (view active_employees). */
+export async function getEmployeeOptions(env: Env, actorId: string, q: string | undefined) {
+  await requireRole(env, actorId, ['super_admin', 'hr_admin']);
+  return listEmployeeOptions(env, q);
 }
 export async function updateEmployee(
   env: Env,
   actorId: string,
-  employeeId: string,
-  input: AdminEmployeeUpdate,
+  change: { employeeId: string } & AdminEmployeeUpdate,
 ) {
-  const target = await getEmployeeDetail(env, actorId, employeeId);
+  const target = await getEmployeeDetail(env, actorId, change.employeeId);
   if (target.role === 'super_admin') throw forbidden();
-  await editEmployee(env, actorId, employeeId, input);
+  await editEmployee(env, actorId, change);
+  return getEmployeeDetail(env, actorId, change.employeeId);
+}
+/** BR-53: xoá mềm. RPC chặn tự xoá, xoá Super Admin; khoá tài khoản và thu hồi phiên. */
+export async function deleteEmployee(
+  env: Env,
+  actorId: string,
+  target: { employeeId: string; newManagerId: string | null },
+) {
+  await requireAdmin(env, actorId);
+  await deleteEmployeeRecord(env, actorId, target);
+  return { deleted: true };
+}
+export async function restoreEmployee(env: Env, actorId: string, employeeId: string) {
+  await requireAdmin(env, actorId);
+  await restoreEmployeeRecord(env, actorId, employeeId);
   return getEmployeeDetail(env, actorId, employeeId);
 }
 export async function resetEmployeePassword(
   env: Env,
   actorId: string,
-  employeeId: string,
-  password: string,
+  reset: { employeeId: string; password: string },
 ) {
-  const target = await getEmployeeDetail(env, actorId, employeeId);
+  const target = await getEmployeeDetail(env, actorId, reset.employeeId);
   if (!target.username || target.role === 'super_admin' || target.status !== 'active')
     throw forbidden();
-  const userId = await beginPasswordReset(env, actorId, employeeId);
+  const userId = await beginPasswordReset(env, actorId, reset.employeeId);
   // Fail closed: a failed Auth request leaves the account requiring a reset retry.
-  await setLocalPassword(env, userId, password);
+  await setLocalPassword(env, userId, reset.password);
   return { reset: true };
 }
 
@@ -64,14 +97,32 @@ export async function requireActiveAccount(env: Env, userId: string) {
   return account;
 }
 
+/** Map employeeId → signed URL; ảnh nằm ngoài thư mục của chính chủ thì không ký. */
+export async function getAvatarUrls(env: Env, owners: AvatarOwner[]): Promise<Map<string, string>> {
+  const owned = owners.filter(
+    (owner) => owner.avatarPath && owner.avatarPath.startsWith(`${owner.authUserId}/`),
+  );
+  const urls = await signStorageUrls(
+    env,
+    AVATAR_BUCKET,
+    owned.flatMap((owner) => (owner.avatarPath ? [owner.avatarPath] : [])),
+  );
+  return new Map(
+    owned.flatMap((owner) => {
+      const url = owner.avatarPath ? urls.get(owner.avatarPath) : undefined;
+      return url ? [[owner.id, url] as const] : [];
+    }),
+  );
+}
+
 export async function getOwnProfile(env: Env, userId: string) {
-  const account = await requireActiveAccount(env, userId);
-  const profile = await findProfile(env, account.id);
+  await requireActiveAccount(env, userId);
+  const profile = await findProfile(env, userId);
   if (!profile)
     throw notFound('Chưa có hồ sơ. Vui lòng chạy migration đăng ký hoặc liên hệ quản trị viên');
   if (profile.avatarPath) {
     if (!profile.avatarPath.startsWith(`${userId}/`)) throw forbidden();
-    profile.avatarUrl = await signAvatar(env, profile.avatarPath);
+    profile.avatarUrl = await signStorageUrl(env, AVATAR_BUCKET, profile.avatarPath);
   }
   return profile;
 }

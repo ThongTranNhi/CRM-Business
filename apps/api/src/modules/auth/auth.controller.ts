@@ -5,7 +5,7 @@ import { AppError } from '../../lib/app-error';
 import { credentialsSchema, newPasswordSchema } from './auth.schema';
 import {
   changeOwnPassword,
-  getSessionContext,
+  getCurrentUser,
   loginLocal,
   registerLocal,
   throttleAuth,
@@ -32,7 +32,7 @@ export async function login(c: Context<AppEnv>) {
 }
 export async function me(c: Context<AppEnv>) {
   return c.json({
-    data: await getSessionContext(readEnv(c.env), c.get('user').id, c.get('user').sessionId),
+    data: await getCurrentUser(readEnv(c.env), c.get('user').id, c.get('user').sessionId),
   });
 }
 export async function changePassword(c: Context<AppEnv>) {

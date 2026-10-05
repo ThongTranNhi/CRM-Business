@@ -1,28 +1,10 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { fileURLToPath, URL } from 'node:url';
-import { realpathSync } from 'node:fs';
-import { Buffer } from 'node:buffer';
+import { URL } from 'node:url';
 import test from 'node:test';
+import { loadTsModule } from '../../lib/load-ts-module.mjs';
 
-// Use Node's built-in runner and the already-installed esbuild, no new dependencies.
-const require = createRequire(
-  realpathSync(
-    fileURLToPath(new URL('../../../node_modules/wrangler/package.json', import.meta.url)),
-  ),
-);
 const { Response } = globalThis;
-const { buildSync } = require('esbuild');
-const build = buildSync({
-  entryPoints: [fileURLToPath(new URL('./users.service.ts', import.meta.url))],
-  bundle: true,
-  write: false,
-  platform: 'node',
-  format: 'esm',
-});
-const service = await import(
-  `data:text/javascript;base64,${Buffer.from(build.outputFiles[0].text).toString('base64')}`
-);
+const service = await loadTsModule(new URL('./users.service.ts', import.meta.url));
 const env = {
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'test-key',
@@ -51,12 +33,19 @@ test('profile authorization and updates', async (t) => {
   });
   await t.test('employee cannot list everyone', async () => {
     globalThis.fetch = async () => Response.json([account]);
-    await assert.rejects(() => service.getEmployeeDirectory(env, userId, 1), { code: 'FORBIDDEN' });
+    await assert.rejects(
+      () => service.getEmployeeDirectory(env, userId, { page: 1, pageSize: 25, status: 'active' }),
+      { code: 'FORBIDDEN' },
+    );
   });
   await t.test('employee cannot reset another password', async () => {
     globalThis.fetch = async () => Response.json([account]);
     await assert.rejects(
-      () => service.resetEmployeePassword(env, userId, 'employee-2', 'TemporaryStrong123'),
+      () =>
+        service.resetEmployeePassword(env, userId, {
+          employeeId: 'employee-2',
+          password: 'TemporaryStrong123',
+        }),
       { code: 'FORBIDDEN' },
     );
   });
@@ -116,5 +105,92 @@ test('profile authorization and updates', async (t) => {
         error.status === 409 &&
         !error.message.includes('private database details'),
     );
+  });
+});
+
+const admin = { id: 'account-admin', status: 'active', role: 'super_admin' };
+const hr = { id: 'account-hr', status: 'active', role: 'hr_admin' };
+const rpcError = (message) => Response.json({ code: 'P0001', message }, { status: 400 });
+
+test('employee soft delete and pickers (BR-53)', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  await t.test('HR cannot delete an employee', async () => {
+    globalThis.fetch = async (url) => {
+      assert.ok(!String(url).includes('/rpc/'), 'Must not call delete RPC');
+      return Response.json([hr]);
+    };
+    await assert.rejects(
+      () => service.deleteEmployee(env, userId, { employeeId: 'employee-2', newManagerId: null }),
+      { code: 'FORBIDDEN' },
+    );
+  });
+  await t.test('deleting yourself maps to a clear error', async () => {
+    globalThis.fetch = async (url) =>
+      String(url).includes('/rpc/crm_delete_employee')
+        ? rpcError('CANNOT_DELETE_SELF')
+        : Response.json([admin]);
+    await assert.rejects(
+      () => service.deleteEmployee(env, userId, { employeeId: 'employee-1', newManagerId: null }),
+      { code: 'CANNOT_DELETE_SELF', status: 422 },
+    );
+  });
+  await t.test('delete sends the optional new manager to the RPC', async () => {
+    let body;
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).includes('/rpc/')) return Response.json([admin]);
+      body = JSON.parse(init.body);
+      return new Response(null, { status: 204 });
+    };
+    await service.deleteEmployee(env, userId, {
+      employeeId: 'employee-2',
+      newManagerId: 'employee-3',
+    });
+    assert.deepEqual(body, {
+      actor_uuid: userId,
+      employee_uuid: 'employee-2',
+      new_manager_uuid: 'employee-3',
+    });
+  });
+  await t.test('restore with a reused employee code explains what to do', async () => {
+    globalThis.fetch = async (url) =>
+      String(url).includes('/rpc/crm_restore_employee')
+        ? rpcError('EMPLOYEE_CODE_EXISTS')
+        : Response.json([admin]);
+    await assert.rejects(
+      () => service.restoreEmployee(env, userId, 'employee-2'),
+      (error) =>
+        error.code === 'EMPLOYEE_CODE_EXISTS' &&
+        error.message === 'Mã nhân viên đã được dùng, hãy đổi mã trước khi khôi phục',
+    );
+  });
+  await t.test('employee picker reads only non-deleted people (active_employees)', async () => {
+    const urls = [];
+    globalThis.fetch = async (url) => {
+      urls.push(String(url));
+      return Response.json(String(url).includes('/app_accounts?') ? [hr] : []);
+    };
+    await service.getEmployeeOptions(env, userId, 'an');
+    const pickerUrl = urls.find((url) => !url.includes('/app_accounts?'));
+    assert.match(pickerUrl, /\/rest\/v1\/active_employees\?/);
+    assert.doesNotMatch(pickerUrl, /employee_directory|\/employees\?/);
+  });
+  await t.test('department picker reads only non-deleted departments', async () => {
+    const urls = [];
+    globalThis.fetch = async (url) => {
+      urls.push(String(url));
+      return Response.json(String(url).includes('/app_accounts?') ? [admin] : []);
+    };
+    await service.getDepartmentOptions(env, userId);
+    assert.ok(urls.some((url) => url.includes('/rest/v1/active_departments?')));
+  });
+  await t.test('regular employees cannot use the picker', async () => {
+    globalThis.fetch = async () => Response.json([account]);
+    await assert.rejects(() => service.getEmployeeOptions(env, userId, undefined), {
+      code: 'FORBIDDEN',
+    });
   });
 });

@@ -6,6 +6,7 @@ import { auth } from './middleware/auth.middleware';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { requestId } from './middleware/request-id.middleware';
 import { healthRoutes } from './modules/health/health.routes';
+import { departmentRoutes } from './modules/departments/departments.routes';
 import { userRoutes } from './modules/users/users.routes';
 import { publicAuthRoutes, privateAuthRoutes } from './modules/auth/auth.routes';
 
@@ -28,7 +29,7 @@ app.route('/api/auth', publicAuthRoutes);
 app.use('/api/*', auth);
 app.route('/api/auth', privateAuthRoutes);
 app.route('/api/users', userRoutes);
-// Mount module tại đây, vd: app.route('/api/departments', departmentRoutes);
+app.route('/api/departments', departmentRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

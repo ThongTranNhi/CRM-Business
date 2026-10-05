@@ -66,6 +66,40 @@ export async function findLocalIdentity(env: Env, username: string) {
   return { ...account, email: user.email };
 }
 
+export interface EmployeeSummary {
+  employeeId: string;
+  fullName: string;
+  departmentId: string | null;
+  departmentName: string | null;
+}
+
+export async function findEmployeeSummary(
+  env: Env,
+  userId: string,
+): Promise<EmployeeSummary | null> {
+  const params = new URLSearchParams({
+    select: 'id,full_name,department_id,department_name',
+    auth_user_id: `eq.${userId}`,
+    limit: '1',
+  });
+  const rows = await supabaseRequest<
+    {
+      id: string;
+      full_name: string;
+      department_id: string | null;
+      department_name: string | null;
+    }[]
+  >(env, `/rest/v1/active_employees?${params}`);
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    employeeId: row.id,
+    fullName: row.full_name,
+    departmentId: row.department_id,
+    departmentName: row.department_name,
+  };
+}
+
 export const sessionContext = (env: Env, userId: string, sessionId: string) =>
   supabaseRequest<SessionContext | null>(env, '/rest/v1/rpc/crm_session_context', {
     method: 'POST',

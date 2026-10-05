@@ -1,27 +1,11 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
-import { createRequire } from 'node:module';
-import { realpathSync } from 'node:fs';
-import { fileURLToPath, URL } from 'node:url';
+import { URL } from 'node:url';
 import test from 'node:test';
+import { loadTsModule } from '../../lib/load-ts-module.mjs';
 
-const require = createRequire(
-  realpathSync(
-    fileURLToPath(new URL('../../../node_modules/wrangler/package.json', import.meta.url)),
-  ),
-);
-const { buildSync } = require('esbuild');
 const { Response } = globalThis;
-const built = buildSync({
-  entryPoints: [fileURLToPath(new URL('./auth.service.ts', import.meta.url))],
-  bundle: true,
-  write: false,
-  platform: 'node',
-  format: 'esm',
-});
-const service = await import(
-  `data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`
-);
+const service = await loadTsModule(new URL('./auth.service.ts', import.meta.url));
 const env = { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'test-key' };
 const jwt = (session) =>
   `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub: 'user-1', session_id: session })).toString('base64url')}.signature`;
