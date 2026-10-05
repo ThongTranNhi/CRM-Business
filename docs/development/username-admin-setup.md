@@ -22,8 +22,9 @@ gán username riêng nếu muốn chuyển đổi. Không tự ghép tài khoả
 `/app/employees`: chỉ super_admin, phân trang 25 bản ghi, có trang hồ sơ chi tiết.
 CEO/Master sửa tên, chức vụ, phòng ban, active/disabled; không đổi role qua form này.
 Không cho sửa/khóa quản trị viên bằng luồng nhân viên để tránh tự khóa hai quản trị viên.
-Phòng ban phải tồn tại và có trưởng phòng; danh sách chọn lấy tối đa 100 phòng.
-Nếu nhân viên là trưởng phòng, phải thay trưởng phòng trước khi chuyển họ sang phòng khác.
+Phòng ban phải chưa bị xoá; trưởng phòng là tuỳ chọn (BR-08); danh sách chọn lấy tối đa 100 phòng.
+Nếu nhân viên là trưởng phòng mà bị chuyển sang phòng khác, phòng cũ thành "Chưa có trưởng phòng".
+Xoá / khôi phục nhân viên (BR-53): docs/api/endpoints/users.md.
 
 Đặt lại mật khẩu chỉ tài khoản username active không phải super_admin.
 Admin nhập mật khẩu tạm hai lần, giao cho nhân viên qua kênh trực tiếp.

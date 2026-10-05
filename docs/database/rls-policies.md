@@ -17,3 +17,13 @@ Migration registration_profiles: policy profile_avatars_insert trên storage.obj
 chỉ cho authenticated upload vào folder UUID bản thân nếu account/hồ sơ active.
 Không thêm quyền đọc hoặc sửa bảng employees từ web. RPC update_own_profile chỉ
 service_role có EXECUTE; API lấy auth user ID từ JWT đã xác minh.
+
+## Đợt 1 — phòng ban, xoá mềm (2026-10-06)
+
+Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều thu hồi quyền của hai role này:
+
+- `app_private.applied_migrations`: bật RLS, thu hồi cả `service_role`.
+- View `active_departments`, `employee_directory`, `active_employees`: `security_invoker = true`
+  (chạy theo quyền người gọi, không vượt RLS của bảng gốc); chỉ `service_role` được SELECT.
+- RPC phòng ban / xoá nhân viên: chỉ `service_role` EXECUTE; hàm trợ giúp trong `app_private`
+  không ai gọi trực tiếp được. Mỗi RPC tự kiểm tra role người thao tác qua `app_private.crm_actor`.

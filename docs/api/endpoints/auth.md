@@ -8,7 +8,9 @@ Chỉ trả 201 sau khi kiểm tra username đã liên kết đúng ID Auth vừ
 POST `/api/auth/register`: public, `{username,password}` strict, employee role fixed,
 rate-limit. Chỉ tạo tài khoản username; không tạo admin theo email/name người dùng.
 POST `/api/auth/login`: public, cùng input; trả `{data:{access_token,refresh_token,...}}`, no-store.
-GET `/api/auth/me`: JWT/session hợp lệ, trả role, username, mustChangePassword, resetVersion.
+GET `/api/auth/me`: JWT/session hợp lệ, trả id, role, status, username, mustChangePassword, resetVersion,
+employeeId, fullName, departmentId, departmentName (từ view `active_employees`; null nếu chưa có hồ sơ).
+Web dùng để hiện menu tài khoản và helper `can()` ẩn nút theo quyền.
 POST `/api/auth/change-password`: JWT/session hợp lệ, `{username,currentPassword,password}`;
 xác minh mật khẩu hiện tại, cập nhật qua Auth, kiểm tra version và thu hồi phiên khác.
 

@@ -11,7 +11,8 @@ Nếu project đã có bảng cùng tên, kiểm tra schema trước; không xó
 `full_name`, `job_title`: bắt buộc. Chức vụ không quyết định quyền hệ thống.
 `department_id`: phòng ban; cho phép trống khi chưa phân phòng hoặc cho CEO/Master.
 `account_id`: liên kết tài khoản, cho phép trống khi nhân viên chưa có đăng nhập.
-Mỗi phòng ban có đúng một `manager_employee_id`, phải là nhân viên thuộc phòng đó.
+Mỗi phòng ban có tối đa một `manager_employee_id` (NULL = "Chưa có trưởng phòng", BR-08,
+từ migration 20261006090100); khi có thì phải là nhân viên thuộc phòng đó.
 API lấy người quản lý bằng departments.manager_employee_id, không sao chép tên vào hồ sơ.
 CEO và Master quản lý các trưởng phòng bằng quyền hệ thống; chưa có liên kết quản lý cá nhân cấp CEO.
 
@@ -41,10 +42,10 @@ cho chức vụ CEO hay Master. Email không phải khóa chính và không đ�
 - CEO/Master toàn hệ thống; HR quản lý nhân sự; manager/leader chỉ phạm vi được giao;
   employee chỉ hồ sơ bản thân và trường cho phép. Chưa có endpoint nghiệp vụ.
 - Audit tự ghi insert/update, chặn hard delete; audit không update/delete/truncate.
-  Với secret key, auth.uid() thường trống: actor_account_id sẽ trống. Cần RPC giao dịch
-  có kiểm tra danh tính để ghi đúng người thao tác trước khi vận hành production.
-- FK trưởng phòng có vòng tham chiếu: tạo phòng và hồ sơ trưởng phòng trong CÙNG
-  giao dịch, chuẩn bị hai UUID trước. API cần RPC cho giao dịch này.
+  Với secret key, auth.uid() trống; các RPC quản trị gọi `app_private.crm_actor` để đặt
+  `app.actor_account_id`, nên audit ghi đúng người thao tác. Ghi thẳng bảng (không qua RPC) thì actor trống.
+- FK trưởng phòng có vòng tham chiếu: đã xử lý bằng RPC `crm_create_department` /
+  `crm_update_department` (migration 20261006090200), chuyển trưởng phòng vào phòng trong cùng giao dịch.
 - Không có Storage policy, realtime publication, bảng lương/CCCD/hợp đồng trong migration này.
 - Không chống được lộ secret key, quyền owner database, hoặc sao chép bởi người có quyền xem.
 
