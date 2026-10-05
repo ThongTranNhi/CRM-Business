@@ -1,0 +1,6 @@
+node_modules
+dist
+.turbo
+.wrangler
+pnpm-lock.yaml
+docs/ui-ux/demo/crm-demo.html

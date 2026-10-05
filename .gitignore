@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.turbo/
+.wrangler/
+
+# Env & secrets (không bao giờ commit)
+.env
+.env.*
+!.env.example
+.dev.vars
+!.dev.vars.example
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/

@@ -1,0 +1,4 @@
+# Hono: routes → controller → service → repository
+
+Nguồn chính thức: rules/backend-rules.md, rules/api-rules.md — đọc trước khi làm phần liên quan.
+Luật chung: CLAUDE.md. Mâu thuẫn hoặc thiếu thông tin → DỪNG và HỎI.
