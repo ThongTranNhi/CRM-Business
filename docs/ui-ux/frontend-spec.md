@@ -177,10 +177,11 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 
 ### 4.8 Nhân viên `/app/employees` và `/app/employees/:id`
 
-- Danh sách (API thật): tìm theo tên/username/mã, lọc phòng ban, trạng thái; cột: ảnh, họ tên, mã NV, chức vụ, phòng ban, trưởng phòng, trạng thái. Phân trang 25.
+- Danh sách (API thật): tìm theo tên/username/mã, lọc phòng ban, trạng thái (**Đang làm** mặc định / Đã khoá / **Đã xoá** — chỉ Super Admin thấy "Đã xoá"); cột: ảnh, họ tên, mã NV, chức vụ, phòng ban, trưởng phòng, trạng thái. Phân trang 25.
   **[Thêm nhân viên]** → `/app/onboarding?new=1` (tạo hồ sơ nhận việc), không tạo trực tiếp ở đây.
 - Hồ sơ, tab (URL `?tab=`):
-  - **Thông tin** (API thật): như hiện có; Super Admin sửa tên, chức vụ, phòng ban, trạng thái; **[Đặt lại mật khẩu]** ⧉ (đã có).
+  - **Thông tin** (API thật): như hiện có; Super Admin sửa tên, chức vụ, phòng ban, trạng thái; **[Đặt lại mật khẩu]** ⧉ (đã có, BR-54).
+  - Super Admin có **[Xoá nhân viên]** ✓ (BR-53): ConfirmDialog nói rõ hậu quả; nếu là trưởng phòng → báo phòng sẽ "Chưa có trưởng phòng" + ô chọn trưởng phòng mới (tuỳ chọn); nếu còn việc đang mở → hiện số việc + ô chọn người nhận bàn giao (tuỳ chọn). Xong → về danh sách, toast "Đã xoá nhân viên" kèm **Hoàn tác** 5 giây. Hồ sơ "Đã xoá" có **[Khôi phục]** ✓. Không hiện nút với chính mình và Super Admin khác.
   - **Công việc**: việc đang mở của người này → task; link **Xem khối lượng** → `/app/workload`.
   - **Chấm công**: bảng công tháng hiện tại → `/app/attendance?employee=<id>`.
   - **Nghỉ phép**: số ngày còn lại theo loại + đơn gần đây → `/app/approvals?request=`.
@@ -197,8 +198,8 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 ### 4.10 Phòng ban `/app/departments` và `/app/departments/:id`
 
 - Danh sách: tên, trưởng phòng, số nhân viên, Dashboard (**Đã có** → nút **[Mở Dashboard]** → board; **Chưa có** → nút **[Tạo Dashboard]** → `/app/workspace?createFor=<departmentId>` mở sẵn modal với phòng đã chọn).
-  **[Tạo phòng ban]** ⧉ (Super Admin/HR, BR-08): tên (không trùng), trưởng phòng. **Không** tự tạo Dashboard (BR-02).
-- Chi tiết: thông tin + **[Sửa]** ⧉ (đổi tên, đổi trưởng phòng) · **Thành viên** (bấm → hồ sơ; **[Thêm thành viên]** ⧉ chọn nhân viên; **[Chuyển phòng]** ⧉ cho từng người, ghi audit) · **Dự án** của phòng · **KPI phòng** → `/app/kpi?level=department&department=<id>` · **[Lưu trữ phòng ban]** ✓ ConfirmDialog (BR-06).
+  **[Tạo phòng ban]** ⧉ (Super Admin/HR, BR-08): tên (không trùng), trưởng phòng (tuỳ chọn, "Chọn sau"). **Không** tự tạo Dashboard (BR-02). Bộ lọc **Đang hoạt động** (mặc định) / **Đã xoá** (chỉ Super Admin, có **[Khôi phục]**).
+- Chi tiết: thông tin + **[Sửa]** ⧉ (đổi tên, đổi trưởng phòng) · **Thành viên** (bấm → hồ sơ; **[Thêm thành viên]** ⧉ chọn nhân viên; **[Chuyển phòng]** ⧉ cho từng người, ghi audit) · **Dự án** của phòng · **KPI phòng** → `/app/kpi?level=department&department=<id>` · **[Xoá phòng ban]** ✓ chỉ Super Admin (BR-09): ConfirmDialog; nếu còn nhân viên thì bắt buộc chọn **phòng nhận** cho toàn bộ nhân viên, hiện số người sẽ chuyển; xong → về danh sách, toast "Đã xoá phòng ban". Phòng không có trưởng phòng hiện nhãn warning "Chưa có trưởng phòng" + nút **[Chọn trưởng phòng]** (Super Admin/HR).
 
 ### 4.11 Sơ đồ tổ chức `/app/org-chart`
 

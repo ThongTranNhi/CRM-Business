@@ -8,6 +8,7 @@
 | `team_leader`              | Trưởng nhóm       | Task của nhóm, giao việc trong phòng, xem workload nhóm                         |
 | `employee`                 | Nhân viên         | Việc của mình, Dashboard được cấp quyền, hồ sơ & đơn từ cá nhân                 |
 
+- Hiện có **2 tài khoản Super Admin: CEO và Master**, đăng nhập bằng Google theo allowlist (`docs/database/employee-directory-setup.md`). Không tạo Super Admin qua form đăng ký.
 - Một người có **một role hệ thống**. Quyền theo phòng ban xác định qua `department_members` (ai là manager phòng nào).
 - Role là dữ liệu cấu hình được ở Settings → Roles & Permissions; 5 role trên là mặc định khi seed.
 - Ma trận quyền chi tiết: `docs/architecture/permission-model.md`.
