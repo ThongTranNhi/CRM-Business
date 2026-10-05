@@ -1,7 +1,14 @@
 export { signOut } from './api/auth.api';
 export { ProtectedRoute } from './components/ProtectedRoute';
+export { RequireAccess } from './components/RequireAccess';
+export { useCan } from './hooks/useCan';
+export { useCurrentUser } from './hooks/useCurrentUser';
 export { useSession } from './hooks/useSession';
-export { LoginPage } from './pages/LoginPage';
-export { RegisterPage } from './pages/RegisterPage';
 export { ChangePasswordPage } from './pages/ChangePasswordPage';
-export { useAccountState } from './hooks/useAccountState';
+export { ForbiddenPage } from './pages/ForbiddenPage';
+export { LoginPage } from './pages/LoginPage';
+export { NotFoundPage } from './pages/NotFoundPage';
+export { RegisterPage } from './pages/RegisterPage';
+export type { Permission } from './permissions';
+export { ROLE_LABELS, type Role } from './roles';
+export type { CurrentUser } from './types';

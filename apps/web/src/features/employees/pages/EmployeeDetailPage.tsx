@@ -1,91 +1,104 @@
-import { Link, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Skeleton } from '@/components/ui';
-import { useAccountState } from '@/features/auth';
-import { useEmployeeDetail } from '../hooks/useDirectory';
-import { saveEmployee } from '../api/directory.api';
-import type { AdminEmployeeUpdate } from '../types';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Button, Card, ErrorState, Icon, PageHeader, Skeleton } from '@/components/ui';
+import { useCan, useCurrentUser } from '@/features/auth';
+import { DeleteEmployeeDialog } from '../components/DeleteEmployeeDialog';
 import { EmployeeAdminForm } from '../components/EmployeeAdminForm';
+import { EmployeeProfileCard } from '../components/EmployeeProfileCard';
 import { ResetPasswordForm } from '../components/ResetPasswordForm';
+import { RestoreEmployeeButton } from '../components/RestoreEmployeeButton';
+import { useEmployeeDetail } from '../hooks/useDirectory';
+import type { DirectoryEmployee } from '../types';
 
 export function EmployeeDetailPage() {
   const { id = '' } = useParams();
-  const account = useAccountState();
-  const admin = account.data?.role === 'super_admin';
-  const { employee, departments } = useEmployeeDetail(id, admin);
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: (input: AdminEmployeeUpdate) => saveEmployee(id, input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['employee-detail'] });
-      await queryClient.invalidateQueries({ queryKey: ['employee-directory'] });
-    },
-  });
-  if (account.isPending) return <Skeleton className="h-40 w-full" />;
-  if (!admin) return <p role="alert">Chỉ CEO và Master được quản lý nhân viên.</p>;
-  if (employee.isPending || departments.isPending) return <Skeleton className="h-60 w-full" />;
-  if (employee.isError || departments.isError)
+  const { employee, departments } = useEmployeeDetail(id);
+
+  if (employee.isPending || departments.isPending) return <Skeleton className="h-72 w-full" />;
+  if (employee.isError || departments.isError) {
     return (
-      <div>
-        <p role="alert">{employee.error?.message ?? departments.error?.message}</p>
-        <Button
-          onClick={() => {
-            void employee.refetch();
-            void departments.refetch();
-          }}
-        >
-          Thử lại
-        </Button>
-      </div>
+      <ErrorState
+        message={employee.error?.message ?? departments.error?.message}
+        onRetry={() => {
+          void employee.refetch();
+          void departments.refetch();
+        }}
+      />
     );
-  const profile = employee.data;
-  if (!profile) return <p>Không tìm thấy hồ sơ.</p>;
+  }
+  return <EmployeeProfile employee={employee.data} departments={departments.data} />;
+}
+
+interface EmployeeProfileProps {
+  employee: DirectoryEmployee;
+  departments: { id: string; name: string }[];
+}
+
+function EmployeeProfile({ employee, departments }: EmployeeProfileProps) {
+  const canDo = useCan();
+  const { data: currentUser } = useCurrentUser();
+  const [deleting, setDeleting] = useState(false);
+  const isDeleted = employee.archivedAt !== null;
+  const isAdmin = employee.role === 'super_admin';
+  // BR-53: không xoá được chính mình và Super Admin khác.
+  const canDelete =
+    canDo('employees.manage') && !isDeleted && !isAdmin && currentUser?.employeeId !== employee.id;
+
   return (
-    <section className="mx-auto max-w-2xl space-y-6 rounded-card border border-gray-200 bg-white p-6">
-      <Link to="/app/employees" className="text-sm text-primary-600">
-        ← Tất cả nhân viên
-      </Link>
-      <h1 className="text-2xl font-semibold">{profile.fullName}</h1>
-      {profile.avatarUrl && (
-        <img
-          src={profile.avatarUrl}
-          alt={`Ảnh của ${profile.fullName}`}
-          className="h-24 w-24 rounded-full object-cover"
-        />
+    <>
+      <PageHeader
+        title={employee.fullName}
+        breadcrumbs={[{ label: 'Nhân viên', to: '/app/employees' }]}
+        actions={
+          <>
+            {isDeleted && canDo('employees.manage') && (
+              <RestoreEmployeeButton employeeId={employee.id} />
+            )}
+            {canDelete && (
+              <Button variant="danger" onClick={() => setDeleting(true)}>
+                <Icon name="trash" size={18} />
+                Xoá nhân viên
+              </Button>
+            )}
+          </>
+        }
+      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <EmployeeProfileCard employee={employee} />
+        <Card className="space-y-6 p-5">
+          <ProfileManagement employee={employee} departments={departments} />
+        </Card>
+      </div>
+      {deleting && <DeleteEmployeeDialog employee={employee} onClose={() => setDeleting(false)} />}
+    </>
+  );
+}
+
+function ProfileManagement({ employee, departments }: EmployeeProfileProps) {
+  if (employee.archivedAt) {
+    return (
+      <p className="text-sm text-gray-600">
+        Hồ sơ đã bị xoá: tài khoản bị khoá và ẩn khỏi danh sách. Bấm [Khôi phục] để mở lại.
+      </p>
+    );
+  }
+  if (employee.role === 'super_admin') {
+    return (
+      <p className="text-sm text-gray-600">
+        Tài khoản quản trị. Không sửa hoặc đặt lại mật khẩu bằng luồng nhân viên.
+      </p>
+    );
+  }
+  return (
+    <>
+      <EmployeeAdminForm
+        key={`${employee.id}:${employee.status}:${employee.departmentId}`}
+        employee={employee}
+        departments={departments}
+      />
+      {employee.username && employee.status === 'active' && (
+        <ResetPasswordForm employeeId={employee.id} username={employee.username} />
       )}
-      <dl className="space-y-2 text-sm">
-        <div>
-          <dt>ID nhân viên</dt>
-          <dd className="break-all">{profile.id}</dd>
-        </div>
-        <div>
-          <dt>Username</dt>
-          <dd>{profile.username ?? 'Google / Email'}</dd>
-        </div>
-        <div>
-          <dt>Mã nhân viên</dt>
-          <dd>{profile.employeeCode ?? 'Chưa cập nhật'}</dd>
-        </div>
-        <div>
-          <dt>Người quản lý</dt>
-          <dd>{profile.managerName ?? 'Chưa được gán'}</dd>
-        </div>
-      </dl>
-      {profile.role === 'super_admin' ? (
-        <p>Tài khoản quản trị. Không sửa hoặc đặt lại mật khẩu bằng luồng nhân viên.</p>
-      ) : (
-        <>
-          <EmployeeAdminForm
-            key={`${profile.id}:${profile.status}:${profile.departmentId}:${profile.jobTitle}:${profile.fullName}`}
-            employee={profile}
-            departments={departments.data ?? []}
-            save={mutation.mutateAsync}
-          />
-          {profile.username && profile.status === 'active' && (
-            <ResetPasswordForm employeeId={profile.id} username={profile.username} />
-          )}
-        </>
-      )}
-    </section>
+    </>
   );
 }

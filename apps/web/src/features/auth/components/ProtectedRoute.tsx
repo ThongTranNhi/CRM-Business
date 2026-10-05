@@ -1,13 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
-import { useAccountState } from '../hooks/useAccountState';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { Button } from '@/components/ui';
 import { signOut } from '../api/auth.api';
 
 export function ProtectedRoute() {
   const { session, loading } = useSession();
   const location = useLocation();
-  const account = useAccountState();
+  const account = useCurrentUser();
 
   if (loading) {
     return (

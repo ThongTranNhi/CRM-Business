@@ -1,28 +1,39 @@
-import { supabase } from '@/lib/supabase';
-import { apiRequest } from '@/lib/api-client';
-import type { AdminEmployeeUpdate, DirectoryEmployee, DirectoryPage } from '../types';
+import { apiPage, apiRequest, withQuery } from '@/lib/api-client';
+import type {
+  AdminEmployeeUpdate,
+  DirectoryEmployee,
+  DirectoryParams,
+  EmployeeOption,
+} from '../types';
 
-export async function listEmployees(page: number): Promise<DirectoryPage> {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) throw new Error('Bạn cần đăng nhập');
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/employees?page=${page}`, {
-    headers: { Authorization: `Bearer ${data.session.access_token}` },
-  });
-  const result = (await response.json()) as DirectoryPage & { error?: { message: string } };
-  if (!response.ok) throw new Error(result.error?.message ?? 'Không tải được danh sách');
-  return result;
-}
-export const getEmployee = (id: string) =>
-  apiRequest<DirectoryEmployee>(`/api/users/employees/${id}`);
+const BASE = '/api/users/employees';
+export const EMPLOYEE_PAGE_SIZE = 25;
+
+export const listEmployees = ({ status, q, page }: DirectoryParams) =>
+  apiPage<DirectoryEmployee>(withQuery(BASE, { status, q, page, pageSize: EMPLOYEE_PAGE_SIZE }));
+
+export const getEmployee = (id: string) => apiRequest<DirectoryEmployee>(`${BASE}/${id}`);
+
 export const getDepartments = () =>
-  apiRequest<{ id: string; name: string }[]>('/api/users/employees/department-options');
+  apiRequest<{ id: string; name: string }[]>(`${BASE}/department-options`);
+
+export const listEmployeeOptions = (q: string) =>
+  apiRequest<EmployeeOption[]>(withQuery(`${BASE}/options`, { q }));
+
 export const saveEmployee = (id: string, data: AdminEmployeeUpdate) =>
-  apiRequest<DirectoryEmployee>(`/api/users/employees/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  });
+  apiRequest<DirectoryEmployee>(`${BASE}/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+
 export const resetPassword = (id: string, password: string) =>
-  apiRequest(`/api/users/employees/${id}/reset-password`, {
+  apiRequest(`${BASE}/${id}/reset-password`, {
     method: 'POST',
     body: JSON.stringify({ password }),
   });
+
+export const deleteEmployee = (id: string, newManagerId: string | null) =>
+  apiRequest<{ deleted: true }>(`${BASE}/${id}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ newManagerId }),
+  });
+
+export const restoreEmployee = (id: string) =>
+  apiRequest<DirectoryEmployee>(`${BASE}/${id}/restore`, { method: 'POST' });

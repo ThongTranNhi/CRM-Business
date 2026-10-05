@@ -1,26 +1,38 @@
-import { useQuery } from '@tanstack/react-query';
-import { useSession } from '@/features/auth';
-import { getDepartments, getEmployee, listEmployees } from '../api/directory.api';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  getDepartments,
+  getEmployee,
+  listEmployeeOptions,
+  listEmployees,
+} from '../api/directory.api';
+import type { DirectoryParams } from '../types';
 
-export function useDirectory(page: number, enabled: boolean) {
-  const { session } = useSession();
+export function useDirectory(params: DirectoryParams) {
   return useQuery({
-    queryKey: ['employee-directory', session?.user.id, page],
-    queryFn: () => listEmployees(page),
-    enabled,
+    queryKey: ['employee-directory', params],
+    queryFn: () => listEmployees(params),
+    placeholderData: keepPreviousData,
   });
 }
-export function useEmployeeDetail(id: string, enabled: boolean) {
-  const { session } = useSession();
+
+export function useEmployeeDetail(id: string) {
   const employee = useQuery({
-    queryKey: ['employee-detail', session?.user.id, id],
+    queryKey: ['employee-detail', id],
     queryFn: () => getEmployee(id),
-    enabled,
   });
   const departments = useQuery({
-    queryKey: ['department-options', session?.user.id],
+    queryKey: ['department-options'],
     queryFn: getDepartments,
-    enabled,
   });
   return { employee, departments };
+}
+
+/** Ô chọn người: tìm phía server theo tên / mã / username. */
+export function useEmployeeOptions(q: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['employee-options', q],
+    queryFn: () => listEmployeeOptions(q),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
 }

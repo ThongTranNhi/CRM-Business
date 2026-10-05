@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Input } from '@/components/ui';
 import { changePassword } from '../api/auth.api';
-import { useAccountState } from '../hooks/useAccountState';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { registrationSchema } from '../schemas/registration.schema';
 
 export function ChangePasswordPage() {
-  const account = useAccountState();
+  const account = useCurrentUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [currentPassword, setCurrentPassword] = useState('');

@@ -36,6 +36,17 @@ const ICON_PATHS = {
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
   mail: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1M3 6l9 7 9-7',
   lock: 'M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1M8 11V7a4 4 0 1 1 8 0v4',
+  alert:
+    'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0',
+  check: 'M20 6 9 17l-5-5',
+  chevronLeft: 'M15 18l-6-6 6-6',
+  chevronRight: 'M9 18l6-6-6-6',
+  trash:
+    'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6M10 11v6M14 11v6',
+  restore: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5',
+  edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+  transfer: 'M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13',
+  pieChart: 'M21 12A9 9 0 1 1 12 3v9zM12 3a9 9 0 0 1 9 9h-9z',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

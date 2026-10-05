@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md';
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700',
@@ -16,6 +16,17 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
   sm: 'h-8 px-3 text-sm',
   md: 'h-10 px-4 text-sm',
 };
+
+/** Class chung cho Button và ButtonLink. */
+export function buttonClasses(variant: ButtonVariant, size: ButtonSize): string {
+  return cn(
+    'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-1',
+    'disabled:cursor-not-allowed disabled:opacity-60',
+    VARIANT_CLASSES[variant],
+    SIZE_CLASSES[size],
+  );
+}
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -37,14 +48,7 @@ export function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-1',
-        'disabled:cursor-not-allowed disabled:opacity-60',
-        VARIANT_CLASSES[variant],
-        SIZE_CLASSES[size],
-        className,
-      )}
+      className={cn(buttonClasses(variant, size), className)}
       {...props}
     >
       {loading && (

@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { Icon } from '@/components/ui';
+import { useCan } from '@/features/auth';
 import { cn } from '@/lib/cn';
 import { NAV_GROUPS, type NavItem } from './nav-items';
-import { useAccountState } from '@/features/auth';
 
 interface SidebarProps {
   open: boolean;
@@ -10,7 +10,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const account = useAccountState();
+  const canDo = useCan();
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.permission || canDo(item.permission)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <>
       {open && (
@@ -34,19 +39,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Điều hướng chính">
-          {NAV_GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.title}>
-              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 {group.title}
               </p>
               <ul className="space-y-0.5">
-                {group.items
-                  .filter((item) => !item.adminOnly || account.data?.role === 'super_admin')
-                  .map((item) => (
-                    <li key={item.to}>
-                      <SidebarLink item={item} onNavigate={onClose} />
-                    </li>
-                  ))}
+                {group.items.map((item) => (
+                  <li key={item.to}>
+                    <SidebarLink item={item} onNavigate={onClose} />
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
@@ -56,32 +59,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   );
 }
 
-function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
-  const base = 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium';
+interface SidebarLinkProps {
+  item: NavItem;
+  onNavigate: () => void;
+}
 
-  if (!item.ready) {
-    return (
-      <span className={cn(base, 'cursor-not-allowed text-gray-400')} aria-disabled="true">
-        <Icon name={item.icon} size={18} />
-        <span className="min-w-0 flex-1 truncate" title={item.label}>
-          {item.label}
-        </span>
-        <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-          Sắp có
-        </span>
-      </span>
-    );
-  }
-
+function SidebarLink({ item, onNavigate }: SidebarLinkProps) {
   return (
     <NavLink
       to={item.to}
-      end
+      end={item.to === '/app'}
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          base,
-          'transition-colors',
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
           isActive
             ? 'bg-primary-50 text-primary-700'
             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',

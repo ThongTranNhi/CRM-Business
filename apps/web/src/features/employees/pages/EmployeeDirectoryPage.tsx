@@ -1,86 +1,91 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Skeleton } from '@/components/ui';
-import { useAccountState } from '@/features/auth';
+import {
+  ButtonLink,
+  Card,
+  EmptyState,
+  ErrorState,
+  Icon,
+  PageHeader,
+  Pagination,
+  SearchInput,
+  Skeleton,
+  Tabs,
+} from '@/components/ui';
+import { readOption, readPage, useUrlParams } from '@/lib/use-url-params';
+import { EmployeeTable } from '../components/EmployeeTable';
 import { useDirectory } from '../hooks/useDirectory';
+import { EMPLOYEE_STATUSES, type DirectoryParams, type EmployeeStatusFilter } from '../types';
+
+const STATUS_TABS = [
+  { value: 'active' as const, label: 'Đang làm' },
+  { value: 'locked' as const, label: 'Đã khoá' },
+  { value: 'deleted' as const, label: 'Đã xoá' },
+];
 
 export function EmployeeDirectoryPage() {
-  const [page, setPage] = useState(1);
-  const account = useAccountState();
-  const admin = account.data?.role === 'super_admin';
-  const query = useDirectory(page, admin);
-  if (account.isPending) return <Skeleton className="h-40 w-full" />;
-  if (!admin) return <p role="alert">Chỉ CEO và Master được xem tất cả nhân viên.</p>;
-  if (query.isPending) return <Skeleton className="h-40 w-full" />;
-  if (query.isError)
-    return (
-      <div>
-        <p role="alert">{query.error.message}</p>
-        <Button onClick={() => void query.refetch()}>Thử lại</Button>
-      </div>
-    );
+  const [params, updateParams] = useUrlParams();
+  const directoryParams: DirectoryParams = {
+    status: readOption(params, 'status', EMPLOYEE_STATUSES),
+    q: params.get('q') ?? '',
+    page: readPage(params),
+  };
+
   return (
-    <section className="space-y-5">
-      <h1 className="text-2xl font-semibold text-gray-900">Tất cả nhân viên</h1>
-      {query.data.data.length === 0 ? (
-        <p>Chưa có nhân viên trong trang này.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">Danh sách tài khoản và hồ sơ nhân viên</caption>
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                {[
-                  'Nhân viên',
-                  'Username',
-                  'Mã nhân viên',
-                  'Chức vụ',
-                  'Phòng ban',
-                  'Trạng thái',
-                  'Hồ sơ',
-                ].map((label) => (
-                  <th key={label} scope="col" className="px-4 py-3">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {query.data.data.map((employee) => (
-                <tr key={employee.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3">{employee.fullName}</td>
-                  <td className="px-4 py-3">{employee.username ?? 'Google / Email'}</td>
-                  <td className="px-4 py-3">{employee.employeeCode ?? 'Chưa cập nhật'}</td>
-                  <td className="px-4 py-3">{employee.jobTitle ?? 'Chưa gán'}</td>
-                  <td className="px-4 py-3">{employee.departmentName ?? 'Chưa gán'}</td>
-                  <td className="px-4 py-3">{employee.status ?? 'Chưa có tài khoản'}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      to={`/app/employees/${employee.id}`}
-                      className="text-primary-600 hover:underline"
-                    >
-                      Mở hồ sơ
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <>
+      <PageHeader
+        title="Nhân viên"
+        description="Hồ sơ, phòng ban và trạng thái tài khoản của toàn công ty."
+        actions={
+          <ButtonLink to="/app/onboarding?new=1">
+            <Icon name="plus" size={18} />
+            Thêm nhân viên
+          </ButtonLink>
+        }
+      />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <Tabs
+          label="Lọc nhân viên theo trạng thái"
+          items={STATUS_TABS}
+          value={directoryParams.status}
+          onChange={(status: EmployeeStatusFilter) => updateParams({ status, page: null })}
+        />
+        <div className="sm:w-80">
+          <SearchInput
+            label="Tìm nhân viên"
+            placeholder="Tìm theo tên, mã nhân viên, username"
+            value={directoryParams.q}
+            onSearch={(q) => updateParams({ q, page: null })}
+          />
         </div>
-      )}
-      <div className="flex items-center gap-3">
-        <Button variant="secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
-          Trang trước
-        </Button>
-        <span>Trang {page}</span>
-        <Button
-          variant="secondary"
-          disabled={!query.data.meta.hasMore}
-          onClick={() => setPage(page + 1)}
-        >
-          Trang sau
-        </Button>
       </div>
-    </section>
+      <DirectoryContent params={directoryParams} onPageChange={(page) => updateParams({ page })} />
+    </>
+  );
+}
+
+interface DirectoryContentProps {
+  params: DirectoryParams;
+  onPageChange: (page: number) => void;
+}
+
+function DirectoryContent({ params, onPageChange }: DirectoryContentProps) {
+  const { data, isPending, isError, error, refetch } = useDirectory(params);
+
+  if (isPending) return <Skeleton className="h-64 w-full" />;
+  if (isError) return <ErrorState message={error.message} onRetry={() => void refetch()} />;
+  if (data.data.length === 0) {
+    return (
+      <Card>
+        <EmptyState
+          icon={params.q ? 'search' : 'users'}
+          title={params.q ? 'Không tìm thấy nhân viên phù hợp' : 'Không có nhân viên trong mục này'}
+        />
+      </Card>
+    );
+  }
+  return (
+    <>
+      <EmployeeTable employees={data.data} />
+      <Pagination {...data.meta} onChange={onPageChange} />
+    </>
   );
 }

@@ -1,51 +1,70 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Input } from '@/components/ui';
+import { Button, ConfirmDialog, Input, Select, useToast } from '@/components/ui';
+import { errorMessage } from '@/lib/api-client';
+import { useSaveEmployee } from '../hooks/useEmployeeMutations';
 import type { AdminEmployeeUpdate, DirectoryEmployee } from '../types';
 
-interface Props {
+interface EmployeeAdminFormProps {
   employee: DirectoryEmployee;
   departments: { id: string; name: string }[];
-  save: (input: AdminEmployeeUpdate) => Promise<unknown>;
 }
-export function EmployeeAdminForm({ employee, departments, save }: Props) {
+
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Hoạt động' },
+  { value: 'disabled', label: 'Khoá tài khoản' },
+];
+
+export function EmployeeAdminForm({ employee, departments }: EmployeeAdminFormProps) {
+  const toast = useToast();
+  const save = useSaveEmployee(employee.id);
   const [fullName, setFullName] = useState(employee.fullName);
   const [jobTitle, setJobTitle] = useState(employee.jobTitle ?? '');
   const [departmentId, setDepartmentId] = useState(employee.departmentId ?? '');
-  const [status, setStatus] = useState<'active' | 'disabled'>(
-    employee.status === 'disabled' ? 'disabled' : 'active',
-  );
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!fullName.trim() || fullName.trim().length > 120 || jobTitle.trim().length > 120) {
-      setMessage('Tên bắt buộc; tên và chức vụ tối đa 120 ký tự.');
-      return;
-    }
-    setBusy(true);
-    setMessage(null);
+  const [status, setStatus] = useState(employee.status === 'disabled' ? 'disabled' : 'active');
+  const [nameError, setNameError] = useState<string>();
+  const [confirmingMove, setConfirmingMove] = useState(false);
+  // Chuyển trưởng phòng sang phòng khác: phòng cũ thành "Chưa có trưởng phòng" — hỏi lại trước.
+  const leavesManagedDepartment =
+    employee.managedDepartment !== null && departmentId !== (employee.departmentId ?? '');
+
+  async function persist() {
+    const input: AdminEmployeeUpdate = {
+      fullName: fullName.trim(),
+      jobTitle: jobTitle.trim() || null,
+      departmentId: departmentId || null,
+      status: status === 'disabled' ? 'disabled' : 'active',
+    };
     try {
-      await save({
-        fullName: fullName.trim(),
-        jobTitle: jobTitle.trim() || null,
-        departmentId: departmentId || null,
-        status,
-      });
-      setMessage('Đã cập nhật hồ sơ.');
+      await save.mutateAsync(input);
+      toast({ message: 'Đã cập nhật hồ sơ nhân viên' });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Không lưu được hồ sơ');
+      toast({ tone: 'error', message: errorMessage(error) });
     } finally {
-      setBusy(false);
+      setConfirmingMove(false);
     }
   }
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!fullName.trim()) {
+      setNameError('Vui lòng nhập tên nhân viên');
+      return;
+    }
+    if (leavesManagedDepartment) setConfirmingMove(true);
+    else void persist();
+  }
+
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-4">
       <Input
         label="Tên nhân viên"
         value={fullName}
         maxLength={120}
-        required
-        onChange={(event) => setFullName(event.target.value)}
+        error={nameError}
+        onChange={(event) => {
+          setFullName(event.target.value);
+          setNameError(undefined);
+        }}
       />
       <Input
         label="Chức vụ"
@@ -53,40 +72,40 @@ export function EmployeeAdminForm({ employee, departments, save }: Props) {
         maxLength={120}
         onChange={(event) => setJobTitle(event.target.value)}
       />
-      <label className="block text-sm">
-        Phòng ban
-        <select
-          value={departmentId}
-          onChange={(event) => setDepartmentId(event.target.value)}
-          className="mt-2 block h-10 w-full rounded-lg border border-gray-200 px-3"
-        >
-          <option value="">Chưa gán</option>
-          {departments.map((department) => (
-            <option key={department.id} value={department.id}>
-              {department.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block text-sm">
-        Trạng thái tài khoản
-        <select
-          value={status}
-          onChange={(event) => setStatus(event.target.value === 'active' ? 'active' : 'disabled')}
-          className="mt-2 block h-10 w-full rounded-lg border border-gray-200 px-3"
-        >
-          <option value="active">Hoạt động</option>
-          <option value="disabled">Khóa tài khoản</option>
-        </select>
-      </label>
-      {message && (
-        <p role="status" className="text-sm text-gray-700">
-          {message}
-        </p>
-      )}
-      <Button type="submit" loading={busy}>
+      <Select
+        label="Phòng ban"
+        placeholder="Chưa gán"
+        options={departments.map((department) => ({
+          value: department.id,
+          label: department.name,
+        }))}
+        value={departmentId}
+        onChange={(event) => setDepartmentId(event.target.value)}
+      />
+      <Select
+        label="Trạng thái tài khoản"
+        options={STATUS_OPTIONS}
+        value={status}
+        onChange={(event) => setStatus(event.target.value)}
+      />
+      <Button type="submit" loading={save.isPending && !confirmingMove}>
         Lưu hồ sơ nhân viên
       </Button>
+      <ConfirmDialog
+        open={confirmingMove}
+        onClose={() => setConfirmingMove(false)}
+        title="Chuyển trưởng phòng sang phòng khác?"
+        description={
+          <p>
+            {employee.fullName} đang là trưởng phòng {employee.managedDepartment?.name}. Phòng{' '}
+            {employee.managedDepartment?.name} sẽ chưa có trưởng phòng.
+          </p>
+        }
+        confirmLabel="Lưu và chuyển phòng"
+        tone="primary"
+        loading={save.isPending}
+        onConfirm={() => void persist()}
+      />
     </form>
   );
 }

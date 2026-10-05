@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { apiRequest } from '@/lib/api-client';
-import type { AccountState } from '../types';
+import type { CurrentUser } from '../types';
 
 async function publicAuthRequest<T>(path: string, username: string, password: string): Promise<T> {
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/${path}`, {
@@ -45,7 +45,7 @@ export async function signInWithPassword(username: string, password: string): Pr
   if (error) throw error;
 }
 
-export const getAccountState = () => apiRequest<AccountState>('/api/auth/me');
+export const getCurrentUser = () => apiRequest<CurrentUser>('/api/auth/me');
 export async function changePassword(username: string, currentPassword: string, password: string) {
   const tokens = await apiRequest<{ access_token: string; refresh_token: string }>(
     '/api/auth/change-password',
