@@ -103,6 +103,8 @@ Tên module (kebab-case, giống nhau ở web và api): xem `rules/architecture-
 
 ## 6. Code sạch & hiệu năng (tóm tắt — chi tiết ở rules/)
 
+**Bắt buộc đọc `rules/code-quality-rules.md`** và rà checklist mục 9 cho từng file trước khi commit.
+
 - 1 file 1 trách nhiệm; component > ~200 dòng / function > ~40 dòng → tách.
 - Tìm & dùng lại trước khi viết mới. Không code chết, console.log, TODO vô chủ.
 - Không hard-code dữ liệu nghiệp vụ; không hex màu trong component (dùng token Tailwind — ESLint chặn).
@@ -113,7 +115,7 @@ Tên module (kebab-case, giống nhau ở web và api): xem `rules/architecture-
 - Chạy `pnpm lint`, `pnpm typecheck` (và test khi có). Còn lỗi → KHÔNG báo xong.
 - Đổi API/DB → cập nhật `docs/api/endpoints/*`, `docs/database/*`.
 - Commit theo `rules/git-rules.md`.
-- Báo cáo: file đã tạo/sửa · migration · endpoint · docs cập nhật · việc còn lại/rủi ro.
+- Báo cáo: file đã tạo/sửa · migration · endpoint · docs cập nhật · việc còn lại/rủi ro · "Đã rà checklist code-quality-rules mục 9".
 
 **Yêu cầu nào buộc phải làm khác các quy tắc trên → DỪNG và HỎI.**
 

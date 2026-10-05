@@ -106,7 +106,7 @@ Quy ước: route phẳng `/app/<module>`, tên module theo `rules/architecture-
 
 ### 3.3 Component dùng chung cần thêm vào `components/ui`
 
-`PageHeader`, `Tabs`, `Table` (sắp xếp cột, hàng bấm được), `Pagination`, `SearchInput` (debounce), `Select`, `Textarea`, `DateInput` (input date gốc), `Modal`, `Drawer`, `ConfirmDialog`, `Toast` + `useToast`, `Dropdown`/`Menu`, `StatCard`, `ProgressBar`, `StatusBadge` (map trạng thái → tone), `AvatarGroup`, `Timeline` (lịch sử/duyệt), `BarList` (biểu đồ thanh ngang bằng CSS, không cài thư viện chart).
+`PageHeader`, `ErrorState` (thông báo lỗi + nút Thử lại), `Tabs`, `Table` (sắp xếp cột, hàng bấm được), `Pagination`, `SearchInput` (debounce), `Select`, `Textarea`, `DateInput` (input date gốc), `Modal`, `Drawer`, `ConfirmDialog`, `Toast` + `useToast`, `Dropdown`/`Menu`, `StatCard`, `ProgressBar`, `StatusBadge` (map trạng thái → tone), `AvatarGroup`, `Timeline` (lịch sử/duyệt), `BarList` (biểu đồ thanh ngang bằng CSS, không cài thư viện chart).
 Mỗi component: có type props rõ ràng, dùng token màu, có `aria-*` đúng, không gọi API.
 
 ## 4. Đặc tả từng trang
