@@ -9,12 +9,5 @@
 
 ## Route chính
 
-| Route                                                                                   | Module                                                           | Trạng thái |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------- |
-| `/auth/login`                                                                           | auth                                                             | ✅         |
-| `/app`                                                                                  | overview                                                         | ✅ (khung) |
-| `/app/workspace`                                                                        | workspace                                                        | ⏳         |
-| `/app/workspace/:dashboardId?task=:taskId`                                              | department-dashboards (task mở dạng drawer)                      | ⏳         |
-| `/app/my-tasks`, `/app/projects`, `/app/projects/:id`, `/app/workload`, `/app/overview` | tương ứng                                                        | ⏳         |
-| `/app/hrm/*`                                                                            | employees, departments, org-chart, attendance, leave, payroll... | ⏳         |
-| `/app/settings/*`                                                                       | settings, users, audit-log                                       | ⏳         |
+Bảng route đầy đủ, quyền xem và nguồn dữ liệu từng trang: `docs/ui-ux/frontend-spec.md` mục 2.
+Quy ước route phẳng `/app/<module>` (không dùng `/app/hrm/*`).

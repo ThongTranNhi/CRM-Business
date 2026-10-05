@@ -1,5 +1,10 @@
 # Quy tắc Frontend (apps/web)
 
+## Đặc tả giao diện
+
+Nội dung từng trang, nút bấm và liên kết giữa các trang: `docs/ui-ux/frontend-spec.md` (bắt buộc đọc trước khi làm trang mới).
+Module chưa có API dùng dữ liệu mẫu theo ADR 007.
+
 ## Luồng dữ liệu
 
 `features/<m>/api/*.ts` (gọi HTTP qua `lib/api-client.ts`) → `features/<m>/hooks/*` (React Query) → component.
@@ -26,7 +31,7 @@ loading (skeleton) · empty (`EmptyState` + nút hành động) · error (thông
 
 ## Router
 
-- Khu đăng nhập `/auth/*` (AuthLayout), khu ứng dụng `/app/*` (ProtectedRoute + AppLayout).
+- Khu đăng nhập `/auth/*` (AuthLayout), khu ứng dụng `/app/*` (ProtectedRoute + AppLayout). Route phẳng `/app/<module>` — bảng route ở `docs/ui-ux/frontend-spec.md` mục 2.
 - Trang trong `/app` lazy load. Module xong → thêm route + đổi `ready: true` trong `layouts/nav-items.ts`.
 
 ## Hiệu năng
