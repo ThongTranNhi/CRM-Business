@@ -1,0 +1,4 @@
+# React, React Query, Tailwind token, 4 trạng thái màn hình
+
+Nguồn chính thức: rules/frontend-rules.md, rules/ui-ux-rules.md — đọc trước khi làm phần liên quan.
+Luật chung: CLAUDE.md. Mâu thuẫn hoặc thiếu thông tin → DỪNG và HỎI.

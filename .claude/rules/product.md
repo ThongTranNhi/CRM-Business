@@ -1,0 +1,4 @@
+# Nghiệp vụ cốt lõi Work Management và HRM
+
+Nguồn chính thức: docs/requirements/business-rules.md, docs/product/* — đọc trước khi làm phần liên quan.
+Luật chung: CLAUDE.md. Mâu thuẫn hoặc thiếu thông tin → DỪNG và HỎI.

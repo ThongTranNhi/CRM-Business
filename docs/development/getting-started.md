@@ -7,7 +7,7 @@ Node 22+, Git, tài khoản Supabase (project region Singapore).
 ## Lấy code (máy mới)
 
 ```bash
-git clone https://github.com/tranhoangthong2006/CRM-Business.git
+git clone https://github.com/ThongTranU/CRM-Business.git
 cd CRM-Business
 ```
 
