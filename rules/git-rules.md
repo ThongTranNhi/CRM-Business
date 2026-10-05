@@ -1,6 +1,6 @@
 # Quy tắc Git
 
-Repo: `github.com/tranhoangthong2006/CRM-Business`. Đổi máy → `git pull`, không copy tay.
+Repo: `github.com/ThongTranU/CRM-Business`. Đổi máy → `git pull`, không copy tay.
 
 ## Branch
 
