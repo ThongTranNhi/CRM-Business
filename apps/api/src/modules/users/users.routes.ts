@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../../lib/app-env';
-import { departmentOptions, detail, directory, getProfile, patchEmployee, patchProfile, resetPassword } from './users.controller';
+import {
+  departmentOptions,
+  detail,
+  directory,
+  getProfile,
+  patchEmployee,
+  patchProfile,
+  resetPassword,
+} from './users.controller';
 import { requireRole } from '../../middleware/permission.middleware';
 
 export const userRoutes = new Hono<AppEnv>();

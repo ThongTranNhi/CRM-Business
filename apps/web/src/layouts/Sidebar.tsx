@@ -40,11 +40,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 {group.title}
               </p>
               <ul className="space-y-0.5">
-                {group.items.filter((item) => !item.adminOnly || account.data?.role === 'super_admin').map((item) => (
-                  <li key={item.to}>
-                    <SidebarLink item={item} onNavigate={onClose} />
-                  </li>
-                ))}
+                {group.items
+                  .filter((item) => !item.adminOnly || account.data?.role === 'super_admin')
+                  .map((item) => (
+                    <li key={item.to}>
+                      <SidebarLink item={item} onNavigate={onClose} />
+                    </li>
+                  ))}
               </ul>
             </div>
           ))}

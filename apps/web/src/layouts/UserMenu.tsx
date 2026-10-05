@@ -52,8 +52,14 @@ export function UserMenu() {
             <Icon name="logOut" size={16} />
             Đăng xuất
           </button>
-          <Link to="/app/profile" role="menuitem" onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Hồ sơ của tôi</Link>
+          <Link
+            to="/app/profile"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Hồ sơ của tôi
+          </Link>
         </div>
       )}
     </div>

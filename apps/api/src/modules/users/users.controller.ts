@@ -2,8 +2,21 @@ import type { Context } from 'hono';
 import { readEnv } from '../../config/env';
 import type { AppEnv } from '../../lib/app-env';
 import { AppError } from '../../lib/app-error';
-import { adminEmployeeSchema, directoryQuerySchema, employeeIdSchema, profileUpdateSchema } from './users.schema';
-import { getDepartmentOptions, getEmployeeDetail, getEmployeeDirectory, getOwnProfile, resetEmployeePassword, updateEmployee, updateOwnProfile } from './users.service';
+import {
+  adminEmployeeSchema,
+  directoryQuerySchema,
+  employeeIdSchema,
+  profileUpdateSchema,
+} from './users.schema';
+import {
+  getDepartmentOptions,
+  getEmployeeDetail,
+  getEmployeeDirectory,
+  getOwnProfile,
+  resetEmployeePassword,
+  updateEmployee,
+  updateOwnProfile,
+} from './users.service';
 import { newPasswordSchema } from '../auth/auth.schema';
 
 export async function getProfile(c: Context<AppEnv>) {
@@ -35,11 +48,20 @@ export async function departmentOptions(c: Context<AppEnv>) {
 export async function patchEmployee(c: Context<AppEnv>) {
   const input = adminEmployeeSchema.safeParse(await c.req.json().catch(() => null));
   if (!input.success) throw new AppError('INVALID_INPUT', 'Thông tin nhân viên không hợp lệ');
-  return c.json({ data: await updateEmployee(readEnv(c.env), c.get('user').id, employeeId(c), input.data) });
+  return c.json({
+    data: await updateEmployee(readEnv(c.env), c.get('user').id, employeeId(c), input.data),
+  });
 }
 export async function resetPassword(c: Context<AppEnv>) {
   const input = newPasswordSchema.safeParse(await c.req.json().catch(() => null));
   if (!input.success) throw new AppError('INVALID_INPUT', 'Mật khẩu tạm cần 12–128 ký tự');
   c.header('Cache-Control', 'no-store');
-  return c.json({ data: await resetEmployeePassword(readEnv(c.env), c.get('user').id, employeeId(c), input.data.password) });
+  return c.json({
+    data: await resetEmployeePassword(
+      readEnv(c.env),
+      c.get('user').id,
+      employeeId(c),
+      input.data.password,
+    ),
+  });
 }

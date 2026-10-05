@@ -30,7 +30,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Nhân sự',
     items: [
-      { to: '/app/employees', label: 'Tất cả nhân viên', icon: 'users', ready: true, adminOnly: true },
+      {
+        to: '/app/employees',
+        label: 'Tất cả nhân viên',
+        icon: 'users',
+        ready: true,
+        adminOnly: true,
+      },
       { to: '/app/hrm/employees', label: 'Nhân viên', icon: 'users', ready: false },
       { to: '/app/hrm/departments', label: 'Phòng ban', icon: 'building', ready: false },
       { to: '/app/hrm/org-chart', label: 'Sơ đồ tổ chức', icon: 'network', ready: false },

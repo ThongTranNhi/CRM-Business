@@ -50,9 +50,21 @@ export const auth = createMiddleware<AppEnv>(async (c, next) => {
   const account = await getSessionContext(env, claims.sub, claims.session_id);
   const role = readRole(claims);
   if (account.role !== role) throw unauthenticated();
-  if (account.mustChangePassword && !['/api/auth/me', '/api/auth/change-password'].includes(c.req.path)) {
-    throw new AppError('PASSWORD_CHANGE_REQUIRED', 'Bạn cần đổi mật khẩu tạm trước khi tiếp tục', 403);
+  if (
+    account.mustChangePassword &&
+    !['/api/auth/me', '/api/auth/change-password'].includes(c.req.path)
+  ) {
+    throw new AppError(
+      'PASSWORD_CHANGE_REQUIRED',
+      'Bạn cần đổi mật khẩu tạm trước khi tiếp tục',
+      403,
+    );
   }
-  c.set('user', { id: claims.sub, email: claims.email ?? null, role, sessionId: claims.session_id });
+  c.set('user', {
+    id: claims.sub,
+    email: claims.email ?? null,
+    role,
+    sessionId: claims.session_id,
+  });
   await next();
 });

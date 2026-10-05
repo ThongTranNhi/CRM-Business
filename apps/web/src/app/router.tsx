@@ -9,9 +9,15 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 const DashboardPage = lazy(() =>
   import('@/features/overview').then((m) => ({ default: m.DashboardPage })),
 );
-const ProfilePage = lazy(() => import('@/features/employees').then((m) => ({ default: m.ProfilePage })));
-const EmployeeDirectoryPage = lazy(() => import('@/features/employees').then((m) => ({ default: m.EmployeeDirectoryPage })));
-const EmployeeDetailPage = lazy(() => import('@/features/employees').then((m) => ({ default: m.EmployeeDetailPage })));
+const ProfilePage = lazy(() =>
+  import('@/features/employees').then((m) => ({ default: m.ProfilePage })),
+);
+const EmployeeDirectoryPage = lazy(() =>
+  import('@/features/employees').then((m) => ({ default: m.EmployeeDirectoryPage })),
+);
+const EmployeeDetailPage = lazy(() =>
+  import('@/features/employees').then((m) => ({ default: m.EmployeeDetailPage })),
+);
 
 function page(element: ReactNode) {
   return <Suspense fallback={<Skeleton className="h-40 w-full" />}>{element}</Suspense>;

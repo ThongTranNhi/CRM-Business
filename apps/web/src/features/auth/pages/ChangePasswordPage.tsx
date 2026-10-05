@@ -20,7 +20,11 @@ export function ChangePasswordPage() {
     const username = account.data?.username;
     const parsed = registrationSchema.safeParse({ username, password, confirmPassword });
     if (!username || !parsed.success) {
-      setError(parsed.success ? 'Chỉ tài khoản username đổi mật khẩu tại đây' : parsed.error.issues[0]?.message ?? 'Thông tin không hợp lệ');
+      setError(
+        parsed.success
+          ? 'Chỉ tài khoản username đổi mật khẩu tại đây'
+          : (parsed.error.issues[0]?.message ?? 'Thông tin không hợp lệ'),
+      );
       return;
     }
     setBusy(true);
@@ -29,18 +33,50 @@ export function ChangePasswordPage() {
       await changePassword(username, currentPassword, password);
       await queryClient.invalidateQueries({ queryKey: ['account-state'] });
       navigate('/app/profile', { replace: true });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không đổi được mật khẩu'); }
-    finally { setBusy(false); }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không đổi được mật khẩu');
+    } finally {
+      setBusy(false);
+    }
   }
   return (
-    <form onSubmit={submit} className="mx-auto max-w-md space-y-4 rounded-card border border-gray-200 bg-white p-6">
+    <form
+      onSubmit={submit}
+      className="mx-auto max-w-md space-y-4 rounded-card border border-gray-200 bg-white p-6"
+    >
       <h1 className="text-xl font-semibold">Đổi mật khẩu</h1>
-      <p className="text-sm text-gray-600">Nếu được cấp mật khẩu tạm, bạn cần đổi trước khi tiếp tục.</p>
-      <Input label="Mật khẩu hiện tại / mật khẩu tạm" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
-      <Input label="Mật khẩu mới" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />
-      <Input label="Xác nhận mật khẩu mới" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
-      {error && <p role="alert" className="text-danger-700">{error}</p>}
-      <Button type="submit" loading={busy}>Đổi mật khẩu</Button>
+      <p className="text-sm text-gray-600">
+        Nếu được cấp mật khẩu tạm, bạn cần đổi trước khi tiếp tục.
+      </p>
+      <Input
+        label="Mật khẩu hiện tại / mật khẩu tạm"
+        type="password"
+        autoComplete="current-password"
+        value={currentPassword}
+        onChange={(event) => setCurrentPassword(event.target.value)}
+      />
+      <Input
+        label="Mật khẩu mới"
+        type="password"
+        autoComplete="new-password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
+      <Input
+        label="Xác nhận mật khẩu mới"
+        type="password"
+        autoComplete="new-password"
+        value={confirmPassword}
+        onChange={(event) => setConfirmPassword(event.target.value)}
+      />
+      {error && (
+        <p role="alert" className="text-danger-700">
+          {error}
+        </p>
+      )}
+      <Button type="submit" loading={busy}>
+        Đổi mật khẩu
+      </Button>
     </form>
   );
 }

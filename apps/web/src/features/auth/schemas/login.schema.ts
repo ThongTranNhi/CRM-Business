@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  username: z.string().trim().min(1, 'Vui lòng nhập tên đăng nhập').max(32, 'Tên đăng nhập tối đa 32 ký tự'),
+  username: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập tên đăng nhập')
+    .max(32, 'Tên đăng nhập tối đa 32 ký tự'),
   password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
 

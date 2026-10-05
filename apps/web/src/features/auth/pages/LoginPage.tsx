@@ -12,7 +12,10 @@ export function LoginPage() {
         <p className="mt-1.5 text-sm text-gray-500">Dùng tài khoản công ty để tiếp tục.</p>
       </div>
       <LoginForm />
-      <Link to="/auth/register" className="mt-5 block text-center text-sm text-primary-600 hover:underline">
+      <Link
+        to="/auth/register"
+        className="mt-5 block text-center text-sm text-primary-600 hover:underline"
+      >
         Chưa có tài khoản? Đăng ký
       </Link>
     </>
