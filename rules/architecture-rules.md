@@ -43,6 +43,9 @@ modules/<module>/  .routes .controller .service .repository .schema .types
 - CẤM `routes/`, `services/`, `utils/`, `database/`, `types/` ở cấp `src/`.
 - Luồng một request: `request-id → auth → permission → controller → service → repository → error`.
 - Module A cần dữ liệu module B → gọi **service** của B, không gọi repository của B.
+- Module lớn (một lớp vượt ~200 dòng) tách theo phần: `<module>.<phần>.<lớp>.ts`, vd.
+  `tasks.checklist.service.ts`, `tasks.comments.repository.ts`. Vẫn chung một `<module>.routes.ts`.
+- Hàm thuần dùng chung giữa các module (không gọi DB) đặt ở `lib/`, vd. `lib/work-access.ts`.
 
 ## 4. Danh sách module (kebab-case, web và api dùng cùng tên)
 

@@ -1,6 +1,8 @@
 import { departmentNotFound } from '../../lib/directory-errors';
 import type { Page } from '../../lib/pagination';
+import type { Env } from '../../config/env';
 import { assertRole, type RequestScope } from '../../lib/request-scope';
+import { getDashboardIdsByDepartment } from '../department-dashboards/department-dashboards.service';
 import { getAvatarUrls } from '../users/users.service';
 import * as departmentsRepository from './departments.repository';
 import type {
@@ -8,6 +10,7 @@ import type {
   CreateDepartmentInput,
   DepartmentDetail,
   DepartmentListItem,
+  DepartmentRecord,
   ListDepartmentsQuery,
   UpdateDepartmentInput,
 } from './departments.types';
@@ -16,13 +19,34 @@ import type {
 const MANAGE_ROLES = ['super_admin', 'hr_admin'] as const;
 const DELETE_ROLES = ['super_admin'] as const;
 
+/** Gắn Dashboard chính của từng phòng (cột Dashboard ở trang Phòng ban, frontend-spec 4.10). */
+async function withDashboards(
+  env: Env,
+  records: DepartmentRecord[],
+): Promise<DepartmentListItem[]> {
+  const dashboardIds = await getDashboardIdsByDepartment(
+    env,
+    records.map((record) => record.id),
+  );
+  return records.map((record) => ({ ...record, dashboardId: dashboardIds.get(record.id) ?? null }));
+}
+
+async function listActive(env: Env, query: ListDepartmentsQuery) {
+  if (!query.withoutDashboard) return departmentsRepository.listActive(env, query);
+  const withDashboard = await getDashboardIdsByDepartment(env);
+  return departmentsRepository.listActive(env, query, [...withDashboard.keys()]);
+}
+
 export async function listDepartments(
   { env, actor }: RequestScope,
   query: ListDepartmentsQuery,
 ): Promise<Page<DepartmentListItem>> {
-  if (query.status === 'active') return departmentsRepository.listActive(env, query);
-  assertRole(actor, DELETE_ROLES);
-  return departmentsRepository.listDeleted(env, query);
+  if (query.status === 'deleted') assertRole(actor, DELETE_ROLES);
+  const page =
+    query.status === 'active'
+      ? await listActive(env, query)
+      : await departmentsRepository.listDeleted(env, query);
+  return { ...page, data: await withDashboards(env, page.data) };
 }
 
 export async function getDepartment({ env }: RequestScope, id: string): Promise<DepartmentDetail> {
@@ -31,9 +55,13 @@ export async function getDepartment({ env }: RequestScope, id: string): Promise<
     departmentsRepository.listMembers(env, id),
   ]);
   if (!department) throw departmentNotFound();
-  const avatarUrls = await getAvatarUrls(env, members);
+  const [dashboardIds, avatarUrls] = await Promise.all([
+    getDashboardIdsByDepartment(env, [id]),
+    getAvatarUrls(env, members),
+  ]);
   return {
     ...department,
+    dashboardId: dashboardIds.get(id) ?? null,
     members: members.map((member) => ({
       id: member.id,
       fullName: member.fullName,

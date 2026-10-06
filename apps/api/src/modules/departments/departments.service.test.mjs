@@ -102,8 +102,33 @@ test('departments service (BR-08, BR-09)', async (t) => {
     };
     await service.listDepartments(scopeAs('employee'), listQuery);
     await service.getDepartment(scopeAs('employee'), 'dept-1');
-    assert.ok(urls.every((url) => /\/rest\/v1\/active_(departments|employees)\?/.test(url)));
+    // department_dashboards chỉ để gắn dashboardId; phòng / nhân viên chỉ đọc qua view active_*.
+    assert.ok(
+      urls.every((url) =>
+        /\/rest\/v1\/(active_departments|active_employees|department_dashboards)\?/.test(url),
+      ),
+    );
   });
+  await t.test(
+    'list carries dashboardId; withoutDashboard excludes those departments',
+    async () => {
+      const urls = [];
+      globalThis.fetch = async (url) => {
+        urls.push(String(url));
+        if (String(url).includes('department_dashboards')) {
+          return Response.json([{ id: 'dash-9', department_id: 'dept-9' }]);
+        }
+        return Response.json([departmentRow]);
+      };
+      const page = await service.listDepartments(scopeAs('employee'), listQuery);
+      assert.equal(page.data[0].dashboardId, null);
+      await service.listDepartments(scopeAs('employee'), { ...listQuery, withoutDashboard: true });
+      const listUrl = decodeURIComponent(
+        urls.findLast((url) => url.includes('active_departments')),
+      );
+      assert.match(listUrl, /id=not\.in\.\(dept-9\)/);
+    },
+  );
   await t.test('unknown department returns 404', async () => {
     globalThis.fetch = async () => Response.json([]);
     await assert.rejects(() => service.getDepartment(scopeAs('employee'), 'missing'), {

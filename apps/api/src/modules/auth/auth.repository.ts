@@ -73,6 +73,8 @@ export interface EmployeeSummary {
   fullName: string;
   departmentId: string | null;
   departmentName: string | null;
+  /** Phòng người này đang làm trưởng phòng (trưởng phòng luôn thuộc phòng mình). */
+  managedDepartmentId: string | null;
 }
 
 export async function findEmployeeSummary(
@@ -80,7 +82,7 @@ export async function findEmployeeSummary(
   userId: string,
 ): Promise<EmployeeSummary | null> {
   const params = new URLSearchParams({
-    select: 'id,full_name,department_id,department_name',
+    select: 'id,full_name,department_id,department_name,department_manager_id',
     auth_user_id: `eq.${userId}`,
     limit: '1',
   });
@@ -90,6 +92,7 @@ export async function findEmployeeSummary(
       full_name: string;
       department_id: string | null;
       department_name: string | null;
+      department_manager_id: string | null;
     }[]
   >(env, `/rest/v1/active_employees?${params}`);
   const row = rows[0];
@@ -99,6 +102,7 @@ export async function findEmployeeSummary(
     fullName: row.full_name,
     departmentId: row.department_id,
     departmentName: row.department_name,
+    managedDepartmentId: row.department_manager_id === row.id ? row.department_id : null,
   };
 }
 

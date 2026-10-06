@@ -6,7 +6,7 @@ import type { AvatarOwner } from '../users/users.types';
 import type {
   AddMemberInput,
   CreateDepartmentInput,
-  DepartmentListItem,
+  DepartmentRecord,
   ListDepartmentsQuery,
   UpdateDepartmentInput,
 } from './departments.types';
@@ -23,7 +23,7 @@ interface ActiveDepartmentRow {
 }
 const ACTIVE_SELECT = 'id,name,manager_employee_id,manager_name,member_count';
 
-function mapActive(row: ActiveDepartmentRow): DepartmentListItem {
+function mapActive(row: ActiveDepartmentRow): DepartmentRecord {
   return {
     id: row.id,
     name: row.name,
@@ -36,16 +36,19 @@ function mapActive(row: ActiveDepartmentRow): DepartmentListItem {
   };
 }
 
+/** excludeIds: bỏ các phòng này (vd. phòng đã có Dashboard khi `withoutDashboard`). */
 export async function listActive(
   env: Env,
   query: ListDepartmentsQuery,
-): Promise<Page<DepartmentListItem>> {
+  excludeIds: string[] = [],
+): Promise<Page<DepartmentRecord>> {
   const params = new URLSearchParams({
     select: ACTIVE_SELECT,
     order: 'name,id',
     ...rangeParams(query),
   });
   if (query.q) params.set('name', `ilike.*${query.q}*`);
+  if (excludeIds.length > 0) params.set('id', `not.in.(${excludeIds.join(',')})`);
   const { rows, total } = await supabaseList<ActiveDepartmentRow>(
     env,
     `/rest/v1/active_departments?${params}`,
@@ -56,7 +59,7 @@ export async function listActive(
 export async function listDeleted(
   env: Env,
   query: ListDepartmentsQuery,
-): Promise<Page<DepartmentListItem>> {
+): Promise<Page<DepartmentRecord>> {
   const params = new URLSearchParams({
     select: 'id,name,archived_at',
     archived_at: 'not.is.null',
@@ -78,7 +81,7 @@ export async function listDeleted(
   return toPage(items, total, query);
 }
 
-export async function findActive(env: Env, id: string): Promise<DepartmentListItem | null> {
+export async function findActive(env: Env, id: string): Promise<DepartmentRecord | null> {
   const params = new URLSearchParams({ select: ACTIVE_SELECT, id: `eq.${id}`, limit: '1' });
   const rows = await supabaseRequest<ActiveDepartmentRow[]>(
     env,

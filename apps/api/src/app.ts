@@ -6,6 +6,7 @@ import { auth } from './middleware/auth.middleware';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { requestId } from './middleware/request-id.middleware';
 import { healthRoutes } from './modules/health/health.routes';
+import { departmentDashboardRoutes } from './modules/department-dashboards/department-dashboards.routes';
 import { departmentRoutes } from './modules/departments/departments.routes';
 import { userRoutes } from './modules/users/users.routes';
 import { publicAuthRoutes, privateAuthRoutes } from './modules/auth/auth.routes';
@@ -30,6 +31,7 @@ app.use('/api/*', auth);
 app.route('/api/auth', privateAuthRoutes);
 app.route('/api/users', userRoutes);
 app.route('/api/departments', departmentRoutes);
+app.route('/api/department-dashboards', departmentDashboardRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

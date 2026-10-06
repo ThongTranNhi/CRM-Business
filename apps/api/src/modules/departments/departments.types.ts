@@ -16,12 +16,18 @@ export interface PersonRef {
   fullName: string;
 }
 
-export interface DepartmentListItem {
+/** Một phòng ban như repository đọc ra. */
+export interface DepartmentRecord {
   id: string;
   name: string;
   manager: PersonRef | null;
   memberCount: number;
   archivedAt: string | null;
+}
+
+/** dashboardId: Dashboard chính của phòng (BR-04), null nếu chưa có. */
+export interface DepartmentListItem extends DepartmentRecord {
+  dashboardId: string | null;
 }
 
 export interface DepartmentMember {
