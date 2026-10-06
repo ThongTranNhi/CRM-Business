@@ -35,9 +35,11 @@ export function can(
   if (!user) return false;
   const roles: readonly Role[] = PERMISSIONS[permission];
   if (!roles.includes(user.role)) return false;
-  // BR-05: Trưởng phòng chỉ tạo Dashboard cho phòng mình.
+  // BR-05, Q1: Trưởng phòng = role department_manager VÀ là trưởng phòng của đúng phòng đó.
+  // Không truyền phòng → có phòng nào để tạo không (nút [+ Tạo Dashboard] ở Workspace).
   if (permission === 'dashboards.create' && user.role === 'department_manager') {
-    return scope.departmentId !== undefined && scope.departmentId === user.departmentId;
+    if (user.managedDepartmentId === null) return false;
+    return scope.departmentId === undefined || scope.departmentId === user.managedDepartmentId;
   }
   return true;
 }

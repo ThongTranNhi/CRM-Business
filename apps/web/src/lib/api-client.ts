@@ -6,6 +6,8 @@ export class ApiError extends Error {
     message: string,
     readonly code: string,
     readonly status: number,
+    /** `error.details` của API, vd. `{ dashboardId }` khi 409 DASHBOARD_ALREADY_EXISTS. */
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -35,7 +37,7 @@ export interface PageResult<T> {
 interface ApiEnvelope<T> {
   data: T;
   meta?: PageMeta;
-  error?: { code: string; message: string };
+  error?: { code: string; message: string; details?: unknown };
 }
 
 async function send<T>(path: string, init: RequestInit): Promise<ApiEnvelope<T>> {
@@ -52,7 +54,12 @@ async function send<T>(path: string, init: RequestInit): Promise<ApiEnvelope<T>>
   const body: ApiEnvelope<T> = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = body.error?.message ?? 'Không thể xử lý yêu cầu, vui lòng thử lại';
-    throw new ApiError(message, body.error?.code ?? 'UNKNOWN_ERROR', response.status);
+    throw new ApiError(
+      message,
+      body.error?.code ?? 'UNKNOWN_ERROR',
+      response.status,
+      body.error?.details,
+    );
   }
   return body;
 }

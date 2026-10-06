@@ -35,6 +35,8 @@ export interface EmployeeOption {
   fullName: string;
   jobTitle: string | null;
   departmentName: string | null;
+  /** Role tài khoản; null nếu chưa có tài khoản. Form chọn trưởng phòng cảnh báo khi chưa phải Trưởng phòng. */
+  role: string | null;
 }
 
 /** Ảnh chỉ được ký URL khi nằm trong thư mục UUID của chính chủ tài khoản. */

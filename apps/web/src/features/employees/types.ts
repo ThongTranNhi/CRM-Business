@@ -46,4 +46,5 @@ export interface EmployeeOption {
   fullName: string;
   jobTitle: string | null;
   departmentName: string | null;
+  role: string | null;
 }

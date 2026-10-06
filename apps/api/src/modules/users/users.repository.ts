@@ -159,19 +159,26 @@ export async function directoryEmployee(env: Env, employeeId: string) {
 
 export async function listEmployeeOptions(env: Env, q: string | undefined) {
   const params = new URLSearchParams({
-    select: 'id,full_name,job_title,department_name',
+    select: 'id,full_name,job_title,department_name,role',
     order: 'full_name,id',
     limit: '20',
   });
   if (q) params.set('or', searchFilter(q));
   const rows = await supabaseRequest<
-    { id: string; full_name: string; job_title: string | null; department_name: string | null }[]
+    {
+      id: string;
+      full_name: string;
+      job_title: string | null;
+      department_name: string | null;
+      role: string | null;
+    }[]
   >(env, `/rest/v1/active_employees?${params}`);
   return rows.map((row): EmployeeOption => ({
     id: row.id,
     fullName: row.full_name,
     jobTitle: row.job_title,
     departmentName: row.department_name,
+    role: row.role,
   }));
 }
 

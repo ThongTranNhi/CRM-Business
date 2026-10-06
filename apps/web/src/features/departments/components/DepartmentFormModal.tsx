@@ -4,7 +4,7 @@ import { EmployeePicker, type PickedEmployee } from '@/features/employees';
 import { errorMessage, hasErrorCode } from '@/lib/api-client';
 import { useCreateDepartment, useUpdateDepartment } from '../hooks/useDepartmentMutations';
 import { departmentNameSchema } from '../schemas/department.schema';
-import type { Department, DepartmentChanges } from '../types';
+import type { Department, DepartmentChanges, DepartmentDetail } from '../types';
 
 interface DepartmentFormModalProps {
   open: boolean;
@@ -25,6 +25,8 @@ export function DepartmentFormModal({ open, onClose, department }: DepartmentFor
 interface DepartmentFormProps {
   department?: Department;
   onDone: () => void;
+  /** Gọi sau khi tạo mới thành công, trước onDone (vd. modal Tạo Dashboard chọn sẵn phòng mới). */
+  onCreated?: (department: DepartmentDetail) => void;
 }
 
 function changesOf(department: Department, name: string, manager: PickedEmployee | null) {
@@ -35,7 +37,11 @@ function changesOf(department: Department, name: string, manager: PickedEmployee
   return changes;
 }
 
-function DepartmentForm({ department, onDone }: DepartmentFormProps) {
+/** Q1: trưởng phòng chỉ quản lý được Dashboard khi có role Trưởng phòng. */
+const needsManagerRole = (manager: PickedEmployee | null) =>
+  manager?.role !== undefined && manager.role !== 'department_manager';
+
+export function DepartmentForm({ department, onDone, onCreated }: DepartmentFormProps) {
   const toast = useToast();
   const [name, setName] = useState(department?.name ?? '');
   const [manager, setManager] = useState<PickedEmployee | null>(department?.manager ?? null);
@@ -45,7 +51,7 @@ function DepartmentForm({ department, onDone }: DepartmentFormProps) {
 
   async function save(validName: string) {
     if (!department) {
-      await create.mutateAsync({ name: validName, managerId: manager?.id ?? null });
+      onCreated?.(await create.mutateAsync({ name: validName, managerId: manager?.id ?? null }));
       return 'Đã tạo phòng ban';
     }
     const changes = changesOf(department, validName, manager);
@@ -84,6 +90,11 @@ function DepartmentForm({ department, onDone }: DepartmentFormProps) {
         }}
       />
       <EmployeePicker label="Trưởng phòng (tuỳ chọn)" value={manager} onChange={setManager} />
+      {needsManagerRole(manager) && (
+        <p role="status" className="rounded-lg bg-warning-100 px-3 py-2 text-sm text-warning-800">
+          Người này chưa có vai trò Trưởng phòng nên chưa tạo và quản lý được Dashboard của phòng.
+        </p>
+      )}
       <p className="text-sm text-gray-500">
         Chưa chọn trưởng phòng thì phòng ban hiện "Chưa có trưởng phòng", có thể chọn sau. Người
         đang ở phòng khác sẽ được chuyển sang phòng này. Tạo phòng ban không tự tạo Dashboard.

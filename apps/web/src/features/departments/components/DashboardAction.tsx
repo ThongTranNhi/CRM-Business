@@ -7,16 +7,35 @@ interface DashboardActionProps {
 }
 
 /**
- * Cột Dashboard (frontend-spec 4.10). Bảng department_dashboards có từ Đợt 2; tới lúc đó mọi phòng
- * là "Chưa có" và [Tạo Dashboard] mở Workspace với phòng đã chọn sẵn.
+ * Cột Dashboard (frontend-spec 4.10): Đã có → [Mở Dashboard]; Chưa có → [Tạo Dashboard] mở Workspace
+ * với phòng chọn sẵn (BR-05). Người không tạo được thấy ai cần tạo khi phòng chưa có trưởng phòng.
  */
 export function DashboardAction({ department }: DashboardActionProps) {
   const canDo = useCan();
-  if (!canDo('dashboards.create', { departmentId: department.id })) return <Badge>Chưa có</Badge>;
+  if (department.dashboardId) {
+    return (
+      <span className="flex flex-wrap items-center gap-2">
+        <Badge tone="success">Đã có</Badge>
+        <ButtonLink to={`/app/workspace/${department.dashboardId}`} variant="secondary" size="sm">
+          Mở Dashboard
+        </ButtonLink>
+      </span>
+    );
+  }
+  if (canDo('dashboards.create', { departmentId: department.id })) {
+    return (
+      <ButtonLink to={`/app/workspace?createFor=${department.id}`} variant="secondary" size="sm">
+        <Icon name="plus" size={16} />
+        Tạo Dashboard
+      </ButtonLink>
+    );
+  }
   return (
-    <ButtonLink to={`/app/workspace?createFor=${department.id}`} variant="secondary" size="sm">
-      <Icon name="plus" size={16} />
-      Tạo Dashboard
-    </ButtonLink>
+    <span className="flex flex-col items-start gap-1">
+      <Badge>Chưa có</Badge>
+      {!department.manager && (
+        <span className="text-xs text-gray-500">Cần CEO hoặc trưởng phòng tạo</span>
+      )}
+    </span>
   );
 }
