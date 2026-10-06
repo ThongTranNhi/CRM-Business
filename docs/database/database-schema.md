@@ -11,7 +11,8 @@ Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](
 - Tên phòng ban unique theo `lower(name)` **chỉ với phòng chưa xoá** (`departments_active_name_unique`),
   để tên phòng đã xoá được dùng lại (BR-09). Mã nhân viên tương tự (`employees_active_code_unique`).
 - Xoá = xoá mềm: `departments.archived_at`, `employees.archived_at` (BR-09, BR-53, BR-55). Xoá nhân viên
-  đồng thời đặt `app_accounts.status = 'disabled'` và xoá `auth.sessions`.
+  đồng thời đặt `app_accounts.status = 'disabled'` và xoá `auth.sessions`; trạng thái cũ lưu ở audit
+  `employee.delete` (`new_values.previousAccountStatus`) để khôi phục trả về đúng trạng thái đó.
 - View đọc (security_invoker, chỉ `service_role` được SELECT):
   - `active_departments`: phòng chưa xoá + `manager_name`, `member_count` (người chưa xoá).
   - `employee_directory`: mọi hồ sơ + phòng ban, trưởng phòng, tài khoản, `is_locked`, `archived_at`.
@@ -36,7 +37,8 @@ Xem [kích hoạt username/admin](../development/username-admin-setup.md).
 
 Xem [thiết lập và cột dữ liệu](employee-directory-setup.md).
 Migration `20261005120000_employee_directory.sql`: app_accounts, departments,
-employees, audit_logs và allowlist quản trị trong schema app_private.
+employees, audit_logs và allowlist quản trị trong schema app_private. Cột `super_admin_allowlist.title`
+(migration `20261006090500`) là nhãn hiển thị CEO / Master, `crm_session_context` trả về `adminTitle`.
 
 Migration `20261005160000_registration_profiles.sql` cho phép employee_code/job_title
 NULL, thêm avatar_path và trigger hồ sơ cho Auth signup. Xem [đăng ký và Storage](registration-profile-setup.md).

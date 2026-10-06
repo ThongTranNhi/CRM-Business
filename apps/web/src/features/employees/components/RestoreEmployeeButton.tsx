@@ -5,7 +5,7 @@ interface RestoreEmployeeButtonProps {
   employeeId: string;
 }
 
-/** Mở lại tài khoản; không gán lại chức trưởng phòng (BR-53). */
+/** Tài khoản về trạng thái trước khi xoá; không gán lại chức trưởng phòng (BR-53). */
 export function RestoreEmployeeButton({ employeeId }: RestoreEmployeeButtonProps) {
   const { restore, isPending } = useRestoreEmployee();
   return (

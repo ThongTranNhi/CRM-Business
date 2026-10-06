@@ -6,19 +6,22 @@ Chạy **đúng thứ tự** dưới đây, mỗi lần dán **nguyên một fil
 `begin; … commit;` — lỗi giữa chừng thì không thay đổi gì. File mới kiểm tra file trước đã chạy chưa;
 chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy lại một file đã chạy không làm hỏng dữ liệu.
 
-| #   | File                                              | Ngày chạy (chủ dự án điền) |
-| --- | ------------------------------------------------- | -------------------------- |
-| 1   | `20261005120000_employee_directory.sql`           |                            |
-| 2   | `20261005160000_registration_profiles.sql`        |                            |
-| 3   | `20261005200000_username_admin_directory.sql`     |                            |
-| 4   | `20261005210000_sync_local_usernames.sql`         |                            |
-| 5   | `20261006090000_migration_tracking.sql`           |                            |
-| 6   | `20261006090100_departments_optional_manager.sql` |                            |
-| 7   | `20261006090200_department_management_rpcs.sql`   |                            |
-| 8   | `20261006090300_employee_soft_delete.sql`         |                            |
+| #   | File                                                  | Ngày chạy (chủ dự án điền) |
+| --- | ----------------------------------------------------- | -------------------------- |
+| 1   | `20261005120000_employee_directory.sql`               |                            |
+| 2   | `20261005160000_registration_profiles.sql`            |                            |
+| 3   | `20261005200000_username_admin_directory.sql`         |                            |
+| 4   | `20261005210000_sync_local_usernames.sql`             |                            |
+| 5   | `20261006090000_migration_tracking.sql`               |                            |
+| 6   | `20261006090100_departments_optional_manager.sql`     |                            |
+| 7   | `20261006090200_department_management_rpcs.sql`       |                            |
+| 8   | `20261006090300_employee_soft_delete.sql`             |                            |
+| 9   | `20261006090400_employee_restore_previous_status.sql` |                            |
+| 10  | `20261006090500_super_admin_titles.sql`               |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-(tự ROLLBACK, thấy thông báo `soft_delete_views: đạt` là đúng).
+và `supabase/tests/employee_restore_status.sql` (tự ROLLBACK, thấy thông báo `soft_delete_views: đạt`,
+`employee_restore_status: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -28,6 +31,13 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261006090500_super_admin_titles.sql`: cột `super_admin_allowlist.title` — nhãn hiển thị CEO
+  (`jathong0107@gmail.com`) / Master (`thongtran2446@gmail.com`); `crm_session_context` trả thêm `adminTitle`
+  (chỉ với `super_admin`). Không đổi quyền.
+- `20261006090400_employee_restore_previous_status.sql`: khôi phục nhân viên trả tài khoản về trạng thái
+  trước khi xoá (khoá trước khi xoá thì vẫn khoá) thay vì luôn `active`. `crm_delete_employee` lưu
+  `previousAccountStatus` vào audit `employee.delete`; `crm_restore_employee` đọc audit gần nhất, không có thì
+  `active`, và ghi `restoredAccountStatus` vào audit `employee.restore`.
 - `20261006090300_employee_soft_delete.sql`: xoá / khôi phục nhân viên (BR-53) bằng RPC — khoá tài khoản,
   thu hồi phiên, gỡ chức trưởng phòng, audit; mã nhân viên chỉ unique giữa người chưa xoá; view
   `employee_directory`, `active_employees`.

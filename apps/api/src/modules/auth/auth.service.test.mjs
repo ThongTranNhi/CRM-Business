@@ -149,6 +149,21 @@ test('username authentication security', async (t) => {
       assert.equal(changed && completed, true);
     },
   );
+  await t.test('current user carries the Super Admin title (CEO / Master)', async () => {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes('crm_session_context'))
+        return Response.json({
+          id: 'account-1',
+          role: 'super_admin',
+          status: 'active',
+          adminTitle: 'Master',
+        });
+      return Response.json([]);
+    };
+    const user = await service.getCurrentUser(env, 'user-1', 'session-1');
+    assert.equal(user.role, 'super_admin');
+    assert.equal(user.adminTitle, 'Master');
+  });
   await t.test('persistent throttle rejects an exhausted limit', async () => {
     globalThis.fetch = async (_url, init) => {
       assert.match(JSON.parse(init.body).key_hash, /^[0-9a-f]{64}$/);

@@ -53,7 +53,7 @@ export function UserMenu() {
           <div className="border-b border-gray-100 px-4 py-2.5">
             <p className="truncate text-sm font-medium text-gray-900">{displayName}</p>
             <p className="truncate text-xs text-gray-500">
-              {user ? ROLE_LABELS[user.role] : ''}
+              {user ? (user.adminTitle ?? ROLE_LABELS[user.role]) : ''}
               {user?.departmentName ? ` · ${user.departmentName}` : ''}
             </p>
           </div>
