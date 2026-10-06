@@ -9,6 +9,8 @@ export interface SessionContext {
   username: string | null;
   mustChangePassword: boolean;
   resetVersion: number;
+  /** Nhãn Super Admin (CEO / Master) từ allowlist; null với role khác. Chỉ để hiển thị. */
+  adminTitle: string | null;
 }
 export interface TokenPair {
   access_token: string;

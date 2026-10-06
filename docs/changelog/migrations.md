@@ -17,6 +17,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 7   | `20261006090200_department_management_rpcs.sql`       |                            |
 | 8   | `20261006090300_employee_soft_delete.sql`             |                            |
 | 9   | `20261006090400_employee_restore_previous_status.sql` |                            |
+| 10  | `20261006090500_super_admin_titles.sql`               |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 và `supabase/tests/employee_restore_status.sql` (tự ROLLBACK, thấy thông báo `soft_delete_views: đạt`,
@@ -30,6 +31,9 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261006090500_super_admin_titles.sql`: cột `super_admin_allowlist.title` — nhãn hiển thị CEO
+  (`jathong0107@gmail.com`) / Master (`thongtran2446@gmail.com`); `crm_session_context` trả thêm `adminTitle`
+  (chỉ với `super_admin`). Không đổi quyền.
 - `20261006090400_employee_restore_previous_status.sql`: khôi phục nhân viên trả tài khoản về trạng thái
   trước khi xoá (khoá trước khi xoá thì vẫn khoá) thay vì luôn `active`. `crm_delete_employee` lưu
   `previousAccountStatus` vào audit `employee.delete`; `crm_restore_employee` đọc audit gần nhất, không có thì

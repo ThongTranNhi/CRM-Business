@@ -37,7 +37,8 @@ Xem [kích hoạt username/admin](../development/username-admin-setup.md).
 
 Xem [thiết lập và cột dữ liệu](employee-directory-setup.md).
 Migration `20261005120000_employee_directory.sql`: app_accounts, departments,
-employees, audit_logs và allowlist quản trị trong schema app_private.
+employees, audit_logs và allowlist quản trị trong schema app_private. Cột `super_admin_allowlist.title`
+(migration `20261006090500`) là nhãn hiển thị CEO / Master, `crm_session_context` trả về `adminTitle`.
 
 Migration `20261005160000_registration_profiles.sql` cho phép employee_code/job_title
 NULL, thêm avatar_path và trigger hồ sơ cho Auth signup. Xem [đăng ký và Storage](registration-profile-setup.md).

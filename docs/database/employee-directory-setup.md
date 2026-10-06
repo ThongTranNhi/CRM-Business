@@ -30,8 +30,11 @@ select app_private.provision_super_admin('thongtran2446@gmail.com');
 4. Đăng nhập lại để lấy JWT mới có app_metadata.role = super_admin.
 
 Hàm đối chiếu email đã xác minh của Google với allowlist. Không cho phép trình duyệt
-hoặc service_role gọi hàm cấp quyền. Hai tài khoản ngang quyền; chưa gán Gmail nào
-cho chức vụ CEO hay Master. Email không phải khóa chính và không đủ để tự cấp quyền.
+hoặc service_role gọi hàm cấp quyền. Hai tài khoản ngang quyền. Nhãn hiển thị lưu ở
+`app_private.super_admin_allowlist.title` (migration `20261006090500_super_admin_titles.sql`):
+`jathong0107@gmail.com` → **CEO**, `thongtran2446@gmail.com` → **Master**. Nhãn chỉ để hiển thị
+(menu tài khoản, `/api/auth/me` → `adminTitle`), không ảnh hưởng quyền. Email không phải khóa chính và
+không đủ để tự cấp quyền.
 
 ## Giới hạn cần nối API trước khi sử dụng thật
 

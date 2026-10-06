@@ -8,6 +8,8 @@ export interface CurrentUser {
   username: string | null;
   mustChangePassword: boolean;
   resetVersion: number;
+  /** CEO / Master cho Super Admin; null với role khác. */
+  adminTitle: string | null;
   employeeId: string | null;
   fullName: string | null;
   departmentId: string | null;
