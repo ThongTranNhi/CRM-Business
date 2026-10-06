@@ -8,16 +8,16 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 
 | #   | File                                                  | Ngày chạy (chủ dự án điền) |
 | --- | ----------------------------------------------------- | -------------------------- |
-| 1   | `20261005120000_employee_directory.sql`               |                            |
-| 2   | `20261005160000_registration_profiles.sql`            |                            |
-| 3   | `20261005200000_username_admin_directory.sql`         |                            |
-| 4   | `20261005210000_sync_local_usernames.sql`             |                            |
-| 5   | `20261006090000_migration_tracking.sql`               |                            |
-| 6   | `20261006090100_departments_optional_manager.sql`     |                            |
-| 7   | `20261006090200_department_management_rpcs.sql`       |                            |
-| 8   | `20261006090300_employee_soft_delete.sql`             |                            |
-| 9   | `20261006090400_employee_restore_previous_status.sql` |                            |
-| 10  | `20261006090500_super_admin_titles.sql`               |                            |
+| 1   | `20261005120000_employee_directory.sql`               | 06/10/2026                 |
+| 2   | `20261005160000_registration_profiles.sql`            | 06/10/2026                 |
+| 3   | `20261005200000_username_admin_directory.sql`         | 06/10/2026                 |
+| 4   | `20261005210000_sync_local_usernames.sql`             | 06/10/2026                 |
+| 5   | `20261006090000_migration_tracking.sql`               | 06/10/2026                 |
+| 6   | `20261006090100_departments_optional_manager.sql`     | 06/10/2026                 |
+| 7   | `20261006090200_department_management_rpcs.sql`       | 06/10/2026                 |
+| 8   | `20261006090300_employee_soft_delete.sql`             | 06/10/2026                 |
+| 9   | `20261006090400_employee_restore_previous_status.sql` | 06/10/2026                 |
+| 10  | `20261006090500_super_admin_titles.sql`               | 06/10/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 và `supabase/tests/employee_restore_status.sql` (tự ROLLBACK, thấy thông báo `soft_delete_views: đạt`,
