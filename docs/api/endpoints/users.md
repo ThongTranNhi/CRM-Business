@@ -17,7 +17,8 @@ DELETE `/api/users/employees/:id` `{ "newManagerId": "uuid | null" }` — xoá m
 khoá tài khoản, xoá mọi `auth.sessions`, ẩn khỏi danh sách và ô chọn người. Nếu là trưởng phòng → phòng
 thành "Chưa có trưởng phòng" hoặc nhận `newManagerId`. Không xoá được chính mình (`422 CANNOT_DELETE_SELF`)
 và Super Admin (`422 CANNOT_DELETE_ADMIN`). Audit `employee.delete`.
-POST `/api/users/employees/:id/restore` — mở lại tài khoản (status active), không gán lại chức trưởng phòng;
+POST `/api/users/employees/:id/restore` — trả tài khoản về trạng thái trước khi xoá (đã khoá thì vẫn khoá;
+xoá trước migration 20261006090400 thì `active`), không gán lại chức trưởng phòng;
 phòng cũ đã xoá thì để trống. Mã nhân viên đã bị người khác dùng → `409 EMPLOYEE_CODE_EXISTS`
 "Mã nhân viên đã được dùng, hãy đổi mã trước khi khôi phục". Audit `employee.restore`.
 Người dùng được khôi phục phải đăng nhập lại.

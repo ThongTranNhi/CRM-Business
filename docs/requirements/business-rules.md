@@ -59,7 +59,7 @@
   - Người bị xoá đang là **trưởng phòng** → phòng đó tự chuyển sang "Chưa có trưởng phòng"; hộp thoại xác nhận nói rõ điều này và cho chọn trưởng phòng mới ngay (tuỳ chọn).
   - Người bị xoá còn **việc đang mở** → hộp thoại hiện số việc và cho chọn người nhận bàn giao (tuỳ chọn; bỏ qua thì việc giữ nguyên, hiện cảnh báo "người phụ trách đã nghỉ").
   - Lịch sử (task, activity, chấm công, nghỉ phép, lương, audit) giữ nguyên; tên hiển thị kèm nhãn "(đã nghỉ)".
-  - Super Admin xem ở bộ lọc "Đã xoá" và **Khôi phục** (mở lại tài khoản, không tự gán lại chức trưởng phòng).
+  - Super Admin xem ở bộ lọc "Đã xoá" và **Khôi phục** (tài khoản về trạng thái trước khi xoá — đã khoá thì vẫn khoá; không tự gán lại chức trưởng phòng).
   - Ghi audit log.
 - **BR-54** **Đặt lại mật khẩu**: Super Admin đặt mật khẩu tạm cho mọi tài khoản username không phải Super Admin; người dùng bắt buộc đổi ở lần đăng nhập sau, các phiên cũ bị thu hồi (đã có, xem `docs/development/username-admin-setup.md`).
 - **BR-55** Không có chức năng **xoá vĩnh viễn** trên giao diện. Nếu cần xoá hẳn dữ liệu (yêu cầu pháp lý), làm bằng quy trình riêng, có ADR.

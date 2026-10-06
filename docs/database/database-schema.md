@@ -11,7 +11,8 @@ Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](
 - Tên phòng ban unique theo `lower(name)` **chỉ với phòng chưa xoá** (`departments_active_name_unique`),
   để tên phòng đã xoá được dùng lại (BR-09). Mã nhân viên tương tự (`employees_active_code_unique`).
 - Xoá = xoá mềm: `departments.archived_at`, `employees.archived_at` (BR-09, BR-53, BR-55). Xoá nhân viên
-  đồng thời đặt `app_accounts.status = 'disabled'` và xoá `auth.sessions`.
+  đồng thời đặt `app_accounts.status = 'disabled'` và xoá `auth.sessions`; trạng thái cũ lưu ở audit
+  `employee.delete` (`new_values.previousAccountStatus`) để khôi phục trả về đúng trạng thái đó.
 - View đọc (security_invoker, chỉ `service_role` được SELECT):
   - `active_departments`: phòng chưa xoá + `manager_name`, `member_count` (người chưa xoá).
   - `employee_directory`: mọi hồ sơ + phòng ban, trưởng phòng, tài khoản, `is_locked`, `archived_at`.
