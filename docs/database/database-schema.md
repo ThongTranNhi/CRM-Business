@@ -2,6 +2,29 @@
 
 Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](../changelog/migrations.md).
 
+## Work Management (Đợt 2 — migration 20261006090600 → 090800)
+
+- Người phụ trách (`tasks.assignee_id`, NOT NULL — BR-12), người phối hợp (`task_collaborators.employee_id`),
+  thành viên board (`board_members.employee_id`) → `employees`. Người tạo, người hoàn thành, người thao tác
+  (`created_by`, `completed_by`, `task_activities.actor_id`, `task_comments.author_id`) → `app_accounts`.
+- `department_dashboards.department_id` UNIQUE (BR-04); `boards.dashboard_id` UNIQUE (1 board / Dashboard);
+  `board_columns (board_id, status)` UNIQUE — 3 cột `todo`, `in_progress`, `done` (BR-10).
+- `tasks`: `status`, `priority` dùng `check`; `position numeric` (thứ tự trong cột); `project_id` chưa có
+  khoá ngoại (Đợt 3). Ràng buộc: đã hoàn thành ⇔ có `completed_at` + `completed_by` (BR-14).
+  Index `(board_id, status, position)` cho task chưa lưu trữ, `assignee_id`, `department_id`, `due_date`.
+- Trigger: `updated_at` (`app_private.set_updated_at`) cho mọi bảng; chặn người phụ trách làm người phối
+  hợp; `task_activities` chỉ INSERT (BR-21).
+- Xoá mềm: `tasks.archived_at` (BR-19), `task_checklist_items.deleted_at`.
+- View đọc: `dashboard_summaries` (số việc đang mở / đang làm / quá hạn theo giờ Việt Nam — BR-16),
+  `task_cards` (thẻ trên board: người phụ trách, số checklist, số bình luận), `account_profiles`,
+  `task_activity_feed`, `task_comment_feed`.
+- RPC (chỉ `service_role` EXECUTE): `crm_work_access`, `crm_list_dashboards`, `crm_create_dashboard`,
+  `crm_create_task`, `crm_move_task`, `crm_update_task`, `crm_set_task_collaborators`,
+  `crm_add_checklist_item`, `crm_update_checklist_item`, `crm_remove_checklist_item`, `crm_archive_task`;
+  `crm_delete_employee` thêm `handover_employee_uuid`. Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra
+  tài khoản còn hoạt động, phòng chưa xoá (BR-06) và người được giao thuộc phòng / board.
+- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql` (tự ROLLBACK).
+
 ## Phòng ban, xoá mềm, view đọc (Đợt 1 — 2026-10-06)
 
 - `app_private.applied_migrations(name, applied_at)`: migration đã áp bằng SQL Editor. Mỗi migration mới
