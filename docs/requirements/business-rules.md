@@ -21,7 +21,7 @@
 
 ## Task
 
-- **BR-10** Board mặc định 3 cột: VIỆC CẦN LÀM, VIỆC ĐANG LÀM, ĐÃ HOÀN THÀNH.
+- **BR-10** Board mặc định 3 cột: VIỆC CẦN LÀM, VIỆC ĐANG LÀM, ĐÃ HOÀN THÀNH. Mỗi cột thuộc 1 nhóm trạng thái (todo/in_progress/done). Đợt 2 chỉ có 3 cột mặc định; thêm cột tuỳ chỉnh: Đợt 3, cần duyệt.
 - **BR-11** Task tạo trong Dashboard tự gán `department_id` của Dashboard; người dùng không chọn lại.
 - **BR-12** Mỗi task có đúng 1 người phụ trách chính (bắt buộc), 0..n người phối hợp. Người phụ trách không đồng thời là người phối hợp.
 - **BR-13** Chuyển sang VIỆC ĐANG LÀM lần đầu → ghi `started_at`.

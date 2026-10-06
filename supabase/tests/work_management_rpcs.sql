@@ -35,6 +35,8 @@ declare
   other_department uuid := gen_random_uuid();
   first_employee uuid; second_employee uuid; third_employee uuid; outsider uuid;
   board_uuid uuid; result jsonb; first_task uuid; second_task uuid; task_row public.tasks;
+  todo_column uuid; doing_column uuid; done_column uuid; other_board_column uuid;
+  root_comment uuid; reply_comment uuid;
 begin
   insert into public.departments (id, name) values
     (department_uuid, '[TEST] phòng ' || department_uuid),
@@ -52,16 +54,25 @@ begin
   if (public.crm_create_dashboard(admin_user, department_uuid, null, null)) ->> 'dashboardId'
     <> result ->> 'dashboardId' then raise exception 'Lần 2 phải trả Dashboard cũ'; end if;
   select b.id into board_uuid from public.boards b where b.dashboard_id = (result ->> 'dashboardId')::uuid;
-  if (select count(*) from public.board_columns where board_id = board_uuid) <> 3 then
-    raise exception 'Board phải có 3 cột';
+  if (select count(*) from public.board_columns where board_id = board_uuid and is_default) <> 3 then
+    raise exception 'Board phải có 3 cột mặc định';
   end if;
+  select id into todo_column from public.board_columns where board_id = board_uuid and status = 'todo';
+  select id into doing_column from public.board_columns
+  where board_id = board_uuid and status = 'in_progress';
+  select id into done_column from public.board_columns where board_id = board_uuid and status = 'done';
+  result := public.crm_create_dashboard(admin_user, other_department, null, null);
+  select c.id into other_board_column from public.board_columns c
+  join public.boards b on b.id = c.board_id
+  where b.dashboard_id = (result ->> 'dashboardId')::uuid and c.status = 'in_progress';
 
   -- BR-11, BR-12: tạo task kèm ngày bắt đầu + người phối hợp trong 1 giao dịch; department_id theo Dashboard.
   first_task := public.crm_create_task(admin_user, board_uuid, '[TEST] việc 1', null, first_employee,
     null, current_date, current_date + 7, array[third_employee]);
   select * into task_row from public.tasks where id = first_task;
-  if task_row.department_id <> department_uuid or task_row.start_date <> current_date then
-    raise exception 'Task phải có department_id của Dashboard và start_date';
+  if task_row.department_id <> department_uuid or task_row.start_date <> current_date
+    or task_row.column_id <> todo_column then
+    raise exception 'Task phải có department_id của Dashboard, start_date và nằm ở cột todo mặc định';
   end if;
   if not exists (select 1 from public.task_activities
     where task_id = first_task and action = 'collaborators_changed') then
@@ -76,14 +87,26 @@ begin
   perform pg_temp.expect_error(format('select public.crm_create_task(%L, %L, %L, null, null, null, null, null)',
     admin_user, board_uuid, '[TEST] thiếu người'), 'ASSIGNEE_REQUIRED');
 
+  -- Khoá ngoại ghép: status của task phải khớp nhóm của cột.
+  perform pg_temp.expect_error(format('update public.tasks set status = %L where id = %L',
+    'in_progress', first_task),
+    'insert or update on table "tasks" violates foreign key constraint "tasks_column_status_fk"');
+  -- Kéo sang cột của board khác → từ chối.
+  perform pg_temp.expect_error(format('select public.crm_move_task(%L, %L, %L, null, null)',
+    admin_user, first_task, other_board_column), 'INVALID_COLUMN');
+
   -- BR-13, BR-14: started_at lần đầu; completed_at/by khi xong; kéo ngược → xoá, có activity reopened.
-  perform public.crm_move_task(admin_user, first_task, 'in_progress', null, null);
-  perform public.crm_move_task(admin_user, first_task, 'done', null, null);
+  perform public.crm_move_task(admin_user, first_task, doing_column, null, null);
+  if not exists (select 1 from public.task_activities where task_id = first_task and action = 'moved'
+    and from_value ->> 'columnId' = todo_column::text and to_value ->> 'status' = 'in_progress') then
+    raise exception 'Activity moved phải ghi cột và nhóm trạng thái';
+  end if;
+  perform public.crm_move_task(admin_user, first_task, done_column, null, null);
   select * into task_row from public.tasks where id = first_task;
   if task_row.started_at is null or task_row.completed_at is null or task_row.completed_by is null then
     raise exception 'Phải có started_at, completed_at, completed_by';
   end if;
-  perform public.crm_move_task(admin_user, first_task, 'todo', null, null);
+  perform public.crm_move_task(admin_user, first_task, todo_column, null, null);
   select * into task_row from public.tasks where id = first_task;
   if task_row.completed_at is not null or task_row.completed_by is not null
     or not exists (select 1 from public.task_activities where task_id = first_task and action = 'reopened') then
@@ -93,7 +116,7 @@ begin
   -- Thứ tự: thả task 2 ngay dưới task 1.
   second_task := public.crm_create_task(admin_user, board_uuid, '[TEST] việc 2', null, first_employee,
     null, null, null);
-  perform public.crm_move_task(admin_user, second_task, 'todo', first_task, null);
+  perform public.crm_move_task(admin_user, second_task, todo_column, first_task, null);
   if (select position from public.tasks where id = second_task)
     <= (select position from public.tasks where id = first_task) then
     raise exception 'Task 2 phải nằm dưới task 1';
@@ -119,6 +142,15 @@ begin
     select 1 from public.task_activities where task_id = first_task
       and action = 'collaborators_changed' and to_value -> 'employeeIds' = '[]'::jsonb) then
     raise exception 'Người phụ trách mới phải bị gỡ khỏi phối hợp, có activity';
+  end if;
+
+  -- Bình luận: trả lời 1 cấp.
+  root_comment := public.crm_add_comment(admin_user, first_task, '[TEST] bình luận', null);
+  reply_comment := public.crm_add_comment(admin_user, first_task, '[TEST] trả lời', root_comment);
+  perform pg_temp.expect_error(format('select public.crm_add_comment(%L, %L, %L, %L)',
+    admin_user, first_task, '[TEST] trả lời cấp 2', reply_comment), 'COMMENT_REPLY_TOO_DEEP');
+  if (select parent_id from public.task_comment_feed where id = reply_comment) <> root_comment then
+    raise exception 'Trả lời phải có parent_id';
   end if;
 
   -- BR-21: activity chỉ INSERT.

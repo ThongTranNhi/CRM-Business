@@ -7,13 +7,19 @@ Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](
 - Người phụ trách (`tasks.assignee_id`, NOT NULL — BR-12), người phối hợp (`task_collaborators.employee_id`),
   thành viên board (`board_members.employee_id`) → `employees`. Người tạo, người hoàn thành, người thao tác
   (`created_by`, `completed_by`, `task_activities.actor_id`, `task_comments.author_id`) → `app_accounts`.
-- `department_dashboards.department_id` UNIQUE (BR-04); `boards.dashboard_id` UNIQUE (1 board / Dashboard);
-  `board_columns (board_id, status)` UNIQUE — 3 cột `todo`, `in_progress`, `done` (BR-10).
+- `department_dashboards.department_id` UNIQUE (BR-04); `boards.dashboard_id` UNIQUE (1 board / Dashboard).
+- `board_columns` kiểu Trello: `status` là nhóm trạng thái của cột; `is_default` đánh dấu 3 cột mặc định
+  (BR-10). Unique `(board_id, position)`; partial unique `(board_id, status) where is_default`; unique
+  `(id, board_id, status)` làm đích khoá ngoại ghép. Đợt 2 không có thêm / sửa / xoá cột.
+- `tasks.column_id` NOT NULL, khoá ngoại ghép `tasks_column_status_fk (column_id, board_id, status) →
+board_columns(id, board_id, status)`: cột cùng board và status luôn khớp nhóm của cột.
+- `task_comments.parent_id` → `task_comments` (trả lời 1 cấp, `crm_add_comment` chặn trả lời vào trả lời).
 - `tasks`: `status`, `priority` dùng `check`; `position numeric` (thứ tự trong cột); `project_id` chưa có
   khoá ngoại (Đợt 3). Check có tên cố định để API map lỗi: `tasks_title_check`, `tasks_description_check`,
   `tasks_date_range_check`, `tasks_done_completed_at_check`, `tasks_completed_by_check` (BR-14),
   `task_checklist_items_content_check`, `task_comments_body_check`.
-  Index `(board_id, status, position)` cho task chưa lưu trữ, `assignee_id`, `department_id`, `due_date`.
+  Index `(column_id, position)` và `(board_id, status)` cho task chưa lưu trữ, `assignee_id`, `department_id`,
+  `due_date`.
 - Trigger: `updated_at` (`app_private.set_updated_at`) cho mọi bảng; chặn người phụ trách làm người phối
   hợp; `task_activities` chỉ INSERT (BR-21).
 - Xoá mềm: `tasks.archived_at` (BR-19), `task_checklist_items.deleted_at`.
@@ -23,7 +29,8 @@ Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](
   `task_activity_feed`, `task_comment_feed`.
 - RPC (chỉ `service_role` EXECUTE): `crm_work_access`, `crm_list_dashboards`, `crm_create_dashboard`,
   `crm_create_task`, `crm_move_task`, `crm_update_task`, `crm_set_task_collaborators`,
-  `crm_add_checklist_item`, `crm_update_checklist_item`, `crm_remove_checklist_item`, `crm_archive_task`;
+  `crm_add_checklist_item`, `crm_update_checklist_item`, `crm_remove_checklist_item`, `crm_add_comment`,
+  `crm_archive_task`;
   `crm_delete_employee` thêm `handover_employee_uuid` (người nhận phải thuộc board của từng việc bàn giao,
   sai → `HANDOVER_EMPLOYEE_NOT_IN_BOARD`). `crm_create_task` nhận cả ngày bắt đầu và người phối hợp.
   Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra tài khoản còn hoạt động, phòng chưa xoá (BR-06) và

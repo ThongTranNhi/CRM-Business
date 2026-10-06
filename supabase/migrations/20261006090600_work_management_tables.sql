@@ -43,18 +43,26 @@ create table if not exists public.boards (
   updated_at timestamptz not null default now()
 );
 
--- BR-10: 3 cột cố định, tên lưu ở DB để giao diện không hard-code.
+-- BR-10: cột kiểu Trello. `status` là nhóm trạng thái của cột (todo / in_progress / done). Đợt 2 chỉ có
+-- 3 cột mặc định (is_default); thêm cột tuỳ chỉnh: Đợt 3. Tên cột lưu ở DB, giao diện không hard-code.
 create table if not exists public.board_columns (
   id uuid primary key default gen_random_uuid(),
   board_id uuid not null references public.boards(id) on delete restrict,
-  status text not null check (status in ('todo', 'in_progress', 'done')),
-  name text not null check (name = btrim(name) and name <> ''),
+  status text not null constraint board_columns_status_check
+    check (status in ('todo', 'in_progress', 'done')),
+  name text not null constraint board_columns_name_check
+    check (name = btrim(name) and char_length(name) between 1 and 60),
   position smallint not null,
+  is_default boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (board_id, status),
-  unique (board_id, position)
+  constraint board_columns_position_unique unique (board_id, position),
+  -- Đích của khoá ngoại ghép từ tasks: status của task luôn khớp nhóm của cột.
+  constraint board_columns_id_board_status_unique unique (id, board_id, status)
 );
+-- Mỗi board có đúng 1 cột mặc định cho mỗi nhóm trạng thái (task mới vào cột mặc định nhóm todo).
+create unique index if not exists board_columns_default_status_unique
+  on public.board_columns (board_id, status) where is_default;
 
 -- Người ngoài phòng được mời vào Dashboard (BR-41). Giao diện quản lý: Đợt 3.
 create table if not exists public.board_members (
@@ -71,15 +79,18 @@ create index if not exists board_members_employee_idx on public.board_members (e
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   board_id uuid not null references public.boards(id) on delete restrict,
+  column_id uuid not null,
   department_id uuid not null references public.departments(id) on delete restrict,
   project_id uuid, -- Đợt 3: khoá ngoại tới projects
   title text not null constraint tasks_title_check
     check (title = btrim(title) and char_length(title) between 1 and 200),
   description text constraint tasks_description_check check (char_length(description) <= 5000),
-  status text not null default 'todo' check (status in ('todo', 'in_progress', 'done')),
+  status text not null default 'todo' constraint tasks_status_check
+    check (status in ('todo', 'in_progress', 'done')),
   position numeric not null,
   assignee_id uuid not null references public.employees(id) on delete restrict, -- BR-12
-  priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  priority text not null default 'normal' constraint tasks_priority_check
+    check (priority in ('low', 'normal', 'high', 'urgent')),
   start_date date,
   due_date date,
   started_at timestamptz,
@@ -94,10 +105,15 @@ create table if not exists public.tasks (
     check (start_date is null or due_date is null or start_date <= due_date),
   -- BR-14: đã hoàn thành ⇔ có completed_at và completed_by.
   constraint tasks_done_completed_at_check check ((status = 'done') = (completed_at is not null)),
-  constraint tasks_completed_by_check check ((completed_at is null) = (completed_by is null))
+  constraint tasks_completed_by_check check ((completed_at is null) = (completed_by is null)),
+  -- Cột của task phải thuộc cùng board và status = nhóm trạng thái của cột (không cần trigger).
+  constraint tasks_column_status_fk foreign key (column_id, board_id, status)
+    references public.board_columns (id, board_id, status) on delete restrict
 );
-create index if not exists tasks_board_status_position_idx
-  on public.tasks (board_id, status, position) where archived_at is null;
+create index if not exists tasks_column_position_idx
+  on public.tasks (column_id, position) where archived_at is null;
+create index if not exists tasks_board_status_idx
+  on public.tasks (board_id, status) where archived_at is null;
 create index if not exists tasks_assignee_idx on public.tasks (assignee_id);
 create index if not exists tasks_department_idx on public.tasks (department_id);
 create index if not exists tasks_due_date_idx on public.tasks (due_date);
@@ -141,9 +157,11 @@ create table if not exists public.task_checklist_items (
 create index if not exists task_checklist_items_task_idx
   on public.task_checklist_items (task_id, position) where deleted_at is null;
 
+-- Trả lời 1 cấp: parent_id trỏ tới bình luận gốc (crm_add_comment chặn trả lời vào một trả lời).
 create table if not exists public.task_comments (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete restrict,
+  parent_id uuid references public.task_comments(id) on delete restrict,
   author_id uuid not null references public.app_accounts(id) on delete restrict,
   body text not null constraint task_comments_body_check
     check (body = btrim(body) and char_length(body) between 1 and 5000),
@@ -151,6 +169,7 @@ create table if not exists public.task_comments (
   updated_at timestamptz not null default now()
 );
 create index if not exists task_comments_task_idx on public.task_comments (task_id, created_at);
+create index if not exists task_comments_parent_idx on public.task_comments (task_id, parent_id);
 
 -- BR-21: chỉ INSERT. Danh sách hành động: docs/features/work-management/activity-log.md.
 create table if not exists public.task_activities (
@@ -210,7 +229,8 @@ from public.app_accounts a
 left join public.employees e on e.account_id = a.id;
 
 create or replace view public.task_cards with (security_invoker = true) as
-select t.id, t.board_id, t.title, t.status, t.position, t.priority, t.due_date, t.completed_at,
+select t.id, t.board_id, t.column_id, t.title, t.status, t.position, t.priority, t.due_date,
+  t.completed_at,
   t.assignee_id, e.full_name as assignee_name, e.avatar_path as assignee_avatar_path,
   e.archived_at is not null as assignee_archived,
   coalesce((select jsonb_agg(jsonb_build_object('id', ce.id, 'name', ce.full_name,
@@ -233,7 +253,7 @@ from public.task_activities v
 left join public.account_profiles p on p.account_id = v.actor_id;
 
 create or replace view public.task_comment_feed with (security_invoker = true) as
-select m.id, m.task_id, m.body, m.created_at, m.author_id,
+select m.id, m.task_id, m.parent_id, m.body, m.created_at, m.author_id,
   p.display_name as author_name, p.avatar_path as author_avatar_path
 from public.task_comments m
 left join public.account_profiles p on p.account_id = m.author_id;
@@ -254,14 +274,12 @@ alter table public.task_comments enable row level security;
 alter table public.task_activities enable row level security;
 
 -- API chỉ đọc trực tiếp; mọi thao tác ghi qua RPC 20261006090700 (ghi activity cùng giao dịch).
--- Bình luận là thao tác ghi duy nhất không qua RPC (không kèm activity).
 revoke all on public.department_dashboards, public.boards, public.board_columns,
   public.board_members, public.tasks, public.task_collaborators, public.task_checklist_items,
   public.task_comments, public.task_activities from public, anon, authenticated, service_role;
 grant select on public.department_dashboards, public.boards, public.board_columns,
   public.board_members, public.tasks, public.task_collaborators, public.task_checklist_items,
   public.task_comments, public.task_activities to service_role;
-grant insert on public.task_comments to service_role;
 
 insert into app_private.applied_migrations (name)
 values ('20261006090600_work_management_tables.sql')

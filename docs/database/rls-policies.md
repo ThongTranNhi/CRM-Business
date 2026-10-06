@@ -31,7 +31,7 @@ Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều t
 ## Đợt 2 — Work Management (2026-10-06)
 
 - Bật RLS trên 9 bảng mới, không policy cho `anon` / `authenticated` (mặc định từ chối).
-- `service_role` chỉ được SELECT; riêng `task_comments` có thêm INSERT. Mọi thao tác ghi khác đi qua RPC
-  `security definer` để activity được ghi cùng giao dịch.
+- `service_role` chỉ được SELECT. Mọi thao tác ghi (kể cả bình luận) đi qua RPC `security definer` để
+  activity và ràng buộc nghiệp vụ được xử lý cùng giao dịch.
 - View đọc mới (`security_invoker = true`) chỉ `service_role` SELECT. RPC mới chỉ `service_role` EXECUTE;
   hàm trợ giúp trong `app_private` không ai gọi trực tiếp được.

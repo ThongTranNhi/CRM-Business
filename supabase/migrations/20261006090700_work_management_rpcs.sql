@@ -149,23 +149,23 @@ end;
 $$;
 
 -- drag-and-drop.md: thả giữa A và B → (A + B) / 2; đầu cột → đầu - 1024; cuối cột → cuối + 1024.
-create or replace function app_private.crm_renumber_column(board_uuid uuid, column_status text)
+-- Thứ tự tính trong phạm vi một cột (column_id).
+create or replace function app_private.crm_renumber_column(column_uuid uuid)
 returns void language sql security definer set search_path = '' as $$
   update public.tasks t set position = r.rank * 1024
   from (select id, row_number() over (order by position, created_at, id) as rank
-    from public.tasks where board_id = board_uuid and status = column_status and archived_at is null) r
+    from public.tasks where column_id = column_uuid and archived_at is null) r
   where t.id = r.id;
 $$;
 
 create or replace function app_private.crm_neighbor_position(
-  board_uuid uuid, column_status text, task_uuid uuid, neighbor_uuid uuid
+  column_uuid uuid, task_uuid uuid, neighbor_uuid uuid
 ) returns numeric language plpgsql security definer set search_path = '' as $$
 declare neighbor_position numeric;
 begin
   if neighbor_uuid is null then return null; end if;
   select position into neighbor_position from public.tasks
-  where id = neighbor_uuid and id <> task_uuid and board_id = board_uuid
-    and status = column_status and archived_at is null;
+  where id = neighbor_uuid and id <> task_uuid and column_id = column_uuid and archived_at is null;
   if not found then raise exception 'INVALID_POSITION'; end if;
   return neighbor_position;
 end;
@@ -173,29 +173,35 @@ $$;
 
 -- previous = task ngay trên chỗ thả, next = task ngay dưới. Không truyền cả hai → cuối cột.
 create or replace function app_private.crm_task_position(
-  task_row public.tasks, column_status text, previous_uuid uuid, next_uuid uuid
+  task_uuid uuid, column_uuid uuid, previous_uuid uuid, next_uuid uuid
 ) returns numeric language plpgsql security definer set search_path = '' as $$
 declare previous_position numeric; next_position numeric;
 begin
   if previous_uuid is null and next_uuid is null then
     select max(position) + 1024 into previous_position from public.tasks
-    where board_id = task_row.board_id and status = column_status
-      and archived_at is null and id <> task_row.id;
+    where column_id = column_uuid and archived_at is null and id <> task_uuid;
     return coalesce(previous_position, 0);
   end if;
-  previous_position := app_private.crm_neighbor_position(task_row.board_id, column_status, task_row.id, previous_uuid);
-  next_position := app_private.crm_neighbor_position(task_row.board_id, column_status, task_row.id, next_uuid);
+  previous_position := app_private.crm_neighbor_position(column_uuid, task_uuid, previous_uuid);
+  next_position := app_private.crm_neighbor_position(column_uuid, task_uuid, next_uuid);
   if next_position <= previous_position then raise exception 'INVALID_POSITION'; end if;
   if next_position - previous_position < 0.001 then
-    perform app_private.crm_renumber_column(task_row.board_id, column_status);
-    previous_position := app_private.crm_neighbor_position(task_row.board_id, column_status, task_row.id, previous_uuid);
-    next_position := app_private.crm_neighbor_position(task_row.board_id, column_status, task_row.id, next_uuid);
+    perform app_private.crm_renumber_column(column_uuid);
+    previous_position := app_private.crm_neighbor_position(column_uuid, task_uuid, previous_uuid);
+    next_position := app_private.crm_neighbor_position(column_uuid, task_uuid, next_uuid);
   end if;
   return case
     when previous_position is null then next_position - 1024
     when next_position is null then previous_position + 1024
     else (previous_position + next_position) / 2 end;
 end;
+$$;
+
+-- Giá trị from/to của activity 'moved'.
+create or replace function app_private.crm_column_ref(column_row public.board_columns) returns jsonb
+language sql immutable set search_path = '' as $$
+  select jsonb_build_object('columnId', column_row.id, 'columnName', column_row.name,
+    'status', column_row.status);
 $$;
 
 -- ---------- Đọc: dữ liệu để service quyết định quyền ----------
@@ -246,7 +252,8 @@ $$;
 
 -- ---------- Ghi ----------
 
--- BR-02, BR-04, BR-10: Dashboard + board + 3 cột trong một giao dịch; phòng đã có thì trả Dashboard cũ.
+-- BR-02, BR-04, BR-10: Dashboard + board + 3 cột mặc định trong một giao dịch; phòng đã có thì trả
+-- Dashboard cũ.
 create or replace function public.crm_create_dashboard(
   actor_uuid uuid, department_uuid uuid, dashboard_name text, dashboard_description text
 ) returns jsonb language plpgsql security definer set search_path = '' as $$
@@ -265,31 +272,33 @@ begin
   returning id into dashboard_uuid;
   insert into public.boards (dashboard_id, created_by) values (dashboard_uuid, actor_id)
   returning id into board_uuid;
-  insert into public.board_columns (board_id, status, name, position) values
-    (board_uuid, 'todo', 'VIỆC CẦN LÀM', 1),
-    (board_uuid, 'in_progress', 'VIỆC ĐANG LÀM', 2),
-    (board_uuid, 'done', 'ĐÃ HOÀN THÀNH', 3);
+  insert into public.board_columns (board_id, status, name, position, is_default) values
+    (board_uuid, 'todo', 'VIỆC CẦN LÀM', 1, true),
+    (board_uuid, 'in_progress', 'VIỆC ĐANG LÀM', 2, true),
+    (board_uuid, 'done', 'ĐÃ HOÀN THÀNH', 3, true);
   return jsonb_build_object('dashboardId', dashboard_uuid, 'created', true);
 end;
 $$;
 
--- BR-11: department_id lấy từ Dashboard, không nhận từ client. Task mới nằm đầu cột Việc cần làm.
+-- BR-11: department_id lấy từ Dashboard, không nhận từ client. Task mới nằm đầu cột mặc định nhóm todo.
 -- Tạo task + người phối hợp + activity trong một giao dịch.
 create or replace function public.crm_create_task(
   actor_uuid uuid, board_uuid uuid, task_title text, task_description text, assignee_uuid uuid,
   task_priority text, task_start_date date, task_due_date date, collaborator_uuids uuid[] default '{}'
 ) returns uuid language plpgsql security definer set search_path = '' as $$
-declare actor_id uuid; task_row public.tasks;
+declare actor_id uuid; todo_column uuid; task_row public.tasks;
 begin
   actor_id := app_private.crm_work_actor(actor_uuid);
   perform app_private.crm_assert_board_writable(board_uuid);
   if assignee_uuid is null then raise exception 'ASSIGNEE_REQUIRED'; end if;
   perform app_private.crm_assert_board_member(board_uuid, assignee_uuid);
-  insert into public.tasks (board_id, department_id, title, description, position, assignee_id,
-    priority, start_date, due_date, created_by)
-  select board_uuid, dd.department_id, btrim(task_title), nullif(btrim(task_description), ''),
-    coalesce((select min(position) from public.tasks
-      where board_id = board_uuid and status = 'todo' and archived_at is null), 1024) - 1024,
+  select id into todo_column from public.board_columns
+  where board_id = board_uuid and status = 'todo' and is_default;
+  insert into public.tasks (board_id, column_id, department_id, title, description, status, position,
+    assignee_id, priority, start_date, due_date, created_by)
+  select board_uuid, todo_column, dd.department_id, btrim(task_title), nullif(btrim(task_description), ''),
+    'todo', coalesce((select min(position) from public.tasks
+      where column_id = todo_column and archived_at is null), 1024) - 1024,
     assignee_uuid, coalesce(task_priority, 'normal'), task_start_date, task_due_date, actor_id
   from public.boards b join public.department_dashboards dd on dd.id = b.dashboard_id
   where b.id = board_uuid
@@ -305,37 +314,41 @@ begin
 end;
 $$;
 
--- BR-13, BR-14, BR-15: đổi cột / thứ tự; position tính từ task lân cận, không nhận từ client.
+-- BR-13, BR-14, BR-15: đổi cột / thứ tự; cột đích phải cùng board, status = nhóm của cột đích.
+-- position tính từ task lân cận, không nhận từ client. BR-13 / BR-14 theo việc đổi NHÓM trạng thái.
 create or replace function public.crm_move_task(
-  actor_uuid uuid, task_uuid uuid, to_status text, previous_task_uuid uuid, next_task_uuid uuid
+  actor_uuid uuid, task_uuid uuid, to_column_uuid uuid, previous_task_uuid uuid, next_task_uuid uuid
 ) returns jsonb language plpgsql security definer set search_path = '' as $$
-declare actor_id uuid; old_row public.tasks; new_row public.tasks; new_position numeric;
+declare
+  actor_id uuid; old_row public.tasks; new_row public.tasks;
+  old_column public.board_columns; new_column public.board_columns; new_position numeric;
 begin
   actor_id := app_private.crm_work_actor(actor_uuid);
-  if to_status is null or to_status not in ('todo', 'in_progress', 'done') then
-    raise exception 'INVALID_STATUS';
-  end if;
   old_row := app_private.crm_lock_writable_task(task_uuid);
+  select * into new_column from public.board_columns
+  where id = to_column_uuid and board_id = old_row.board_id;
+  if not found then raise exception 'INVALID_COLUMN'; end if;
+  select * into old_column from public.board_columns where id = old_row.column_id;
   -- Tính trước UPDATE: crm_task_position có thể đánh số lại cả cột (gồm chính task này).
-  new_position := app_private.crm_task_position(old_row, to_status, previous_task_uuid, next_task_uuid);
-  update public.tasks set status = to_status, position = new_position,
-    started_at = case when to_status = 'in_progress' then coalesce(started_at, now()) else started_at end,
-    completed_at = case when to_status <> 'done' then null else coalesce(completed_at, now()) end,
-    completed_by = case when to_status <> 'done' then null else coalesce(completed_by, actor_id) end
+  new_position := app_private.crm_task_position(task_uuid, new_column.id, previous_task_uuid, next_task_uuid);
+  update public.tasks set column_id = new_column.id, status = new_column.status, position = new_position,
+    started_at = case when new_column.status = 'in_progress' then coalesce(started_at, now()) else started_at end,
+    completed_at = case when new_column.status <> 'done' then null else coalesce(completed_at, now()) end,
+    completed_by = case when new_column.status <> 'done' then null else coalesce(completed_by, actor_id) end
   where id = task_uuid
   returning * into new_row;
-  if old_row.status <> to_status then
+  if old_column.id <> new_column.id then
     perform app_private.crm_log_task(task_uuid, actor_id, 'moved',
-      jsonb_build_object('status', old_row.status), jsonb_build_object('status', to_status));
-    if to_status = 'done' then
-      perform app_private.crm_log_task(task_uuid, actor_id, 'completed', null, null);
-    elsif old_row.status = 'done' then
-      perform app_private.crm_log_task(task_uuid, actor_id, 'reopened', null, null);
-    end if;
+      app_private.crm_column_ref(old_column), app_private.crm_column_ref(new_column));
   end if;
-  return jsonb_build_object('id', new_row.id, 'status', new_row.status, 'position', new_row.position,
-    'startedAt', new_row.started_at, 'completedAt', new_row.completed_at,
-    'completedBy', new_row.completed_by);
+  if old_row.status <> new_row.status and new_row.status = 'done' then
+    perform app_private.crm_log_task(task_uuid, actor_id, 'completed', null, null);
+  elsif old_row.status <> new_row.status and old_row.status = 'done' then
+    perform app_private.crm_log_task(task_uuid, actor_id, 'reopened', null, null);
+  end if;
+  return jsonb_build_object('id', new_row.id, 'columnId', new_row.column_id, 'status', new_row.status,
+    'position', new_row.position, 'startedAt', new_row.started_at,
+    'completedAt', new_row.completed_at, 'completedBy', new_row.completed_by);
 end;
 $$;
 
@@ -438,6 +451,27 @@ begin
 end;
 $$;
 
+-- Bình luận và trả lời 1 cấp (task-management.md). Không ghi activity (activity-log.md).
+create or replace function public.crm_add_comment(
+  actor_uuid uuid, task_uuid uuid, comment_body text, parent_uuid uuid
+) returns uuid language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid; parent_of_parent uuid; comment_uuid uuid;
+begin
+  actor_id := app_private.crm_work_actor(actor_uuid);
+  perform app_private.crm_lock_writable_task(task_uuid);
+  if parent_uuid is not null then
+    select parent_id into parent_of_parent from public.task_comments
+    where id = parent_uuid and task_id = task_uuid;
+    if not found then raise exception 'COMMENT_NOT_FOUND'; end if;
+    if parent_of_parent is not null then raise exception 'COMMENT_REPLY_TOO_DEEP'; end if;
+  end if;
+  insert into public.task_comments (task_id, parent_id, author_id, body)
+  values (task_uuid, parent_uuid, actor_id, btrim(comment_body))
+  returning id into comment_uuid;
+  return comment_uuid;
+end;
+$$;
+
 -- BR-19, BR-22: lưu trữ task (không xoá), ghi activity và audit log.
 create or replace function public.crm_archive_task(actor_uuid uuid, task_uuid uuid)
 returns void language plpgsql security definer set search_path = '' as $$
@@ -466,21 +500,23 @@ begin
     'app_private.crm_log_collaborators(uuid, uuid, uuid[])',
     'app_private.crm_drop_collaborator(uuid, uuid, uuid)',
     'app_private.crm_log_task_changes(public.tasks, public.tasks, uuid)',
-    'app_private.crm_renumber_column(uuid, text)',
-    'app_private.crm_neighbor_position(uuid, text, uuid, uuid)',
-    'app_private.crm_task_position(public.tasks, text, uuid, uuid)'] loop
+    'app_private.crm_renumber_column(uuid)',
+    'app_private.crm_neighbor_position(uuid, uuid, uuid)',
+    'app_private.crm_task_position(uuid, uuid, uuid, uuid)',
+    'app_private.crm_column_ref(public.board_columns)'] loop
     execute format('revoke all on function %s from public, anon, authenticated, service_role', signature);
   end loop;
   foreach signature in array array[
     'public.crm_work_access(uuid, uuid, uuid)', 'public.crm_list_dashboards(uuid, boolean)',
     'public.crm_create_dashboard(uuid, uuid, text, text)',
     'public.crm_create_task(uuid, uuid, text, text, uuid, text, date, date, uuid[])',
-    'public.crm_move_task(uuid, uuid, text, uuid, uuid)',
+    'public.crm_move_task(uuid, uuid, uuid, uuid, uuid)',
     'public.crm_update_task(uuid, uuid, jsonb)',
     'public.crm_set_task_collaborators(uuid, uuid, uuid[])',
     'public.crm_add_checklist_item(uuid, uuid, text)',
     'public.crm_update_checklist_item(uuid, uuid, uuid, text, boolean)',
     'public.crm_remove_checklist_item(uuid, uuid, uuid)',
+    'public.crm_add_comment(uuid, uuid, text, uuid)',
     'public.crm_archive_task(uuid, uuid)'] loop
     execute format('revoke all on function %s from public, anon, authenticated', signature);
     execute format('grant execute on function %s to service_role', signature);
