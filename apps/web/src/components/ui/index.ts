@@ -1,4 +1,5 @@
 export { Avatar, getInitials } from './Avatar';
+export { AvatarGroup } from './AvatarGroup';
 export { Badge, type BadgeTone } from './Badge';
 export { Button } from './Button';
 export { ButtonLink } from './ButtonLink';
@@ -16,4 +17,5 @@ export { Select, type SelectOption } from './Select';
 export { Skeleton } from './Skeleton';
 export { Table, type TableColumn } from './Table';
 export { Tabs, type TabItem } from './Tabs';
+export { Textarea } from './Textarea';
 export { ToastProvider, useToast } from './Toast';

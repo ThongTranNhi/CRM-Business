@@ -27,7 +27,8 @@ Quyền kiểm tra cả middleware lẫn service; RPC kiểm tra actor role lầ
 ## Ô chọn nhân viên — super_admin, hr_admin
 
 GET `/api/users/employees/options?q=`: tối đa 20 người **chưa bị xoá** (view `active_employees`),
-`[{ id, fullName, jobTitle, departmentName }]`. Dùng cho chọn trưởng phòng, thêm thành viên.
+`[{ id, fullName, jobTitle, departmentName, role }]` (`role` null nếu chưa có tài khoản). Dùng cho chọn
+trưởng phòng (cảnh báo khi người được chọn chưa có role `department_manager`), thêm thành viên.
 
 ## Hồ sơ của tôi
 

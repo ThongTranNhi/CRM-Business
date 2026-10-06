@@ -22,6 +22,8 @@ export interface DepartmentListItem {
   manager: PersonRef | null;
   memberCount: number;
   archivedAt: string | null;
+  /** Dashboard chính của phòng (BR-04), null nếu chưa có. */
+  dashboardId: string | null;
 }
 
 export interface DepartmentMember {

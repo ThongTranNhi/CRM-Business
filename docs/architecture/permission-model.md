@@ -38,6 +38,13 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 
 ## Dữ liệu cần cho kiểm tra
 
-- `app_metadata.role` trong JWT.
-- `department_members(user_id, department_id, member_role)` với `member_role ∈ {manager, leader, member}`.
-- `board_members(board_id, user_id)` cho người ngoài phòng được mời vào Dashboard.
+- `app_metadata.role` trong JWT (khớp `app_accounts.role`).
+- Thành viên phòng = `employees.department_id`. **Trưởng phòng** của phòng X = role `department_manager`
+  **và** là `departments.manager_employee_id` của X (cả hai điều kiện). `/api/auth/me` trả `managedDepartmentId`.
+- `board_members(board_id, employee_id)` cho người ngoài phòng được mời vào Dashboard.
+- Work Management: RPC `crm_work_access` trả các dữ kiện trên cho một board / task; quyền tính bằng hàm thuần
+  `apps/api/src/lib/work-access.ts` (có test). HR Admin xem mọi Dashboard nhưng chỉ đọc, trừ khi là thành viên
+  board. Phòng ban đã xoá → Dashboard chỉ đọc với mọi người (BR-06).
+- HR Admin cũng là nhân viên của phòng mình (thường là phòng Nhân sự): trên Dashboard phòng đó, HR Admin ghi
+  được như một thành viên bình thường (tạo task, bình luận, sửa / kéo task mình phụ trách hoặc phối hợp, lưu
+  trữ task mình tạo); với Dashboard phòng khác chỉ đọc.

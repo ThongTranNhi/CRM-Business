@@ -63,6 +63,9 @@ export async function getSessionContext(env: Env, userId: string, sessionId: str
   return state;
 }
 
+/** Hồ sơ nhân viên của người gọi (null nếu chưa có), dùng cho kiểm tra quyền ở module khác. */
+export const getEmployeeSummary = findEmployeeSummary;
+
 /** GET /api/auth/me: trạng thái phiên + tên, phòng ban để hiển thị menu tài khoản và can(). */
 export async function getCurrentUser(env: Env, userId: string, sessionId: string) {
   const [state, employee] = await Promise.all([
@@ -75,6 +78,7 @@ export async function getCurrentUser(env: Env, userId: string, sessionId: string
     fullName: employee?.fullName ?? state.username,
     departmentId: employee?.departmentId ?? null,
     departmentName: employee?.departmentName ?? null,
+    managedDepartmentId: employee?.managedDepartmentId ?? null,
   };
 }
 

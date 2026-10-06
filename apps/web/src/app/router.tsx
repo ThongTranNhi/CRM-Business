@@ -35,6 +35,9 @@ const DepartmentListPage = lazy(() =>
 const DepartmentDetailPage = lazy(() =>
   import('@/features/departments').then((m) => ({ default: m.DepartmentDetailPage })),
 );
+const WorkspacePage = lazy(() =>
+  import('@/features/workspace').then((m) => ({ default: m.WorkspacePage })),
+);
 
 function page(element: ReactNode) {
   return <Suspense fallback={<Skeleton className="h-40 w-full" />}>{element}</Suspense>;
@@ -71,6 +74,7 @@ const appRoutes: RouteObject[] = [
   guarded('employees.view', { path: 'employees/:id', element: page(<EmployeeDetailPage />) }),
   { path: 'departments', element: page(<DepartmentListPage />) },
   { path: 'departments/:id', element: page(<DepartmentDetailPage />) },
+  { path: 'workspace', element: page(<WorkspacePage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>
     guarded(permission, { path, element: <PlaceholderPage title={title} /> }),
   ),

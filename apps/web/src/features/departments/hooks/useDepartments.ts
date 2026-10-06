@@ -1,5 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { getDepartment, listDepartmentOptions, listDepartments } from '../api/departments.api';
+import {
+  getDepartment,
+  listDepartmentOptions,
+  listDepartments,
+  listDepartmentsWithoutDashboard,
+} from '../api/departments.api';
 import type { DepartmentListParams } from '../types';
 
 // Danh sách phòng ban ít thay đổi (frontend-rules: staleTime vài phút); ghi xong thì invalidate.
@@ -9,6 +14,7 @@ const departmentKeys = {
   list: (params: DepartmentListParams) => ['departments', 'list', params] as const,
   detail: (id: string) => ['departments', 'detail', id] as const,
   options: ['departments', 'options'] as const,
+  withoutDashboard: ['departments', 'without-dashboard'] as const,
 };
 
 export function useDepartments(params: DepartmentListParams) {
@@ -32,6 +38,14 @@ export function useDepartmentOptions() {
   return useQuery({
     queryKey: departmentKeys.options,
     queryFn: listDepartmentOptions,
+    staleTime: STALE_MS,
+  });
+}
+
+export function useDepartmentsWithoutDashboard() {
+  return useQuery({
+    queryKey: departmentKeys.withoutDashboard,
+    queryFn: listDepartmentsWithoutDashboard,
     staleTime: STALE_MS,
   });
 }

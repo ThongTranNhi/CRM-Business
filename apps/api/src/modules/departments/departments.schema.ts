@@ -12,6 +12,8 @@ export const departmentIdSchema = z.uuid();
 export const listDepartmentsQuerySchema = paginationSchema.extend({
   status: z.enum(['active', 'deleted']).default('active'),
   q: searchSchema,
+  /** Chỉ phòng chưa có Dashboard (modal Tạo Dashboard, ghi chú ở Workspace). */
+  withoutDashboard: z.stringbool().default(false),
 });
 
 export const createDepartmentSchema = z

@@ -17,6 +17,10 @@ export const listDepartments = ({ status, q, page }: DepartmentListParams) =>
 export const listDepartmentOptions = async () =>
   (await apiPage<Department>(withQuery(BASE, { pageSize: 100 }))).data;
 
+/** Phòng chưa có Dashboard (API trả đủ, không phân trang): modal Tạo Dashboard, ghi chú ở Workspace. */
+export const listDepartmentsWithoutDashboard = async () =>
+  (await apiPage<Department>(withQuery(BASE, { withoutDashboard: 'true' }))).data;
+
 export const getDepartment = (id: string) => apiRequest<DepartmentDetail>(`${BASE}/${id}`);
 
 export const createDepartment = (input: { name: string; managerId: string | null }) =>

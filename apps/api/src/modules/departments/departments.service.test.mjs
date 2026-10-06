@@ -104,6 +104,19 @@ test('departments service (BR-08, BR-09)', async (t) => {
     await service.getDepartment(scopeAs('employee'), 'dept-1');
     assert.ok(urls.every((url) => /\/rest\/v1\/active_(departments|employees)\?/.test(url)));
   });
+  await t.test('list carries dashboardId; withoutDashboard filters in the database', async () => {
+    const urls = [];
+    globalThis.fetch = async (url) => {
+      urls.push(decodeURIComponent(String(url)));
+      return Response.json([{ ...departmentRow, department_dashboards: { id: 'dash-1' } }]);
+    };
+    const page = await service.listDepartments(scopeAs('employee'), listQuery);
+    assert.equal(page.data[0].dashboardId, 'dash-1');
+    await service.listDepartments(scopeAs('employee'), { ...listQuery, withoutDashboard: true });
+    const lastUrl = urls.at(-1);
+    assert.match(lastUrl, /department_dashboards=is\.null/);
+    assert.doesNotMatch(lastUrl, /limit=/);
+  });
   await t.test('unknown department returns 404', async () => {
     globalThis.fetch = async () => Response.json([]);
     await assert.rejects(() => service.getDepartment(scopeAs('employee'), 'missing'), {

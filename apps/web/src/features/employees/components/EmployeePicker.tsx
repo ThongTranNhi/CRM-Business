@@ -1,11 +1,14 @@
 import { useId, useState } from 'react';
 import { Avatar, Button, SearchInput, Skeleton } from '@/components/ui';
+import type { Role } from '@/features/auth';
 import { useEmployeeOptions } from '../hooks/useDirectory';
 import type { EmployeeOption } from '../types';
 
 export interface PickedEmployee {
   id: string;
   fullName: string;
+  /** Có khi vừa chọn từ danh sách; người đã gán từ trước không kèm role. */
+  role?: Role | null;
 }
 
 interface EmployeePickerProps {
@@ -48,7 +51,9 @@ export function EmployeePicker({ label, value, onChange, excludeIds = [] }: Empl
             isError={options.isError}
             onRetry={() => void options.refetch()}
             items={(options.data ?? []).filter((option) => !excludeIds.includes(option.id))}
-            onSelect={(option) => onChange({ id: option.id, fullName: option.fullName })}
+            onSelect={(option) =>
+              onChange({ id: option.id, fullName: option.fullName, role: option.role })
+            }
           />
         </>
       )}

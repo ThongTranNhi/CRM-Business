@@ -1,3 +1,4 @@
+import type { Role } from '@/features/auth';
 export interface OwnProfile {
   id: string;
   fullName: string;
@@ -46,4 +47,5 @@ export interface EmployeeOption {
   fullName: string;
   jobTitle: string | null;
   departmentName: string | null;
+  role: Role | null;
 }

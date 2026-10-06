@@ -1,3 +1,4 @@
+import type { Role } from '../../config/constants';
 import type { z } from 'zod';
 import type {
   adminEmployeeSchema,
@@ -35,6 +36,8 @@ export interface EmployeeOption {
   fullName: string;
   jobTitle: string | null;
   departmentName: string | null;
+  /** Role tài khoản; null nếu chưa có tài khoản. Form chọn trưởng phòng cảnh báo khi chưa phải Trưởng phòng. */
+  role: Role | null;
 }
 
 /** Ảnh chỉ được ký URL khi nằm trong thư mục UUID của chính chủ tài khoản. */

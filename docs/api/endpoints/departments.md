@@ -17,7 +17,8 @@ Ghi dữ liệu đi qua RPC trong `supabase/migrations/20261006090200_department
 
 ## GET `/api/departments`
 
-Query: `status=active|deleted` (mặc định `active`), `q` (tìm theo tên), `page`, `pageSize` (≤ 100).
+Query: `status=active|deleted` (mặc định `active`), `q` (tìm theo tên), `withoutDashboard=true` (chỉ phòng
+chưa có Dashboard — modal Tạo Dashboard, ghi chú ở Workspace), `page`, `pageSize` (≤ 100).
 
 ```json
 {
@@ -27,7 +28,8 @@ Query: `status=active|deleted` (mặc định `active`), `q` (tìm theo tên), `
       "name": "Kinh doanh",
       "manager": { "id": "uuid", "fullName": "Nguyễn Minh Anh" },
       "memberCount": 3,
-      "archivedAt": null
+      "archivedAt": null,
+      "dashboardId": "uuid"
     }
   ],
   "meta": { "page": 1, "pageSize": 20, "total": 4 }
@@ -35,7 +37,7 @@ Query: `status=active|deleted` (mặc định `active`), `q` (tìm theo tên), `
 ```
 
 `manager: null` = "Chưa có trưởng phòng". Với `status=deleted`: `manager` null, `memberCount` 0, có `archivedAt`.
-Thông tin Dashboard (Đã có / Chưa có) bổ sung ở Đợt 2 khi có bảng `department_dashboards`.
+`dashboardId`: Dashboard chính của phòng (BR-04), `null` = chưa có. GET `/:id` cũng trả trường này.
 
 ## GET `/api/departments/:id`
 

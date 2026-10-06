@@ -14,4 +14,6 @@ export interface CurrentUser {
   fullName: string | null;
   departmentId: string | null;
   departmentName: string | null;
+  /** Phòng người này là trưởng phòng (manager_employee_id); null nếu không. */
+  managedDepartmentId: string | null;
 }
