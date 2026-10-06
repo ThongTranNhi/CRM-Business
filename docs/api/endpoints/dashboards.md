@@ -72,7 +72,8 @@ Super Admin, HR Admin thấy mọi Dashboard; người khác thấy Dashboard c�
   người phụ trách / phối hợp.
 - `viewer.canWrite`: tạo task, bình luận. `viewer.canEditAllTasks`: sửa / kéo mọi task (Super Admin, Trưởng
   phòng, Trưởng nhóm của phòng). Phòng đã xoá → cả hai `false` (BR-06).
-- Lỗi: `404 DASHBOARD_NOT_FOUND`, `403 FORBIDDEN` (không thuộc phòng / board).
+- Lỗi: `400 VALIDATION_ERROR` (id không phải UUID), `404 DASHBOARD_NOT_FOUND`, `403 FORBIDDEN`
+  (không thuộc phòng / board).
 
 ## POST `/api/department-dashboards`
 

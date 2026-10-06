@@ -142,6 +142,22 @@ test('department dashboards service (BR-03 → BR-05, BR-41)', async (t) => {
     assert.equal(card.isReadOnly, true);
     assert.deepEqual(card.counts, { open: 2, inProgress: 1, overdue: 0 });
   });
+  await t.test('HR Admin can write on the board of their own (HR) department', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_list_dashboards: [summaryRow],
+      active_employees: [
+        {
+          id: ids.employee,
+          full_name: 'Nhân sự',
+          department_id: ids.department,
+          department_name: 'Nhân sự',
+          department_manager_id: null,
+        },
+      ],
+    }).fetch;
+    const [card] = await service.listDashboards(scopeAs('hr_admin'));
+    assert.equal(card.isReadOnly, false);
+  });
   await t.test('employee of another department cannot open the board', async () => {
     globalThis.fetch = fakeDatabase({
       dashboard_summaries: [summaryRow],

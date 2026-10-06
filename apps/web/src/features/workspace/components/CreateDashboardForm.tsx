@@ -7,6 +7,7 @@ import {
   type CreateDashboardErrors,
 } from '../schemas/create-dashboard.schema';
 import type { DepartmentOption } from '../types';
+import { initialDepartment } from '../workspace.utils';
 
 interface CreateDashboardFormProps {
   options: DepartmentOption[];
@@ -23,9 +24,9 @@ export function CreateDashboardForm({
   onNewDepartment,
   onCancel,
 }: CreateDashboardFormProps) {
-  const initial = options.find((option) => option.id === initialDepartmentId) ?? options[0];
-  const [departmentId, setDepartmentId] = useState(initial?.id ?? '');
-  const [name, setName] = useState(initial?.name ?? '');
+  const initial = initialDepartment(options, initialDepartmentId);
+  const [departmentId, setDepartmentId] = useState(initial.option?.id ?? '');
+  const [name, setName] = useState(initial.option?.name ?? '');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<CreateDashboardErrors>({});
   const { submit, isPending } = useSubmitDashboard();
@@ -53,9 +54,15 @@ export function CreateDashboardForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      {initial.isUnavailable && departmentId === '' && (
+        <p role="status" className="rounded-lg bg-warning-100 px-3 py-2 text-sm text-warning-800">
+          Phòng này đã có Dashboard hoặc bạn không có quyền tạo.
+        </p>
+      )}
       {options.length > 0 ? (
         <Select
           label="Phòng ban"
+          placeholder="Chọn phòng ban"
           options={options.map((option) => ({
             value: option.id,
             label: option.isNew ? `${option.name} (mới tạo)` : option.name,

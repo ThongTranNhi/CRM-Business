@@ -39,6 +39,16 @@ test('work permissions (permission-model.md)', async (t) => {
     assert.equal(access.taskPermissions(invited, relation()).canEdit, false);
     assert.equal(access.taskPermissions(invited, relation({ isAssignee: true })).canEdit, true);
   });
+  await t.test('HR Admin works on the HR department board like any member', () => {
+    const hrStaff = viewer('hr_admin', { isDepartmentMember: true });
+    assert.deepEqual(access.boardPermissions(hrStaff), {
+      canView: true,
+      canWrite: true,
+      canEditAllTasks: false,
+    });
+    assert.equal(access.taskPermissions(hrStaff, relation({ isAssignee: true })).canEdit, true);
+    assert.equal(access.taskPermissions(hrStaff, relation({ isCreator: true })).canArchive, true);
+  });
   await t.test('manager role without being the department manager is a plain member (Q1)', () => {
     const roleOnly = viewer('department_manager', { isDepartmentMember: true });
     assert.equal(access.boardPermissions(roleOnly).canEditAllTasks, false);

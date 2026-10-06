@@ -1,3 +1,4 @@
+import type { Role } from '../../config/constants';
 import type { Env } from '../../config/env';
 import { AppError } from '../../lib/app-error';
 import { DIRECTORY_ERRORS } from '../../lib/directory-errors';
@@ -170,7 +171,7 @@ export async function listEmployeeOptions(env: Env, q: string | undefined) {
       full_name: string;
       job_title: string | null;
       department_name: string | null;
-      role: string | null;
+      role: Role | null;
     }[]
   >(env, `/rest/v1/active_employees?${params}`);
   return rows.map((row): EmployeeOption => ({

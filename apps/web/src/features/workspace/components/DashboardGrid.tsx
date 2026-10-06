@@ -1,5 +1,4 @@
 import { Button, Card, EmptyState, ErrorState, Skeleton } from '@/components/ui';
-import { useCan } from '@/features/auth';
 import { useDashboards } from '@/features/department-dashboards';
 import { filterDashboards } from '../workspace.utils';
 import { DashboardTile, NewDashboardTile } from './DashboardTile';
@@ -9,14 +8,15 @@ const SKELETON_TILES = 6;
 
 interface DashboardGridProps {
   query: string;
+  /** Còn phòng để tạo Dashboard (useCanCreateDashboard). */
+  canCreate: boolean;
   onCreate: () => void;
   onClearSearch: () => void;
 }
 
 /** Lưới thẻ Dashboard đã tạo (BR-03) với đủ 4 trạng thái: tải, lỗi, trống, có dữ liệu. */
-export function DashboardGrid({ query, onCreate, onClearSearch }: DashboardGridProps) {
+export function DashboardGrid({ query, canCreate, onCreate, onClearSearch }: DashboardGridProps) {
   const { data, isPending, isError, refetch } = useDashboards();
-  const canCreate = useCan()('dashboards.create');
 
   if (isPending) {
     return (

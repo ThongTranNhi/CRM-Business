@@ -6,7 +6,7 @@ import type { AvatarOwner } from '../users/users.types';
 import type {
   AddMemberInput,
   CreateDepartmentInput,
-  DepartmentRecord,
+  DepartmentListItem,
   ListDepartmentsQuery,
   UpdateDepartmentInput,
 } from './departments.types';
@@ -14,16 +14,23 @@ import type {
 // Hai yêu cầu tạo cùng tên tới cùng lúc: unique index là chốt chặn cuối.
 const ERRORS = { ...DIRECTORY_ERRORS, '23505': departmentNameExists };
 
-interface ActiveDepartmentRow {
+// Dashboard chính của phòng (BR-04, department_id UNIQUE → một object hoặc null) nhúng cùng truy vấn.
+const DASHBOARD_EMBED = 'department_dashboards(id)';
+
+interface DashboardEmbed {
+  department_dashboards: { id: string } | null;
+}
+
+interface ActiveDepartmentRow extends DashboardEmbed {
   id: string;
   name: string;
   manager_employee_id: string | null;
   manager_name: string | null;
   member_count: number;
 }
-const ACTIVE_SELECT = 'id,name,manager_employee_id,manager_name,member_count';
+const ACTIVE_SELECT = `id,name,manager_employee_id,manager_name,member_count,${DASHBOARD_EMBED}`;
 
-function mapActive(row: ActiveDepartmentRow): DepartmentRecord {
+function mapActive(row: ActiveDepartmentRow): DepartmentListItem {
   return {
     id: row.id,
     name: row.name,
@@ -33,55 +40,57 @@ function mapActive(row: ActiveDepartmentRow): DepartmentRecord {
         : null,
     memberCount: row.member_count,
     archivedAt: null,
+    dashboardId: row.department_dashboards?.id ?? null,
   };
 }
 
-/** excludeIds: bỏ các phòng này (vd. phòng đã có Dashboard khi `withoutDashboard`). */
+/**
+ * `withoutDashboard`: chỉ phòng chưa có Dashboard, lọc ở DB (anti-join qua embed) và trả hết, không
+ * phân trang — số phòng ban nhỏ, modal Tạo Dashboard cần đủ danh sách.
+ */
 export async function listActive(
   env: Env,
   query: ListDepartmentsQuery,
-  excludeIds: string[] = [],
-): Promise<Page<DepartmentRecord>> {
-  const params = new URLSearchParams({
-    select: ACTIVE_SELECT,
-    order: 'name,id',
-    ...rangeParams(query),
-  });
+): Promise<Page<DepartmentListItem>> {
+  const params = new URLSearchParams({ select: ACTIVE_SELECT, order: 'name,id' });
+  if (query.withoutDashboard) params.set('department_dashboards', 'is.null');
+  else for (const [key, value] of Object.entries(rangeParams(query))) params.set(key, value);
   if (query.q) params.set('name', `ilike.*${query.q}*`);
-  if (excludeIds.length > 0) params.set('id', `not.in.(${excludeIds.join(',')})`);
   const { rows, total } = await supabaseList<ActiveDepartmentRow>(
     env,
     `/rest/v1/active_departments?${params}`,
   );
-  return toPage(rows.map(mapActive), total, query);
+  const items = rows.map(mapActive);
+  if (query.withoutDashboard) return toPage(items, total, { page: 1, pageSize: items.length });
+  return toPage(items, total, query);
 }
 
 export async function listDeleted(
   env: Env,
   query: ListDepartmentsQuery,
-): Promise<Page<DepartmentRecord>> {
+): Promise<Page<DepartmentListItem>> {
   const params = new URLSearchParams({
-    select: 'id,name,archived_at',
+    select: `id,name,archived_at,${DASHBOARD_EMBED}`,
     archived_at: 'not.is.null',
     order: 'archived_at.desc,id',
     ...rangeParams(query),
   });
   if (query.q) params.set('name', `ilike.*${query.q}*`);
-  const { rows, total } = await supabaseList<{ id: string; name: string; archived_at: string }>(
-    env,
-    `/rest/v1/departments?${params}`,
-  );
+  const { rows, total } = await supabaseList<
+    DashboardEmbed & { id: string; name: string; archived_at: string }
+  >(env, `/rest/v1/departments?${params}`);
   const items = rows.map((row) => ({
     id: row.id,
     name: row.name,
     manager: null,
     memberCount: 0,
     archivedAt: row.archived_at,
+    dashboardId: row.department_dashboards?.id ?? null,
   }));
   return toPage(items, total, query);
 }
 
-export async function findActive(env: Env, id: string): Promise<DepartmentRecord | null> {
+export async function findActive(env: Env, id: string): Promise<DepartmentListItem | null> {
   const params = new URLSearchParams({ select: ACTIVE_SELECT, id: `eq.${id}`, limit: '1' });
   const rows = await supabaseRequest<ActiveDepartmentRow[]>(
     env,

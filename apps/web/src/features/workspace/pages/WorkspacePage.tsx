@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Button, Icon, PageHeader, SearchInput } from '@/components/ui';
-import { useCan } from '@/features/auth';
 import { useUrlParams } from '@/lib/use-url-params';
 import { CreateDashboardModal } from '../components/CreateDashboardModal';
 import { DashboardGrid } from '../components/DashboardGrid';
 import { MissingDashboardsNote } from '../components/MissingDashboardsNote';
+import { useCanCreateDashboard } from '../hooks/useCanCreateDashboard';
 
 /** /app/workspace — Dashboard đã tạo (BR-03). `?q=` tìm kiếm, `?createFor=` mở sẵn modal Tạo Dashboard. */
 export function WorkspacePage() {
   const [params, updateParams] = useUrlParams();
-  const canCreate = useCan()('dashboards.create');
+  const canCreate = useCanCreateDashboard();
   const [isCreating, setCreating] = useState(false);
   const query = params.get('q') ?? '';
   const createFor = params.get('createFor');
@@ -45,6 +45,7 @@ export function WorkspacePage() {
       </div>
       <DashboardGrid
         query={query}
+        canCreate={canCreate}
         onCreate={() => openCreate()}
         onClearSearch={() => updateParams({ q: null })}
       />

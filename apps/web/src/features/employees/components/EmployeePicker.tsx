@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Avatar, Button, SearchInput, Skeleton } from '@/components/ui';
+import type { Role } from '@/features/auth';
 import { useEmployeeOptions } from '../hooks/useDirectory';
 import type { EmployeeOption } from '../types';
 
@@ -7,7 +8,7 @@ export interface PickedEmployee {
   id: string;
   fullName: string;
   /** Có khi vừa chọn từ danh sách; người đã gán từ trước không kèm role. */
-  role?: string | null;
+  role?: Role | null;
 }
 
 interface EmployeePickerProps {

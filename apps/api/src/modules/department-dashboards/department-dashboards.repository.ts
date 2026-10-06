@@ -6,6 +6,7 @@ import { createdDashboardSchema } from './department-dashboards.schema';
 import type {
   CreateDashboardInput,
   DashboardSummary,
+  DepartmentPreview,
   MemberRecord,
 } from './department-dashboards.types';
 
@@ -79,14 +80,61 @@ async function listActiveEmployees(env: Env, filter: Record<string, string>) {
   return rows.map(mapMember);
 }
 
-/** Nhân viên đang làm của các phòng, và (tuỳ chọn) những người được mời vào board. */
-export function listMembers(env: Env, departmentIds: string[], invitedIds: string[] = []) {
-  const conditions = [
-    ...(departmentIds.length > 0 ? [`department_id.in.(${departmentIds.join(',')})`] : []),
-    ...(invitedIds.length > 0 ? [`id.in.(${invitedIds.join(',')})`] : []),
-  ];
-  if (conditions.length === 0) return Promise.resolve([]);
-  return listActiveEmployees(env, { or: `(${conditions.join(',')})`, limit: '1000' });
+/** Thành viên board: nhân viên đang làm của phòng + người được mời (board_members). */
+export function listBoardMembers(env: Env, departmentId: string, invitedIds: string[]) {
+  const conditions = [`department_id.eq.${departmentId}`];
+  if (invitedIds.length > 0) conditions.push(`id.in.(${invitedIds.join(',')})`);
+  return listActiveEmployees(env, { or: `(${conditions.join(',')})` });
+}
+
+const PREVIEW_SIZE = 4;
+
+interface PreviewRow {
+  id: string;
+  manager_employee_id: string | null;
+  manager_name: string | null;
+  member_count: number;
+  employees: {
+    id: string;
+    full_name: string;
+    avatar_path: string | null;
+    app_accounts: { auth_user_id: string } | null;
+  }[];
+}
+
+const PREVIEW_SELECT =
+  'id,manager_employee_id,manager_name,member_count,' +
+  'employees!employees_department_id_fkey(id,full_name,avatar_path,' +
+  'app_accounts!employees_account_id_fkey(auth_user_id))';
+
+const mapPreview = (row: PreviewRow): DepartmentPreview => ({
+  manager:
+    row.manager_employee_id && row.manager_name
+      ? { id: row.manager_employee_id, fullName: row.manager_name }
+      : null,
+  memberCount: row.member_count,
+  members: row.employees.map((employee) => ({
+    id: employee.id,
+    fullName: employee.full_name,
+    avatarPath: employee.avatar_path,
+    authUserId: employee.app_accounts?.auth_user_id ?? null,
+  })),
+});
+
+/**
+ * departmentId → trưởng phòng, số người, tối đa PREVIEW_SIZE người. Một truy vấn, không tải cả phòng:
+ * nhúng employees qua khoá ngoại employees.department_id, chỉ người chưa nghỉ.
+ */
+export async function listDepartmentPreviews(env: Env, departmentIds: string[]) {
+  const params = new URLSearchParams({
+    select: PREVIEW_SELECT,
+    id: `in.(${departmentIds.join(',')})`,
+    'employees.archived_at': 'is.null',
+    'employees.order': 'full_name,id',
+    'employees.limit': String(PREVIEW_SIZE),
+  });
+  const rows = await supabaseRequest<PreviewRow[]>(env, `/rest/v1/active_departments?${params}`);
+  return new Map(rows.map((row) => [row.id, mapPreview(row)]));
 }
 
 async function selectColumn(env: Env, path: string, column: string): Promise<string[]> {
@@ -107,18 +155,6 @@ export const listInvitedBoardIds = (env: Env, employeeId: string) =>
     `/rest/v1/board_members?select=board_id&employee_id=eq.${employeeId}`,
     'board_id',
   );
-
-/** departmentId → dashboardId. Không truyền departmentIds → mọi phòng đã có Dashboard. */
-export async function listDashboardIdsByDepartment(env: Env, departmentIds?: string[]) {
-  if (departmentIds?.length === 0) return new Map<string, string>();
-  const params = new URLSearchParams({ select: 'id,department_id' });
-  if (departmentIds) params.set('department_id', `in.(${departmentIds.join(',')})`);
-  const rows = await supabaseRequest<{ id: string; department_id: string }[]>(
-    env,
-    `/rest/v1/department_dashboards?${params}`,
-  );
-  return new Map(rows.map((row) => [row.department_id, row.id]));
-}
 
 export async function findWorkAccess(env: Env, userId: string, boardId: string) {
   const result = await callRpc<unknown>(env, {

@@ -10,7 +10,7 @@ import { existingDashboardId } from '../workspace.utils';
 
 /**
  * Gửi form Tạo Dashboard. Thành công → mở board + toast. 409 (BR-04) → mở Dashboard có sẵn.
- * Trả lỗi theo ô cho form; lỗi khác hiện bằng toast.
+ * `replace`: nút Back không mở lại modal (?createFor=). Trả lỗi theo ô; lỗi khác hiện bằng toast.
  */
 export function useSubmitDashboard() {
   const create = useCreateDashboard();
@@ -26,13 +26,13 @@ export function useSubmitDashboard() {
       });
       toast({ message: `Đã tạo Dashboard ${dashboard.name}` });
       const state: DashboardLinkState = { boardId: dashboard.boardId };
-      navigate(`/app/workspace/${dashboard.id}`, { state });
+      navigate(`/app/workspace/${dashboard.id}`, { state, replace: true });
       return {};
     } catch (error) {
       const existingId = existingDashboardId(error);
       if (existingId) {
         toast({ message: 'Phòng này đã có Dashboard, đã mở Dashboard hiện có' });
-        navigate(`/app/workspace/${existingId}`);
+        navigate(`/app/workspace/${existingId}`, { replace: true });
         return {};
       }
       if (hasErrorCode(error, 'DEPARTMENT_NOT_FOUND')) return { departmentId: errorMessage(error) };

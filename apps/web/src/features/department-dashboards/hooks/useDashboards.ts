@@ -10,8 +10,11 @@ export function useDashboards() {
   return useQuery({ queryKey: dashboardKeys.list(), queryFn: listDashboards, staleTime: STALE_MS });
 }
 
-/** Tạo Dashboard làm đổi cả cột Dashboard ở trang Phòng ban. */
+/**
+ * Tạo Dashboard làm đổi cả cột Dashboard ở trang Phòng ban. Làm mới cả khi lỗi: 409 nghĩa là người khác
+ * vừa tạo Dashboard cho phòng này, danh sách đang hiện đã cũ.
+ */
 export function useCreateDashboard() {
   const invalidate = useInvalidateQueries([dashboardKeys.all, ['departments']]);
-  return useMutation({ mutationFn: createDashboard, onSuccess: invalidate });
+  return useMutation({ mutationFn: createDashboard, onSettled: invalidate });
 }

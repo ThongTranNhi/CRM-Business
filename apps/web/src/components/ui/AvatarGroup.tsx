@@ -26,6 +26,7 @@ export function AvatarGroup({
   const hidden = total - shown.length;
   return (
     <span
+      role="img"
       className={cn('flex items-center -space-x-2', className)}
       aria-label={`${total} người: ${people.map((person) => person.fullName).join(', ')}`}
     >

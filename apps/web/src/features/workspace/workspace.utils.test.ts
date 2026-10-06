@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DashboardCard } from '@/features/department-dashboards';
 import { ApiError } from '@/lib/api-client';
-import { dashboardAccent, existingDashboardId, filterDashboards } from './workspace.utils';
+import {
+  dashboardAccent,
+  existingDashboardId,
+  filterDashboards,
+  initialDepartment,
+} from './workspace.utils';
 
 // api-client nạp supabase client (cần biến môi trường); test chỉ dùng lớp ApiError.
 vi.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -45,5 +50,22 @@ describe('existingDashboardId', () => {
   it('ignores other errors', () => {
     expect(existingDashboardId(new ApiError('Lỗi', 'FORBIDDEN', 403))).toBeNull();
     expect(existingDashboardId(new Error('x'))).toBeNull();
+  });
+});
+
+describe('initialDepartment', () => {
+  const options = [
+    { id: 'a', name: 'Kinh doanh', isNew: false },
+    { id: 'b', name: 'Kỹ thuật', isNew: false },
+  ];
+
+  it('selects the first department when the modal opens without createFor', () => {
+    expect(initialDepartment(options, null)).toEqual({ option: options[0], isUnavailable: false });
+  });
+  it('selects createFor when the user may create it', () => {
+    expect(initialDepartment(options, 'b').option?.name).toBe('Kỹ thuật');
+  });
+  it('leaves the selection empty when createFor is not creatable', () => {
+    expect(initialDepartment(options, 'x')).toEqual({ option: null, isUnavailable: true });
   });
 });

@@ -14,6 +14,12 @@ interface SearchInputProps {
 
 export function SearchInput({ value, onSearch, label, placeholder }: SearchInputProps) {
   const [text, setText] = useState(value);
+  // Từ khoá đổi từ ngoài (vd. [Xoá tìm kiếm] xoá ?q=) → ô nhập theo luôn, không tự tìm lại chữ cũ.
+  const [appliedValue, setAppliedValue] = useState(value);
+  if (value !== appliedValue) {
+    setAppliedValue(value);
+    if (value !== text.trim()) setText(value);
+  }
 
   useEffect(() => {
     const trimmed = text.trim();

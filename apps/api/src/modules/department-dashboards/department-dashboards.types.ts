@@ -1,14 +1,11 @@
 import type { z } from 'zod';
 import type { BoardPermissions } from '../../lib/work-access';
+import type { PersonRef } from '../departments/departments.types';
 import type { AvatarOwner } from '../users/users.types';
 import type { createDashboardSchema } from './department-dashboards.schema';
 
 export type CreateDashboardInput = z.infer<typeof createDashboardSchema>;
-
-export interface PersonRef {
-  id: string;
-  fullName: string;
-}
+export type { PersonRef };
 
 export interface DepartmentRef {
   id: string;
@@ -55,4 +52,11 @@ export interface MemberRecord extends AvatarOwner {
   departmentId: string | null;
   managerId: string | null;
   managerName: string | null;
+}
+
+/** Thẻ Workspace: trưởng phòng, số người và tối đa 4 người xem trước của một phòng. */
+export interface DepartmentPreview {
+  manager: PersonRef | null;
+  memberCount: number;
+  members: (AvatarOwner & { fullName: string })[];
 }

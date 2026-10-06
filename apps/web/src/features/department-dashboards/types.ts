@@ -1,8 +1,6 @@
+import type { PersonRef } from '@/features/departments';
+
 // Bám response của /api/department-dashboards (docs/api/endpoints/dashboards.md).
-export interface PersonRef {
-  id: string;
-  fullName: string;
-}
 
 export interface DepartmentRef {
   id: string;

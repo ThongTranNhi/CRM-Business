@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { DashboardCard } from '@/features/department-dashboards';
 import { ApiError } from '@/lib/api-client';
+import type { DepartmentOption } from './types';
 
 // Dải màu trên thẻ Dashboard: suy cố định từ id phòng ban, chỉ dùng token Tailwind (không mã hex).
 const ACCENT_CLASSES = [
@@ -43,4 +44,17 @@ export function existingDashboardId(error: unknown): string | null {
   if (!(error instanceof ApiError) || error.code !== 'DASHBOARD_ALREADY_EXISTS') return null;
   const parsed = existingDashboardSchema.safeParse(error.details);
   return parsed.success ? parsed.data.dashboardId : null;
+}
+
+/**
+ * Phòng chọn sẵn trong modal Tạo Dashboard. Có `?createFor=` mà phòng đó không nằm trong danh sách được
+ * tạo (đã có Dashboard / không có quyền) → để trống, KHÔNG tự chọn phòng khác.
+ */
+export function initialDepartment(
+  options: DepartmentOption[],
+  initialId: string | null,
+): { option: DepartmentOption | null; isUnavailable: boolean } {
+  if (initialId === null) return { option: options[0] ?? null, isUnavailable: false };
+  const option = options.find((candidate) => candidate.id === initialId) ?? null;
+  return { option, isUnavailable: option === null };
 }
