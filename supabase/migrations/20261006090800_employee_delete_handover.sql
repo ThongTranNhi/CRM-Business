@@ -12,29 +12,28 @@ begin
 end;
 $$;
 
--- Việc đang mở của người nghỉ → người nhận; bỏ người nhận khỏi danh sách phối hợp (BR-12).
+-- Việc đang mở của người nghỉ → người nhận. Người nhận phải thuộc board của TỪNG việc;
+-- đang là người phối hợp thì được gỡ khỏi phối hợp (BR-12). Sai một việc → không bàn giao việc nào.
 create or replace function app_private.crm_hand_over_tasks(
   actor_id uuid, from_employee uuid, to_employee uuid
 ) returns integer language plpgsql security definer set search_path = '' as $$
-declare handed_over integer;
+declare handed_over integer := 0; task_row record;
 begin
   perform 1 from public.employees where id = to_employee and archived_at is null;
   if not found then raise exception 'HANDOVER_EMPLOYEE_NOT_FOUND'; end if;
-  delete from public.task_collaborators c using public.tasks t
-  where c.task_id = t.id and c.employee_id = to_employee
-    and t.assignee_id = from_employee and t.status <> 'done' and t.archived_at is null;
-  with moved as (
-    update public.tasks set assignee_id = to_employee
+  for task_row in select id, board_id from public.tasks
     where assignee_id = from_employee and status <> 'done' and archived_at is null
-    returning id
-  ), logged as (
-    insert into public.task_activities (task_id, actor_id, action, from_value, to_value)
-    select id, actor_id, 'assignee_changed', jsonb_build_object('assigneeId', from_employee),
-      jsonb_build_object('assigneeId', to_employee)
-    from moved
-    returning 1
-  )
-  select count(*) into handed_over from logged;
+    order by id for update
+  loop
+    if not app_private.crm_is_board_member(task_row.board_id, to_employee) then
+      raise exception 'HANDOVER_EMPLOYEE_NOT_IN_BOARD';
+    end if;
+    update public.tasks set assignee_id = to_employee where id = task_row.id;
+    perform app_private.crm_log_task(task_row.id, actor_id, 'assignee_changed',
+      jsonb_build_object('assigneeId', from_employee), jsonb_build_object('assigneeId', to_employee));
+    perform app_private.crm_drop_collaborator(task_row.id, actor_id, to_employee);
+    handed_over := handed_over + 1;
+  end loop;
   return handed_over;
 end;
 $$;

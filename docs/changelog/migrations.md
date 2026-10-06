@@ -35,8 +35,8 @@ select name, applied_at from app_private.applied_migrations order by name;
 ## Nhật ký
 
 - `20261006090800_employee_delete_handover.sql`: `crm_delete_employee` thêm tham số tuỳ chọn
-  `handover_employee_uuid` (BR-53) — chuyển việc đang mở sang người nhận, ghi activity `assignee_changed`,
-  audit ghi `handoverEmployeeId`, `handedOverTaskCount`.
+  `handover_employee_uuid` (BR-53) — chuyển việc đang mở sang người nhận (phải thuộc board của từng việc),
+  ghi activity `assignee_changed`, audit ghi `handoverEmployeeId`, `handedOverTaskCount`.
 - `20261006090700_work_management_rpcs.sql`: RPC tạo Dashboard + board + 3 cột (BR-04), tạo / sửa / kéo thả /
   lưu trữ task, người phối hợp, checklist (BR-11 → BR-14, BR-19); `crm_work_access` (dữ liệu để API
   kiểm tra quyền), `crm_list_dashboards` (BR-03, BR-41). Mỗi thao tác ghi `task_activities` cùng giao dịch.

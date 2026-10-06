@@ -10,19 +10,25 @@ Thứ tự chạy migration và câu kiểm tra: [docs/changelog/migrations.md](
 - `department_dashboards.department_id` UNIQUE (BR-04); `boards.dashboard_id` UNIQUE (1 board / Dashboard);
   `board_columns (board_id, status)` UNIQUE — 3 cột `todo`, `in_progress`, `done` (BR-10).
 - `tasks`: `status`, `priority` dùng `check`; `position numeric` (thứ tự trong cột); `project_id` chưa có
-  khoá ngoại (Đợt 3). Ràng buộc: đã hoàn thành ⇔ có `completed_at` + `completed_by` (BR-14).
+  khoá ngoại (Đợt 3). Check có tên cố định để API map lỗi: `tasks_title_check`, `tasks_description_check`,
+  `tasks_date_range_check`, `tasks_done_completed_at_check`, `tasks_completed_by_check` (BR-14),
+  `task_checklist_items_content_check`, `task_comments_body_check`.
   Index `(board_id, status, position)` cho task chưa lưu trữ, `assignee_id`, `department_id`, `due_date`.
 - Trigger: `updated_at` (`app_private.set_updated_at`) cho mọi bảng; chặn người phụ trách làm người phối
   hợp; `task_activities` chỉ INSERT (BR-21).
 - Xoá mềm: `tasks.archived_at` (BR-19), `task_checklist_items.deleted_at`.
 - View đọc: `dashboard_summaries` (số việc đang mở / đang làm / quá hạn theo giờ Việt Nam — BR-16),
-  `task_cards` (thẻ trên board: người phụ trách, số checklist, số bình luận), `account_profiles`,
+  `task_cards` (thẻ trên board: người phụ trách, `collaborators` jsonb `[{id, name, avatarPath}]`, số
+  checklist, số bình luận), `account_profiles`,
   `task_activity_feed`, `task_comment_feed`.
 - RPC (chỉ `service_role` EXECUTE): `crm_work_access`, `crm_list_dashboards`, `crm_create_dashboard`,
   `crm_create_task`, `crm_move_task`, `crm_update_task`, `crm_set_task_collaborators`,
   `crm_add_checklist_item`, `crm_update_checklist_item`, `crm_remove_checklist_item`, `crm_archive_task`;
-  `crm_delete_employee` thêm `handover_employee_uuid`. Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra
-  tài khoản còn hoạt động, phòng chưa xoá (BR-06) và người được giao thuộc phòng / board.
+  `crm_delete_employee` thêm `handover_employee_uuid` (người nhận phải thuộc board của từng việc bàn giao,
+  sai → `HANDOVER_EMPLOYEE_NOT_IN_BOARD`). `crm_create_task` nhận cả ngày bắt đầu và người phối hợp.
+  Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra tài khoản còn hoạt động, phòng chưa xoá (BR-06) và
+  người được giao / người phối hợp **mới thêm** thuộc phòng / board (người phối hợp cũ đã chuyển phòng vẫn
+  giữ hoặc gỡ được).
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql` (tự ROLLBACK).
 
 ## Phòng ban, xoá mềm, view đọc (Đợt 1 — 2026-10-06)

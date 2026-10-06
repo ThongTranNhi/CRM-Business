@@ -36,17 +36,21 @@ end;
 $$;
 
 -- Người phụ trách / phối hợp: nhân viên đang làm, thuộc phòng của board hoặc được mời vào board.
-create or replace function app_private.crm_assert_board_member(board_uuid uuid, employee_uuid uuid)
-returns void language plpgsql security definer set search_path = '' as $$
-begin
-  if not exists (
+create or replace function app_private.crm_is_board_member(board_uuid uuid, employee_uuid uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (
     select 1 from public.employees e
     join public.boards b on b.id = board_uuid
     join public.department_dashboards dd on dd.id = b.dashboard_id
     where e.id = employee_uuid and e.archived_at is null and (e.department_id = dd.department_id
       or exists (select 1 from public.board_members m
-        where m.board_id = board_uuid and m.employee_id = employee_uuid))
-  ) then
+        where m.board_id = board_uuid and m.employee_id = employee_uuid)));
+$$;
+
+create or replace function app_private.crm_assert_board_member(board_uuid uuid, employee_uuid uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not app_private.crm_is_board_member(board_uuid, employee_uuid) then
     raise exception 'EMPLOYEE_NOT_IN_BOARD';
   end if;
 end;
@@ -68,6 +72,80 @@ create or replace function app_private.crm_log_task(
 ) returns void language sql security definer set search_path = '' as $$
   insert into public.task_activities (task_id, actor_id, action, from_value, to_value)
   values (task_uuid, actor_id, activity, from_json, to_json);
+$$;
+
+-- Danh sách id không trùng, đã sắp xếp: so sánh danh sách người phối hợp cũ / mới.
+create or replace function app_private.crm_distinct_ids(ids uuid[]) returns uuid[]
+language sql immutable set search_path = '' as $$
+  select array(select distinct id from unnest(coalesce(ids, '{}')) as id order by id);
+$$;
+
+create or replace function app_private.crm_collaborator_ids(task_uuid uuid) returns uuid[]
+language sql stable security definer set search_path = '' as $$
+  select app_private.crm_distinct_ids(array_agg(employee_id))
+  from public.task_collaborators where task_id = task_uuid;
+$$;
+
+-- Chỉ người được thêm phải thuộc board; trigger chặn trùng người phụ trách (BR-12).
+create or replace function app_private.crm_insert_collaborators(
+  task_row public.tasks, actor_id uuid, employee_uuids uuid[]
+) returns void language plpgsql security definer set search_path = '' as $$
+declare employee_uuid uuid;
+begin
+  foreach employee_uuid in array employee_uuids loop
+    perform app_private.crm_assert_board_member(task_row.board_id, employee_uuid);
+  end loop;
+  insert into public.task_collaborators (task_id, employee_id, created_by)
+  select task_row.id, id, actor_id from unnest(employee_uuids) as id
+  on conflict (task_id, employee_id) do nothing;
+end;
+$$;
+
+-- Ghi collaborators_changed khi danh sách thực sự đổi so với old_ids.
+create or replace function app_private.crm_log_collaborators(task_uuid uuid, actor_id uuid, old_ids uuid[])
+returns void language plpgsql security definer set search_path = '' as $$
+declare new_ids uuid[] := app_private.crm_collaborator_ids(task_uuid);
+begin
+  if new_ids = old_ids then return; end if;
+  perform app_private.crm_log_task(task_uuid, actor_id, 'collaborators_changed',
+    jsonb_build_object('employeeIds', old_ids), jsonb_build_object('employeeIds', new_ids));
+end;
+$$;
+
+-- Người phụ trách không đồng thời là người phối hợp (BR-12): gỡ khỏi phối hợp và ghi activity.
+create or replace function app_private.crm_drop_collaborator(task_uuid uuid, actor_id uuid, employee_uuid uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare old_ids uuid[] := app_private.crm_collaborator_ids(task_uuid);
+begin
+  if not (employee_uuid = any (old_ids)) then return; end if;
+  delete from public.task_collaborators where task_id = task_uuid and employee_id = employee_uuid;
+  perform app_private.crm_log_collaborators(task_uuid, actor_id, old_ids);
+end;
+$$;
+
+-- Activity cho các trường đổi qua PATCH /api/tasks/:id (BR-20).
+create or replace function app_private.crm_log_task_changes(
+  old_row public.tasks, new_row public.tasks, actor_id uuid
+) returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if new_row.title <> old_row.title then
+    perform app_private.crm_log_task(new_row.id, actor_id, 'title_changed',
+      jsonb_build_object('title', old_row.title), jsonb_build_object('title', new_row.title));
+  end if;
+  if new_row.assignee_id <> old_row.assignee_id then
+    perform app_private.crm_log_task(new_row.id, actor_id, 'assignee_changed',
+      jsonb_build_object('assigneeId', old_row.assignee_id),
+      jsonb_build_object('assigneeId', new_row.assignee_id));
+  end if;
+  if new_row.priority <> old_row.priority then
+    perform app_private.crm_log_task(new_row.id, actor_id, 'priority_changed',
+      jsonb_build_object('priority', old_row.priority), jsonb_build_object('priority', new_row.priority));
+  end if;
+  if new_row.due_date is distinct from old_row.due_date then
+    perform app_private.crm_log_task(new_row.id, actor_id, 'due_date_changed',
+      jsonb_build_object('dueDate', old_row.due_date), jsonb_build_object('dueDate', new_row.due_date));
+  end if;
+end;
 $$;
 
 -- drag-and-drop.md: thả giữa A và B → (A + B) / 2; đầu cột → đầu - 1024; cuối cột → cuối + 1024.
@@ -196,30 +274,34 @@ end;
 $$;
 
 -- BR-11: department_id lấy từ Dashboard, không nhận từ client. Task mới nằm đầu cột Việc cần làm.
+-- Tạo task + người phối hợp + activity trong một giao dịch.
 create or replace function public.crm_create_task(
-  actor_uuid uuid, board_uuid uuid, task_title text, task_description text,
-  assignee_uuid uuid, task_priority text, task_due_date date
+  actor_uuid uuid, board_uuid uuid, task_title text, task_description text, assignee_uuid uuid,
+  task_priority text, task_start_date date, task_due_date date, collaborator_uuids uuid[] default '{}'
 ) returns uuid language plpgsql security definer set search_path = '' as $$
-declare actor_id uuid; task_uuid uuid;
+declare actor_id uuid; task_row public.tasks;
 begin
   actor_id := app_private.crm_work_actor(actor_uuid);
   perform app_private.crm_assert_board_writable(board_uuid);
   if assignee_uuid is null then raise exception 'ASSIGNEE_REQUIRED'; end if;
   perform app_private.crm_assert_board_member(board_uuid, assignee_uuid);
   insert into public.tasks (board_id, department_id, title, description, position, assignee_id,
-    priority, due_date, created_by)
+    priority, start_date, due_date, created_by)
   select board_uuid, dd.department_id, btrim(task_title), nullif(btrim(task_description), ''),
     coalesce((select min(position) from public.tasks
       where board_id = board_uuid and status = 'todo' and archived_at is null), 1024) - 1024,
-    assignee_uuid, coalesce(task_priority, 'normal'), task_due_date, actor_id
+    assignee_uuid, coalesce(task_priority, 'normal'), task_start_date, task_due_date, actor_id
   from public.boards b join public.department_dashboards dd on dd.id = b.dashboard_id
   where b.id = board_uuid
-  returning id into task_uuid;
-  perform app_private.crm_log_task(task_uuid, actor_id, 'created', null,
-    jsonb_build_object('title', btrim(task_title)));
-  perform app_private.crm_log_task(task_uuid, actor_id, 'assigned', null,
+  returning * into task_row;
+  perform app_private.crm_log_task(task_row.id, actor_id, 'created', null,
+    jsonb_build_object('title', task_row.title));
+  perform app_private.crm_log_task(task_row.id, actor_id, 'assigned', null,
     jsonb_build_object('assigneeId', assignee_uuid));
-  return task_uuid;
+  perform app_private.crm_insert_collaborators(task_row, actor_id,
+    app_private.crm_distinct_ids(collaborator_uuids));
+  perform app_private.crm_log_collaborators(task_row.id, actor_id, '{}');
+  return task_row.id;
 end;
 $$;
 
@@ -258,7 +340,7 @@ end;
 $$;
 
 -- PATCH /api/tasks/:id — chỉ đổi khoá có trong `changes` (title, description, assigneeId, priority,
--- startDate, dueDate). Đổi người phụ trách thành người đang phối hợp → bỏ khỏi phối hợp (BR-12).
+-- startDate, dueDate). Người phụ trách mới đang là người phối hợp → gỡ khỏi phối hợp (BR-12).
 create or replace function public.crm_update_task(actor_uuid uuid, task_uuid uuid, changes jsonb)
 returns void language plpgsql security definer set search_path = '' as $$
 declare actor_id uuid; old_row public.tasks; new_row public.tasks;
@@ -268,8 +350,6 @@ begin
   if changes ? 'assigneeId' then
     if changes ->> 'assigneeId' is null then raise exception 'ASSIGNEE_REQUIRED'; end if;
     perform app_private.crm_assert_board_member(old_row.board_id, (changes ->> 'assigneeId')::uuid);
-    delete from public.task_collaborators
-    where task_id = task_uuid and employee_id = (changes ->> 'assigneeId')::uuid;
   end if;
   update public.tasks set
     title = case when changes ? 'title' then btrim(changes ->> 'title') else title end,
@@ -281,46 +361,27 @@ begin
     due_date = case when changes ? 'dueDate' then (changes ->> 'dueDate')::date else due_date end
   where id = task_uuid
   returning * into new_row;
-  if new_row.title <> old_row.title then
-    perform app_private.crm_log_task(task_uuid, actor_id, 'title_changed',
-      jsonb_build_object('title', old_row.title), jsonb_build_object('title', new_row.title));
-  end if;
-  if new_row.assignee_id <> old_row.assignee_id then
-    perform app_private.crm_log_task(task_uuid, actor_id, 'assignee_changed',
-      jsonb_build_object('assigneeId', old_row.assignee_id), jsonb_build_object('assigneeId', new_row.assignee_id));
-  end if;
-  if new_row.priority <> old_row.priority then
-    perform app_private.crm_log_task(task_uuid, actor_id, 'priority_changed',
-      jsonb_build_object('priority', old_row.priority), jsonb_build_object('priority', new_row.priority));
-  end if;
-  if new_row.due_date is distinct from old_row.due_date then
-    perform app_private.crm_log_task(task_uuid, actor_id, 'due_date_changed',
-      jsonb_build_object('dueDate', old_row.due_date), jsonb_build_object('dueDate', new_row.due_date));
-  end if;
+  perform app_private.crm_log_task_changes(old_row, new_row, actor_id);
+  perform app_private.crm_drop_collaborator(task_uuid, actor_id, new_row.assignee_id);
 end;
 $$;
 
--- PUT /api/tasks/:id/collaborators: thay toàn bộ danh sách; trigger chặn trùng người phụ trách (BR-12).
+-- PUT /api/tasks/:id/collaborators: thay toàn bộ danh sách. Chỉ người MỚI thêm phải thuộc board:
+-- người phối hợp cũ đã chuyển phòng / nghỉ vẫn giữ được hoặc gỡ được.
 create or replace function public.crm_set_task_collaborators(
   actor_uuid uuid, task_uuid uuid, employee_uuids uuid[]
 ) returns void language plpgsql security definer set search_path = '' as $$
-declare actor_id uuid; task_row public.tasks; old_ids uuid[]; new_ids uuid[]; employee_uuid uuid;
+declare actor_id uuid; task_row public.tasks; old_ids uuid[]; new_ids uuid[];
 begin
   actor_id := app_private.crm_work_actor(actor_uuid);
   task_row := app_private.crm_lock_writable_task(task_uuid);
-  select coalesce(array_agg(employee_id order by employee_id), '{}') into old_ids
-  from public.task_collaborators where task_id = task_uuid;
-  new_ids := array(select distinct id from unnest(coalesce(employee_uuids, '{}')) as id order by id);
+  old_ids := app_private.crm_collaborator_ids(task_uuid);
+  new_ids := app_private.crm_distinct_ids(employee_uuids);
   if new_ids = old_ids then return; end if;
-  foreach employee_uuid in array new_ids loop
-    perform app_private.crm_assert_board_member(task_row.board_id, employee_uuid);
-  end loop;
   delete from public.task_collaborators where task_id = task_uuid and employee_id <> all (new_ids);
-  insert into public.task_collaborators (task_id, employee_id, created_by)
-  select task_uuid, id, actor_id from unnest(new_ids) as id
-  on conflict (task_id, employee_id) do nothing;
-  perform app_private.crm_log_task(task_uuid, actor_id, 'collaborators_changed',
-    jsonb_build_object('employeeIds', old_ids), jsonb_build_object('employeeIds', new_ids));
+  perform app_private.crm_insert_collaborators(task_row, actor_id,
+    array(select id from unnest(new_ids) as id where id <> all (old_ids)));
+  perform app_private.crm_log_collaborators(task_uuid, actor_id, old_ids);
 end;
 $$;
 
@@ -397,8 +458,14 @@ declare signature text;
 begin
   foreach signature in array array[
     'app_private.crm_work_actor(uuid)', 'app_private.crm_assert_board_writable(uuid)',
+    'app_private.crm_is_board_member(uuid, uuid)',
     'app_private.crm_assert_board_member(uuid, uuid)', 'app_private.crm_lock_writable_task(uuid)',
     'app_private.crm_log_task(uuid, uuid, text, jsonb, jsonb)',
+    'app_private.crm_distinct_ids(uuid[])', 'app_private.crm_collaborator_ids(uuid)',
+    'app_private.crm_insert_collaborators(public.tasks, uuid, uuid[])',
+    'app_private.crm_log_collaborators(uuid, uuid, uuid[])',
+    'app_private.crm_drop_collaborator(uuid, uuid, uuid)',
+    'app_private.crm_log_task_changes(public.tasks, public.tasks, uuid)',
     'app_private.crm_renumber_column(uuid, text)',
     'app_private.crm_neighbor_position(uuid, text, uuid, uuid)',
     'app_private.crm_task_position(public.tasks, text, uuid, uuid)'] loop
@@ -407,7 +474,7 @@ begin
   foreach signature in array array[
     'public.crm_work_access(uuid, uuid, uuid)', 'public.crm_list_dashboards(uuid, boolean)',
     'public.crm_create_dashboard(uuid, uuid, text, text)',
-    'public.crm_create_task(uuid, uuid, text, text, uuid, text, date)',
+    'public.crm_create_task(uuid, uuid, text, text, uuid, text, date, date, uuid[])',
     'public.crm_move_task(uuid, uuid, text, uuid, uuid)',
     'public.crm_update_task(uuid, uuid, jsonb)',
     'public.crm_set_task_collaborators(uuid, uuid, uuid[])',

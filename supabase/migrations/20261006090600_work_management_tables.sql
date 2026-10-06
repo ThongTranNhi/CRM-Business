@@ -26,8 +26,10 @@ revoke all on function app_private.set_updated_at() from public, anon, authentic
 create table if not exists public.department_dashboards (
   id uuid primary key default gen_random_uuid(),
   department_id uuid not null unique references public.departments(id) on delete restrict,
-  name text not null check (name = btrim(name) and char_length(name) between 1 and 120),
-  description text check (char_length(description) <= 1000),
+  name text not null constraint department_dashboards_name_check
+    check (name = btrim(name) and char_length(name) between 1 and 120),
+  description text constraint department_dashboards_description_check
+    check (char_length(description) <= 1000),
   created_by uuid not null references public.app_accounts(id) on delete restrict,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -71,8 +73,9 @@ create table if not exists public.tasks (
   board_id uuid not null references public.boards(id) on delete restrict,
   department_id uuid not null references public.departments(id) on delete restrict,
   project_id uuid, -- Đợt 3: khoá ngoại tới projects
-  title text not null check (title = btrim(title) and char_length(title) between 1 and 200),
-  description text check (char_length(description) <= 5000),
+  title text not null constraint tasks_title_check
+    check (title = btrim(title) and char_length(title) between 1 and 200),
+  description text constraint tasks_description_check check (char_length(description) <= 5000),
   status text not null default 'todo' check (status in ('todo', 'in_progress', 'done')),
   position numeric not null,
   assignee_id uuid not null references public.employees(id) on delete restrict, -- BR-12
@@ -86,10 +89,12 @@ create table if not exists public.tasks (
   archived_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (start_date is null or due_date is null or start_date <= due_date),
+  -- Tên check cố định: API map tên → mã lỗi tiếng Việt.
+  constraint tasks_date_range_check
+    check (start_date is null or due_date is null or start_date <= due_date),
   -- BR-14: đã hoàn thành ⇔ có completed_at và completed_by.
-  check ((status = 'done') = (completed_at is not null)),
-  check ((completed_at is null) = (completed_by is null))
+  constraint tasks_done_completed_at_check check ((status = 'done') = (completed_at is not null)),
+  constraint tasks_completed_by_check check ((completed_at is null) = (completed_by is null))
 );
 create index if not exists tasks_board_status_position_idx
   on public.tasks (board_id, status, position) where archived_at is null;
@@ -124,7 +129,8 @@ revoke all on function app_private.reject_assignee_as_collaborator() from public
 create table if not exists public.task_checklist_items (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete restrict,
-  content text not null check (content = btrim(content) and char_length(content) between 1 and 500),
+  content text not null constraint task_checklist_items_content_check
+    check (content = btrim(content) and char_length(content) between 1 and 500),
   is_done boolean not null default false,
   position numeric not null,
   created_by uuid not null references public.app_accounts(id) on delete restrict,
@@ -139,7 +145,8 @@ create table if not exists public.task_comments (
   id uuid primary key default gen_random_uuid(),
   task_id uuid not null references public.tasks(id) on delete restrict,
   author_id uuid not null references public.app_accounts(id) on delete restrict,
-  body text not null check (body = btrim(body) and char_length(body) between 1 and 5000),
+  body text not null constraint task_comments_body_check
+    check (body = btrim(body) and char_length(body) between 1 and 5000),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -206,8 +213,10 @@ create or replace view public.task_cards with (security_invoker = true) as
 select t.id, t.board_id, t.title, t.status, t.position, t.priority, t.due_date, t.completed_at,
   t.assignee_id, e.full_name as assignee_name, e.avatar_path as assignee_avatar_path,
   e.archived_at is not null as assignee_archived,
-  coalesce((select array_agg(c.employee_id) from public.task_collaborators c
-    where c.task_id = t.id), '{}') as collaborator_ids,
+  coalesce((select jsonb_agg(jsonb_build_object('id', ce.id, 'name', ce.full_name,
+      'avatarPath', ce.avatar_path) order by ce.full_name, ce.id)
+    from public.task_collaborators c join public.employees ce on ce.id = c.employee_id
+    where c.task_id = t.id), '[]'::jsonb) as collaborators,
   (select count(*) from public.task_checklist_items i
     where i.task_id = t.id and i.deleted_at is null)::int as checklist_total,
   (select count(*) from public.task_checklist_items i
