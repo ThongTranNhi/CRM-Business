@@ -1,0 +1,192 @@
+import assert from 'node:assert/strict';
+import { URL } from 'node:url';
+import test from 'node:test';
+import { loadTsModule } from '../../lib/load-ts-module.mjs';
+
+const { Response } = globalThis;
+const service = await loadTsModule(new URL('./tasks.service.ts', import.meta.url));
+
+const env = {
+  SUPABASE_URL: 'https://example.supabase.co',
+  SUPABASE_SERVICE_ROLE_KEY: 'test-key',
+  ALLOWED_ORIGINS: '',
+};
+const ids = {
+  user: '00000000-0000-4000-8000-000000000001',
+  account: '00000000-0000-4000-8000-000000000002',
+  employee: '00000000-0000-4000-8000-000000000003',
+  other: '00000000-0000-4000-8000-000000000004',
+  department: '00000000-0000-4000-8000-000000000005',
+  board: '00000000-0000-4000-8000-000000000006',
+  task: '00000000-0000-4000-8000-000000000007',
+  column: '00000000-0000-4000-8000-000000000008',
+};
+const scopeAs = (role) => ({ env, actor: { id: ids.user, email: null, role, sessionId: 's-1' } });
+
+const access = (role, facts = {}) => ({
+  accountId: ids.account,
+  role,
+  employeeId: ids.employee,
+  boardId: ids.board,
+  departmentId: ids.department,
+  isReadOnly: false,
+  isDepartmentMember: false,
+  isDepartmentManager: false,
+  isBoardMember: false,
+  taskId: ids.task,
+  isAssignee: false,
+  isCollaborator: false,
+  isCreator: false,
+  ...facts,
+});
+const cardRow = {
+  id: ids.task,
+  column_id: ids.column,
+  status: 'todo',
+  title: 'Gọi khách hàng',
+  position: 0,
+  priority: 'normal',
+  due_date: null,
+  completed_at: null,
+  assignee_id: ids.other,
+  assignee_name: 'Nguyễn Văn An',
+  assignee_archived: false,
+  collaborators: [{ id: ids.employee, name: 'Người xem', avatarPath: null }],
+  checklist_total: 0,
+  checklist_done: 0,
+  comment_count: 0,
+};
+const rpcError = (message, code = 'P0001') => Response.json({ code, message }, { status: 400 });
+const moveInput = { toColumnId: ids.column, previousTaskId: null, nextTaskId: null };
+const createInput = {
+  title: 'Gọi khách hàng',
+  assigneeId: ids.other,
+  collaboratorIds: [],
+  priority: 'normal',
+  startDate: null,
+  dueDate: null,
+  description: null,
+};
+
+/** Trả dữ liệu theo đoạn đường dẫn; ghi lại các RPC đã gọi. */
+function fakeDatabase(routes) {
+  const rpcCalls = [];
+  const fetch = async (url) => {
+    const path = String(url);
+    if (path.includes('/rpc/') && !path.includes('crm_work_access')) rpcCalls.push(path);
+    const match = Object.entries(routes).find(([fragment]) => path.includes(fragment));
+    if (!match) return Response.json([]);
+    const [, value] = match;
+    return value instanceof Response ? value : Response.json(value);
+  };
+  return { fetch, rpcCalls };
+}
+
+test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  await t.test('employee of another department cannot open the board (403)', async () => {
+    globalThis.fetch = fakeDatabase({ crm_work_access: access('employee') }).fetch;
+    await assert.rejects(() => service.getBoard(scopeAs('employee'), ids.board, 20), {
+      code: 'FORBIDDEN',
+      status: 403,
+    });
+  });
+  await t.test('HR Admin reads but cannot create a task outside their department', async () => {
+    const database = fakeDatabase({ crm_work_access: access('hr_admin'), board_columns: [] });
+    globalThis.fetch = database.fetch;
+    const board = await service.getBoard(scopeAs('hr_admin'), ids.board, 20);
+    assert.deepEqual(board.tasks, []);
+    await assert.rejects(() => service.createTask(scopeAs('hr_admin'), ids.board, createInput), {
+      code: 'FORBIDDEN',
+    });
+    assert.deepEqual(database.rpcCalls, []);
+  });
+  await t.test('manager of another department cannot move a task (403)', async () => {
+    const database = fakeDatabase({ crm_work_access: access('department_manager') });
+    globalThis.fetch = database.fetch;
+    await assert.rejects(
+      () => service.moveTask(scopeAs('department_manager'), ids.task, moveInput),
+      {
+        code: 'FORBIDDEN',
+      },
+    );
+    assert.deepEqual(database.rpcCalls, []);
+  });
+  await t.test(
+    'member employee only moves tasks they are assigned to or collaborate on',
+    async () => {
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: access('employee', { isDepartmentMember: true }),
+      }).fetch;
+      await assert.rejects(() => service.moveTask(scopeAs('employee'), ids.task, moveInput), {
+        code: 'FORBIDDEN',
+      });
+    },
+  );
+  await t.test('Super Admin creates a task and may move it', async () => {
+    const database = fakeDatabase({
+      crm_work_access: access('super_admin'),
+      crm_create_task: ids.task,
+      task_cards: [cardRow],
+    });
+    globalThis.fetch = database.fetch;
+    const card = await service.createTask(scopeAs('super_admin'), ids.board, createInput);
+    assert.equal(card.id, ids.task);
+    assert.equal(card.canMove, true);
+    assert.equal(card.collaborators[0].fullName, 'Người xem');
+    assert.ok(database.rpcCalls.some((path) => path.endsWith('crm_create_task')));
+  });
+  await t.test('moving to a column of another board → 400 INVALID_COLUMN', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('super_admin'),
+      crm_move_task: rpcError('INVALID_COLUMN'),
+    }).fetch;
+    await assert.rejects(() => service.moveTask(scopeAs('super_admin'), ids.task, moveInput), {
+      code: 'INVALID_COLUMN',
+      status: 400,
+    });
+  });
+  await t.test('collaborator sees the card as movable on the board', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('employee', { isDepartmentMember: true }),
+      'status=in.': [cardRow],
+      board_columns: [],
+    }).fetch;
+    const board = await service.getBoard(scopeAs('employee'), ids.board, 20);
+    assert.equal(board.tasks[0].canMove, true);
+  });
+  await t.test('archived or unknown task → 404 TASK_NOT_FOUND', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('super_admin', { taskId: null }),
+    }).fetch;
+    await assert.rejects(() => service.getTask(scopeAs('super_admin'), ids.task), {
+      code: 'TASK_NOT_FOUND',
+      status: 404,
+    });
+  });
+  await t.test('due date before start date (named check) → 400 INVALID_DATE_RANGE', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('super_admin'),
+      crm_update_task: rpcError(
+        'new row for relation "tasks" violates check constraint "tasks_date_range_check"',
+        '23514',
+      ),
+    }).fetch;
+    await assert.rejects(
+      () => service.updateTask(scopeAs('super_admin'), ids.task, { dueDate: '2026-01-01' }),
+      { code: 'INVALID_DATE_RANGE', status: 400 },
+    );
+  });
+  await t.test('only the creator, the manager or Super Admin archives (BR-19)', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('employee', { isDepartmentMember: true, isAssignee: true }),
+    }).fetch;
+    await assert.rejects(() => service.archiveTask(scopeAs('employee'), ids.task), {
+      code: 'FORBIDDEN',
+    });
+  });
+});

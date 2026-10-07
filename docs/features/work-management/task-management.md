@@ -28,33 +28,33 @@ Trả lời (1 cấp), @mention (tạo thông báo cho người được nhắc)
 
 ## Dữ liệu chính — bảng `tasks`
 
-| Cột                                             | Ghi chú                              |
-| ----------------------------------------------- | ------------------------------------ |
-| id, board_id, department_id, project_id?        |                                      |
-| title, description                              |                                      |
-| status                                          | `todo` / `in_progress` / `done`      |
-| position                                        | numeric, thứ tự trong cột            |
-| assignee_id                                     | NOT NULL — người phụ trách chính     |
-| priority                                        | `low` / `normal` / `high` / `urgent` |
-| start_date, due_date                            | date                                 |
-| started_at, completed_at, completed_by          | ghi theo BR-13, BR-14                |
-| created_by, created_at, updated_at, archived_at |                                      |
+| Cột                                                 | Ghi chú                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| id, board_id, column_id, department_id, project_id? | column_id: khoá ngoại ghép `(column_id, board_id, status)` |
+| title, description                                  |                                                            |
+| status                                              | `todo` / `in_progress` / `done`                            |
+| position                                            | numeric, thứ tự trong cột                                  |
+| assignee_id                                         | NOT NULL — người phụ trách chính                           |
+| priority                                            | `low` / `normal` / `high` / `urgent`                       |
+| start_date, due_date                                | date                                                       |
+| started_at, completed_at, completed_by              | ghi theo BR-13, BR-14                                      |
+| created_by, created_at, updated_at, archived_at     |                                                            |
 
 Người phối hợp: `task_collaborators(task_id, user_id)`, không được trùng `assignee_id`.
 
 ## API
 
-| Method                | Endpoint                                     |
-| --------------------- | -------------------------------------------- |
-| GET                   | `/api/boards/:boardId/tasks`                 |
-| POST                  | `/api/boards/:boardId/tasks`                 |
-| GET / PATCH / DELETE  | `/api/tasks/:id`                             |
-| PATCH                 | `/api/tasks/:id/move` — xem drag-and-drop.md |
-| PUT                   | `/api/tasks/:id/collaborators`               |
-| POST / PATCH / DELETE | `/api/tasks/:id/checklist[/:itemId]`         |
-| GET / POST            | `/api/tasks/:id/comments`                    |
-| POST / DELETE         | `/api/tasks/:id/attachments[/:fileId]`       |
-| GET                   | `/api/tasks/:id/activities`                  |
+| Method                | Endpoint                                       |
+| --------------------- | ---------------------------------------------- |
+| GET                   | `/api/boards/:boardId` (cột + task, 1 request) |
+| POST                  | `/api/boards/:boardId/tasks`                   |
+| GET / PATCH / DELETE  | `/api/tasks/:id`                               |
+| PATCH                 | `/api/tasks/:id/move` — xem drag-and-drop.md   |
+| PUT                   | `/api/tasks/:id/collaborators`                 |
+| POST / PATCH / DELETE | `/api/tasks/:id/checklist[/:itemId]`           |
+| GET / POST            | `/api/tasks/:id/comments`                      |
+| POST / DELETE         | `/api/tasks/:id/attachments[/:fileId]`         |
+| GET                   | `/api/tasks/:id/activities`                    |
 
 ## Tiêu chí nghiệm thu
 

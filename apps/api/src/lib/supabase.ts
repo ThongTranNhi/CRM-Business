@@ -14,11 +14,15 @@ const postgrestErrorSchema = z.object({ code: z.string(), message: z.string() })
 const databaseUnavailable = () =>
   new AppError('DATABASE_UNAVAILABLE', 'Không thể xử lý dữ liệu, vui lòng thử lại', 503);
 
+/** `violates check constraint "tasks_date_range_check"` → `tasks_date_range_check`. */
+const constraintName = (message: string) => /constraint "([^"]+)"/.exec(message)?.[1];
+
 async function toAppError(response: Response, errors: DatabaseErrorMap): Promise<AppError> {
   const parsed = postgrestErrorSchema.safeParse(await response.json().catch(() => null));
   if (!parsed.success) return databaseUnavailable();
-  const key = [parsed.data.message, parsed.data.code].find((candidate) =>
-    Object.hasOwn(errors, candidate),
+  const { message, code } = parsed.data;
+  const key = [message, constraintName(message), code].find(
+    (candidate) => candidate !== undefined && Object.hasOwn(errors, candidate),
   );
   return key ? errors[key]!() : databaseUnavailable();
 }

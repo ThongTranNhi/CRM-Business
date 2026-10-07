@@ -3,6 +3,7 @@ import { assertRole, type RequestScope } from '../../lib/request-scope';
 import { boardPermissions, canCreateDashboard, type BoardViewer } from '../../lib/work-access';
 import { dashboardAlreadyExists, dashboardNotFound } from '../../lib/work-errors';
 import { getEmployeeSummary } from '../auth/auth.service';
+import { getBoardAccess } from '../tasks/tasks.service';
 import { getAvatarUrls } from '../users/users.service';
 import * as dashboardsRepository from './department-dashboards.repository';
 import type {
@@ -93,7 +94,7 @@ export async function getDashboard(
   const summary = await dashboardsRepository.findSummary(env, id);
   if (!summary) throw dashboardNotFound();
   const [access, invitedIds] = await Promise.all([
-    dashboardsRepository.findWorkAccess(env, actor.id, summary.boardId),
+    getBoardAccess(env, actor.id, summary.boardId),
     dashboardsRepository.listInvitedEmployeeIds(env, summary.boardId),
   ]);
   if (!access) throw dashboardNotFound();
