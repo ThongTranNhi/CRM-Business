@@ -1,7 +1,7 @@
-import { z } from 'zod';
 import type { Env } from '../../config/env';
 import { callRpc, supabaseRequest } from '../../lib/supabase';
 import { WORK_ERRORS } from '../../lib/work-errors';
+import { movedTaskSchema } from './tasks.schema';
 import type { PersonRef } from '../departments/departments.types';
 import type {
   CreateTaskInput,
@@ -133,16 +133,6 @@ export const updateTask = (
     errors: WORK_ERRORS,
   });
 };
-
-const movedTaskSchema = z.object({
-  id: z.uuid(),
-  columnId: z.uuid(),
-  status: z.enum(['todo', 'in_progress', 'done']),
-  position: z.coerce.number(),
-  startedAt: z.string().nullable(),
-  completedAt: z.string().nullable(),
-  completedBy: z.uuid().nullable(),
-});
 
 export async function moveTask(
   env: Env,

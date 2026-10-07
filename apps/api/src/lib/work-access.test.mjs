@@ -74,6 +74,7 @@ test('work permissions (permission-model.md)', async (t) => {
     const member = viewer('employee', { isDepartmentMember: true });
     assert.deepEqual(access.taskPermissions(member, relation()), {
       canEdit: false,
+      canReassign: false,
       canArchive: false,
     });
     assert.equal(access.taskPermissions(member, relation({ isCollaborator: true })).canEdit, true);
@@ -93,5 +94,14 @@ test('work permissions (permission-model.md)', async (t) => {
     assert.equal(access.canCreateDashboard('department_manager', 'dept-1', 'dept-1'), true);
     assert.equal(access.canCreateDashboard('department_manager', 'dept-2', 'dept-1'), false);
     assert.equal(access.canCreateDashboard('hr_admin', 'dept-1', null), false);
+  });
+  await t.test('reassigning: managers, team leaders and the creator only', () => {
+    const member = viewer('employee', { isDepartmentMember: true });
+    assert.equal(access.taskPermissions(member, relation({ isAssignee: true })).canReassign, false);
+    assert.equal(access.taskPermissions(member, relation({ isCreator: true })).canReassign, true);
+    const leader = viewer('team_leader', { isDepartmentMember: true });
+    assert.equal(access.taskPermissions(leader, relation()).canReassign, true);
+    const hr = viewer('hr_admin');
+    assert.equal(access.taskPermissions(hr, relation({ isCreator: true })).canReassign, false);
   });
 });

@@ -18,10 +18,17 @@ export interface BoardColumnsProps {
   today: string;
   avatarOf: (employeeId: string) => string | null;
   /** null: chỉ xem → không có ô thêm nhanh. */
-  quickAdd: { onSubmit: (title: string) => Promise<void>; isPending: boolean } | null;
-  onShowMoreDone: (() => void) | null;
+  quickAdd: { onSubmit: (title: string) => Promise<boolean>; isPending: boolean } | null;
+  /** [Xem thêm] ở cột Đã hoàn thành; null = đã hiện hết hoặc chạm giới hạn. */
+  showMoreDone: { onClick: () => void; isLoading: boolean } | null;
   onDraggingChange: (isDragging: boolean) => void;
 }
+
+/** Chuyển cột bằng menu → thẻ sang cột mới (DOM mới): đưa focus về thẻ để dùng tiếp bằng bàn phím. */
+const focusCard = (taskId: string) =>
+  requestAnimationFrame(() =>
+    document.querySelector<HTMLElement>(`[data-task-card="${taskId}"]`)?.focus(),
+  );
 
 /** Các cột vẽ từ board_columns (không hard-code), xếp ngang, cuộn ngang khi hẹp (min 280px / cột). */
 export function BoardColumns(props: BoardColumnsProps) {
@@ -34,11 +41,18 @@ export function BoardColumns(props: BoardColumnsProps) {
     today: props.today,
     avatarOf: props.avatarOf,
     isFiltering: props.isFiltering,
+    doneTotal: board.doneTotal,
     draggingId: drag.draggingId,
     cardDragProps: drag.cardDragProps,
-    onMoveToColumn: moves.moveToEnd,
+    onMoveToColumn: (taskId, columnId) => {
+      moves.moveToEnd(taskId, columnId);
+      focusCard(taskId);
+    },
     onRequestDelete: setDeleting,
   };
+  // Thêm nhanh chỉ ở cột đầu tiên (cột mặc định nhóm todo — nơi task mới được đặt).
+  const firstColumn = board.columns[0];
+  const quickAddColumnId = firstColumn?.status === 'todo' ? firstColumn.id : null;
 
   return (
     <>
@@ -53,13 +67,16 @@ export function BoardColumns(props: BoardColumnsProps) {
             dropProps={drag.columnDropProps(column.id)}
             footer={
               <>
-                {column.status === 'todo' && props.quickAdd && <QuickAddTask {...props.quickAdd} />}
-                {column.status === 'done' && props.onShowMoreDone && (
+                {column.id === quickAddColumnId && props.quickAdd && (
+                  <QuickAddTask {...props.quickAdd} />
+                )}
+                {column.status === 'done' && props.showMoreDone && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="mx-2.5 mb-2.5"
-                    onClick={props.onShowMoreDone}
+                    loading={props.showMoreDone.isLoading}
+                    onClick={props.showMoreDone.onClick}
                   >
                     Xem thêm việc đã hoàn thành
                   </Button>

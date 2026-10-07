@@ -15,6 +15,10 @@ export const taskNotFound = () => new AppError('TASK_NOT_FOUND', 'Không tìm th
 export const dashboardAlreadyExists = (dashboardId: string) =>
   new AppError('DASHBOARD_ALREADY_EXISTS', 'Phòng ban này đã có Dashboard', 409, { dashboardId });
 
+/** BR-06: phòng ban đã xoá → Dashboard chỉ đọc; kiểm tra trước quyền ghi (409, không phải 403). */
+export const dashboardReadOnly = () =>
+  new AppError('DASHBOARD_READ_ONLY', 'Phòng ban đã bị xoá, Dashboard chỉ xem được', 409);
+
 const invalidDateRange = () =>
   new AppError('INVALID_DATE_RANGE', 'Hạn không được trước ngày bắt đầu', 400);
 
@@ -23,8 +27,7 @@ export const WORK_ERRORS: DatabaseErrorMap = {
   DEPARTMENT_NOT_FOUND: departmentNotFound,
   BOARD_NOT_FOUND: boardNotFound,
   TASK_NOT_FOUND: taskNotFound,
-  DASHBOARD_READ_ONLY: () =>
-    new AppError('DASHBOARD_READ_ONLY', 'Phòng ban đã bị xoá, Dashboard chỉ xem được', 409),
+  DASHBOARD_READ_ONLY: dashboardReadOnly,
   ASSIGNEE_REQUIRED: () =>
     new AppError('ASSIGNEE_REQUIRED', 'Mỗi công việc cần đúng một người phụ trách chính', 400),
   EMPLOYEE_NOT_IN_BOARD: () =>

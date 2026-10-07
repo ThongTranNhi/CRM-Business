@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useEffect, useState, type DragEvent } from 'react';
 import { indexFromPointer } from '../board.utils';
 
 interface DragState {
@@ -31,6 +31,23 @@ export function useBoardDrag({ onDrop, onDraggingChange }: UseBoardDragOptions) 
     setDrag(null);
     onDraggingChange(false);
   };
+
+  // Thả ra ngoài board, nhấn Esc, hoặc thẻ bị gỡ khỏi DOM giữa chừng (board tải lại): dragend của
+  // thẻ có thể không tới → nghe ở window để luôn kết thúc kéo (không để thẻ mờ, board ngừng tự tải).
+  const isDragging = drag !== null;
+  useEffect(() => {
+    if (!isDragging) return;
+    const end = () => {
+      setDrag(null);
+      onDraggingChange(false);
+    };
+    window.addEventListener('dragend', end);
+    window.addEventListener('drop', end);
+    return () => {
+      window.removeEventListener('dragend', end);
+      window.removeEventListener('drop', end);
+    };
+  }, [isDragging, onDraggingChange]);
 
   const cardDragProps = (taskId: string) => ({
     draggable: true,

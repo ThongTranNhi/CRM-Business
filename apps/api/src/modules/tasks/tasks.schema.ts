@@ -64,3 +64,14 @@ export const moveTaskSchema = z
   .strict();
 
 export const collaboratorsSchema = z.object({ employeeIds: collaboratorIds }).strict();
+
+/** Kết quả RPC crm_move_task. */
+export const movedTaskSchema = z.object({
+  id: z.uuid(),
+  columnId: z.uuid(),
+  status: z.enum(['todo', 'in_progress', 'done']),
+  position: z.coerce.number(),
+  startedAt: z.string().nullable(),
+  completedAt: z.string().nullable(),
+  completedBy: z.uuid().nullable(),
+});

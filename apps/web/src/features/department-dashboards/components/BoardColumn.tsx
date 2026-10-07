@@ -22,6 +22,8 @@ export interface ColumnContext {
   today: string;
   avatarOf: (employeeId: string) => string | null;
   isFiltering: boolean;
+  /** Tổng việc Đã hoàn thành (cột chỉ tải N việc gần nhất). */
+  doneTotal: number;
   draggingId: string | null;
   cardDragProps: (taskId: string) => HTMLAttributes<HTMLElement> & { draggable: boolean };
   onMoveToColumn: (taskId: string, columnId: string) => void;
@@ -77,7 +79,7 @@ export function BoardColumn(props: BoardColumnProps) {
         <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', styles.dot)} />
         {column.name}
         <span className="ml-auto rounded-full bg-white px-2 font-semibold text-gray-600">
-          {tasks.length}
+          {column.status === 'done' && !context.isFiltering ? context.doneTotal : tasks.length}
         </span>
       </header>
       <div className="grid min-h-20 flex-1 content-start gap-2 overflow-y-auto px-2.5 pb-2.5">

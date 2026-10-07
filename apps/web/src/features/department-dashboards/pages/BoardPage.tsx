@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ButtonLink, Card, EmptyState, ErrorState, Skeleton } from '@/components/ui';
@@ -35,16 +36,31 @@ function DashboardError({ error, onRetry }: { error: Error; onRetry: () => void 
   );
 }
 
-/** /app/workspace/:dashboardId — Board kiểu Trello của phòng ban. */
+/** /app/workspace/:dashboardId — Board kiểu Trello. `key` theo Dashboard: đổi Dashboard thì state mới. */
 export function BoardPage() {
   const { dashboardId = '' } = useParams();
+  return <DashboardBoard key={dashboardId} dashboardId={dashboardId} />;
+}
+
+function DashboardBoard({ dashboardId }: { dashboardId: string }) {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [doneLimit, setDoneLimit] = useState(DONE_PAGE);
   const [isDragging, setDragging] = useState(false);
   const dashboard = useDashboard(dashboardId);
   const boardId =
     dashboard.data?.boardId ?? linkStateSchema.safeParse(location.state).data?.boardId ?? null;
   const board = useBoard(boardId, { doneLimit, isPaused: isDragging });
+  const boardKey = taskKeys.board(boardId ?? '', doneLimit);
+
+  // Bắt đầu kéo: huỷ lượt tải đang chạy để dữ liệu mới không thay thẻ dưới tay người dùng.
+  const onDraggingChange = useCallback(
+    (dragging: boolean) => {
+      if (dragging) void queryClient.cancelQueries({ queryKey: taskKeys.boards() });
+      setDragging(dragging);
+    },
+    [queryClient],
+  );
 
   if (dashboard.isError) {
     return <DashboardError error={dashboard.error} onRetry={() => void dashboard.refetch()} />;
@@ -63,13 +79,17 @@ export function BoardPage() {
     <BoardContent
       dashboard={dashboard.data}
       board={board}
-      boardKey={taskKeys.board(boardId, doneLimit)}
-      onShowMoreDone={
+      boardKey={boardKey}
+      showMoreDone={
         canShowMore && doneLimit < DONE_MAX
-          ? () => setDoneLimit((limit) => Math.min(limit + DONE_PAGE, DONE_MAX))
+          ? {
+              onClick: () => setDoneLimit((limit) => Math.min(limit + DONE_PAGE, DONE_MAX)),
+              // Đang tải trang tiếp (thẻ đang hiện là dữ liệu cũ giữ tạm) → khoá nút.
+              isLoading: board.isPlaceholderData,
+            }
           : null
       }
-      onDraggingChange={setDragging}
+      onDraggingChange={onDraggingChange}
     />
   );
 }

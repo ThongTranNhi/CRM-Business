@@ -249,4 +249,65 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
       });
     },
   );
+  await t.test(
+    'read-only dashboard (archived department) → 409 before permissions (BR-06)',
+    async () => {
+      const database = fakeDatabase({
+        crm_work_access: access('super_admin', { isReadOnly: true }),
+      });
+      globalThis.fetch = database.fetch;
+      const readOnly = { code: 'DASHBOARD_READ_ONLY', status: 409 };
+      await assert.rejects(
+        () => service.createTask(scopeAs('super_admin'), ids.board, createInput),
+        readOnly,
+      );
+      await assert.rejects(
+        () => service.moveTask(scopeAs('super_admin'), ids.task, moveInput),
+        readOnly,
+      );
+      await assert.rejects(() => service.archiveTask(scopeAs('super_admin'), ids.task), readOnly);
+      // Nhân viên không có quyền ghi vẫn nhận 409 (chỉ đọc được kiểm tra trước quyền).
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: access('employee', { isReadOnly: true, isDepartmentMember: true }),
+      }).fetch;
+      await assert.rejects(
+        () => service.moveTask(scopeAs('employee'), ids.task, moveInput),
+        readOnly,
+      );
+      assert.deepEqual(database.rpcCalls, []);
+    },
+  );
+  await t.test(
+    'assignee edits fields and collaborators but cannot change the assignee',
+    async () => {
+      const assignee = access('employee', { isDepartmentMember: true, isAssignee: true });
+      const database = fakeDatabase({ crm_work_access: assignee });
+      globalThis.fetch = database.fetch;
+      await assert.rejects(
+        () => service.updateTask(scopeAs('employee'), ids.task, { assigneeId: ids.other }),
+        { code: 'FORBIDDEN' },
+      );
+      assert.deepEqual(database.rpcCalls, []);
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: assignee,
+        crm_set_task_collaborators: null,
+      }).fetch;
+      await assert.rejects(
+        () => service.setCollaborators(scopeAs('employee'), ids.task, [ids.other]),
+        { code: 'TASK_NOT_FOUND' }, // RPC chạy; chi tiết sau đó không có trong DB giả → 404
+      );
+    },
+  );
+  await t.test('the creator may hand the task to someone else (Q: reassign)', async () => {
+    const database = fakeDatabase({
+      crm_work_access: access('employee', { isDepartmentMember: true, isCreator: true }),
+      crm_update_task: null,
+    });
+    globalThis.fetch = database.fetch;
+    await assert.rejects(
+      () => service.updateTask(scopeAs('employee'), ids.task, { assigneeId: ids.other }),
+      { code: 'TASK_NOT_FOUND' }, // đã qua kiểm tra quyền và gọi RPC; DB giả không có chi tiết task
+    );
+    assert.ok(database.rpcCalls.some((path) => path.endsWith('crm_update_task')));
+  });
 });

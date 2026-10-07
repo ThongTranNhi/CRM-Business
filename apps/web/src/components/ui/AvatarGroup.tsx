@@ -42,7 +42,13 @@ export function AvatarGroup({
         const avatar = (
           <Avatar name={person.fullName} src={person.avatarUrl} size="sm" className={RING} />
         );
-        if (!hrefOf) return <span key={person.id}>{avatar}</span>;
+        if (!hrefOf) {
+          return (
+            <span key={person.id} title={person.fullName}>
+              {avatar}
+            </span>
+          );
+        }
         return (
           <Link
             key={person.id}

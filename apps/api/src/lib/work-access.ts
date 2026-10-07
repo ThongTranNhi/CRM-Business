@@ -44,6 +44,8 @@ export interface BoardPermissions {
 
 export interface TaskPermissions {
   canEdit: boolean;
+  /** Đổi người phụ trách: Super Admin, Trưởng phòng, Trưởng nhóm của phòng, người tạo task. */
+  canReassign: boolean;
   canArchive: boolean;
 }
 
@@ -71,6 +73,7 @@ export function taskPermissions(viewer: BoardViewer, relation: TaskRelation): Ta
   const isInvolved = relation.isAssignee || relation.isCollaborator;
   return {
     canEdit: board.canEditAllTasks || (board.canWrite && isInvolved),
+    canReassign: board.canEditAllTasks || (board.canWrite && relation.isCreator),
     // BR-19: người tạo, Trưởng phòng, Super Admin.
     canArchive:
       board.canWrite &&

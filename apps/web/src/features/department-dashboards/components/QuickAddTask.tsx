@@ -2,8 +2,8 @@ import { useId, useState, type KeyboardEvent } from 'react';
 import { Icon } from '@/components/ui';
 
 interface QuickAddTaskProps {
-  /** Tạo nhanh với tên đã nhập (trang quyết định tạo ngay hay mở modal đầy đủ). */
-  onSubmit: (title: string) => Promise<void> | void;
+  /** Tạo nhanh với tên đã nhập (trang quyết định tạo ngay hay mở modal đầy đủ); false = lỗi. */
+  onSubmit: (title: string) => Promise<boolean>;
   isPending: boolean;
 }
 
@@ -12,6 +12,7 @@ export function QuickAddTask({ onSubmit, isPending }: QuickAddTaskProps) {
   const inputId = useId();
   const [isOpen, setOpen] = useState(false);
   const [title, setTitle] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
 
   const close = () => {
     setOpen(false);
@@ -19,11 +20,20 @@ export function QuickAddTask({ onSubmit, isPending }: QuickAddTaskProps) {
   };
 
   async function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Escape') close();
-    if (event.key !== 'Enter' || !title.trim() || isPending) return;
+    if (event.key === 'Escape') {
+      close();
+      return;
+    }
+    // Bộ gõ tiếng Việt (ghép chữ) cũng phát Enter khi chốt chữ: bỏ qua, tránh tạo task tên dở.
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
     event.preventDefault();
-    await onSubmit(title.trim());
-    close();
+    const trimmed = title.trim();
+    if (!trimmed || isSubmitting || isPending) return;
+    setSubmitting(true);
+    const isCreated = await onSubmit(trimmed);
+    setSubmitting(false);
+    // Lỗi → giữ ô mở và giữ chữ đã gõ để sửa / thử lại.
+    if (isCreated) close();
   }
 
   if (!isOpen) {
@@ -48,7 +58,8 @@ export function QuickAddTask({ onSubmit, isPending }: QuickAddTaskProps) {
         autoFocus
         value={title}
         maxLength={200}
-        disabled={isPending}
+        readOnly={isSubmitting}
+        aria-busy={isSubmitting}
         placeholder="Nhập tên rồi nhấn Enter, Esc để huỷ"
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => void handleKeyDown(event)}

@@ -19,7 +19,7 @@ interface BoardContentProps {
   board: UseQueryResult<BoardData>;
   boardKey: BoardColumnsProps['boardKey'];
   /** null: đã hiện hết việc xong hoặc chạm giới hạn 200. */
-  onShowMoreDone: (() => void) | null;
+  showMoreDone: BoardColumnsProps['showMoreDone'];
   onDraggingChange: (isDragging: boolean) => void;
 }
 
@@ -70,7 +70,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         today={today}
         avatarOf={(id) => avatars.get(id) ?? null}
         quickAdd={canWrite ? quickAdd : null}
-        onShowMoreDone={props.onShowMoreDone}
+        showMoreDone={props.showMoreDone}
         onDraggingChange={props.onDraggingChange}
       />
     );

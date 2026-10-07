@@ -16,10 +16,11 @@ export function useQuickAddTask(dashboard: DashboardDetail, openForm: (title: st
   const myEmployeeId = user?.employeeId ?? null;
   const isMember = dashboard.members.some((member) => member.id === myEmployeeId);
 
-  async function submit(title: string) {
+  /** true: đã tạo (hoặc chuyển sang modal đầy đủ) → đóng ô; false: lỗi, giữ chữ đã gõ. */
+  async function submit(title: string): Promise<boolean> {
     if (!myEmployeeId || !isMember) {
       openForm(title);
-      return;
+      return true;
     }
     try {
       await create.mutateAsync({
@@ -32,8 +33,10 @@ export function useQuickAddTask(dashboard: DashboardDetail, openForm: (title: st
         description: null,
       });
       toast({ message: 'Đã tạo công việc' });
+      return true;
     } catch (error) {
       toast({ tone: 'error', message: errorMessage(error) });
+      return false;
     }
   }
 

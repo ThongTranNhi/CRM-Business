@@ -37,9 +37,13 @@ export function TaskCard({
     <article
       data-task-card={task.id}
       aria-label={task.title}
+      // Tab tới được thẻ (bàn phím); focus trong thẻ làm hiện menu chuyển cột.
+      tabIndex={0}
       className={cn(
         'group grid gap-2.5 rounded-lg border border-gray-200 bg-white p-3 shadow-sm',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300',
         dragProps?.draggable && 'cursor-grab hover:border-primary-300',
+        isDone && 'opacity-70',
         isDragging && 'opacity-40',
       )}
       {...dragProps}
@@ -94,8 +98,9 @@ export function TaskCard({
         )}
       </div>
       {moveMenu && (
-        // Máy có chuột: hiện khi rê chuột / focus bàn phím. Màn hình cảm ứng: luôn hiện.
-        <div className="transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
+        // Máy có chuột: ẩn hẳn (invisible — không bấm trúng khi đang ẩn), hiện khi rê chuột hoặc focus
+        // trong thẻ. Màn hình cảm ứng: luôn hiện.
+        <div className="[@media(hover:hover)]:invisible [@media(hover:hover)]:group-focus-within:visible [@media(hover:hover)]:group-hover:visible">
           {moveMenu}
         </div>
       )}

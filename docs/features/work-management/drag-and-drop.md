@@ -26,7 +26,10 @@ Khi khoảng cách quá nhỏ (< 0.001) → backend đánh lại số cả cột
 - Activity `moved` ghi `{ columnId, columnName, status }` ở cả `from_value` và `to_value`.
 
 - Backend tính `position` từ hai task lân cận (không tin `position` client gửi).
-- Kiểm tra quyền (permission-model), áp BR-13/BR-14, ghi `task_activities` — **trong một Postgres function** để nguyên tử.
+- Quyền (permission-model) kiểm tra ở **service API** (`lib/work-access.ts` + `crm_work_access`) ngay trước khi gọi RPC;
+  RPC `crm_move_task` áp BR-13/BR-14, tính `position`, ghi `task_activities` **trong một giao dịch**. Giữa lúc API
+  kiểm tra quyền và lúc RPC ghi có một khoảng hở rất ngắn (quyền vừa bị đổi) — đã chấp nhận.
+- "Chuyển sang cột…" (cuối cột) gửi không `previousTaskId` / `nextTaskId`: server đặt sau thẻ cuối thật của cột.
 - Trả task đã cập nhật.
 
 ## Frontend

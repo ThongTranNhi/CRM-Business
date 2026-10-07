@@ -17,8 +17,9 @@ Module `apps/api/src/modules/tasks`. Mọi endpoint yêu cầu đăng nhập. Gh
 | POST   | `/api/tasks/:id/restore`       | Như DELETE                                                                  | Hoàn tác xoá: task về cuối cột cũ (migration 20261007090000) |
 
 "Sửa task": Super Admin, Trưởng phòng (role `department_manager` và là trưởng phòng của phòng đó), Trưởng nhóm
-trong phòng; nhân viên / thành viên board chỉ với task mình phụ trách hoặc phối hợp. Phòng đã xoá → mọi thao tác
-ghi trả `409 DASHBOARD_READ_ONLY` (BR-06).
+trong phòng; nhân viên / thành viên board chỉ với task mình phụ trách hoặc phối hợp. **Đổi người phụ trách**
+(`assigneeId`): Super Admin, Trưởng phòng, Trưởng nhóm của phòng, người tạo task. Phòng đã xoá → mọi thao tác ghi
+trả `409 DASHBOARD_READ_ONLY` (BR-06), kiểm tra **trước** quyền ghi (nên không ra 403).
 
 ## GET `/api/boards/:boardId`
 
@@ -96,7 +97,7 @@ Body `{ "employeeIds": ["uuid"] }` (tối đa 20). Chỉ người **mới thêm*
 ## GET `/api/tasks/:id`
 
 Trả thông tin task, `department`, `assignee`, `collaborators`, `completedBy` / `createdBy` (`{ id, fullName }`), và
-`permissions: { canEdit, canArchive, canComment }` của người xem.
+`permissions: { canEdit, canReassign, canArchive, canComment }` của người xem.
 
 ## Lỗi
 

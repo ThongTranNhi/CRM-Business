@@ -1,5 +1,5 @@
-import { useId, type ReactNode } from 'react';
-import { Button, Icon, SearchInput } from '@/components/ui';
+import type { ReactNode } from 'react';
+import { Button, Icon, SearchInput, Select } from '@/components/ui';
 import { PRIORITIES, PRIORITY_META } from '@/features/tasks';
 import { cn } from '@/lib/cn';
 import {
@@ -23,7 +23,6 @@ interface BoardFiltersProps {
 
 /** Thanh lọc board (department-dashboard.md): tên / người phụ trách, Việc của tôi, hạn, ưu tiên. */
 export function BoardFilters({ filters, onChange, onClear }: BoardFiltersProps) {
-  const priorityId = useId();
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="w-full sm:w-72">
@@ -47,24 +46,21 @@ export function BoardFilters({ filters, onChange, onClear }: BoardFiltersProps) 
           {DUE_LABELS[due]}
         </FilterChip>
       ))}
-      <label htmlFor={priorityId} className="sr-only">
-        Lọc theo ưu tiên
-      </label>
-      <select
-        id={priorityId}
-        value={filters.priority ?? ''}
-        onChange={(event) =>
-          onChange({ priority: PRIORITIES.find((p) => p === event.target.value) ?? null })
-        }
-        className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-sm text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-      >
-        <option value="">Mọi mức ưu tiên</option>
-        {PRIORITIES.map((priority) => (
-          <option key={priority} value={priority}>
-            {PRIORITY_META[priority].label}
-          </option>
-        ))}
-      </select>
+      <div className="w-44">
+        <Select
+          label="Lọc theo ưu tiên"
+          hideLabel
+          placeholder="Mọi mức ưu tiên"
+          options={PRIORITIES.map((priority) => ({
+            value: priority,
+            label: PRIORITY_META[priority].label,
+          }))}
+          value={filters.priority ?? ''}
+          onChange={(event) =>
+            onChange({ priority: PRIORITIES.find((p) => p === event.target.value) ?? null })
+          }
+        />
+      </div>
       {hasFilters(filters) && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <Icon name="filterX" size={16} />

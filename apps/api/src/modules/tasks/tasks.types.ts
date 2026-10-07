@@ -1,6 +1,11 @@
 import type { z } from 'zod';
 import type { PersonRef } from '../departments/departments.types';
-import type { createTaskSchema, moveTaskSchema, updateTaskSchema } from './tasks.schema';
+import type {
+  createTaskSchema,
+  movedTaskSchema,
+  moveTaskSchema,
+  updateTaskSchema,
+} from './tasks.schema';
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
@@ -72,16 +77,8 @@ export interface TaskDetail {
   department: { id: string; name: string };
   assignee: Assignee;
   collaborators: PersonRef[];
-  permissions: { canEdit: boolean; canArchive: boolean; canComment: boolean };
+  permissions: { canEdit: boolean; canReassign: boolean; canArchive: boolean; canComment: boolean };
 }
 
 /** Kết quả crm_move_task. */
-export interface MovedTask {
-  id: string;
-  columnId: string;
-  status: TaskStatus;
-  position: number;
-  startedAt: string | null;
-  completedAt: string | null;
-  completedBy: string | null;
-}
+export type MovedTask = z.infer<typeof movedTaskSchema>;

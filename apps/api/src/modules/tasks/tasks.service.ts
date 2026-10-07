@@ -1,8 +1,13 @@
 import type { Env } from '../../config/env';
 import { forbidden } from '../../lib/app-error';
 import type { RequestScope } from '../../lib/request-scope';
-import { boardPermissions, taskPermissions, type WorkAccess } from '../../lib/work-access';
-import { boardNotFound, taskNotFound } from '../../lib/work-errors';
+import {
+  boardPermissions,
+  taskPermissions,
+  type TaskRelation,
+  type WorkAccess,
+} from '../../lib/work-access';
+import { boardNotFound, dashboardReadOnly, taskNotFound } from '../../lib/work-errors';
 import * as boardRepository from './tasks.board.repository';
 import * as tasksRepository from './tasks.repository';
 import type {
@@ -44,14 +49,26 @@ async function requireTaskAccess(
   return access;
 }
 
+/** Thao tác ghi: Dashboard chỉ đọc (BR-06) → 409 trước, rồi mới tới quyền → 403. */
+function requireWrite(access: WorkAccess, isAllowed: boolean) {
+  if (access.isReadOnly) throw dashboardReadOnly();
+  if (!isAllowed) throw forbidden();
+}
+
+/** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
+const relationTo = (
+  access: WorkAccess,
+  task: Pick<TaskCard, 'assignee' | 'collaborators' | 'createdById'>,
+): TaskRelation => ({
+  isAssignee: task.assignee.id === access.employeeId,
+  isCollaborator: task.collaborators.some((person) => person.id === access.employeeId),
+  isCreator: task.createdById === access.accountId,
+});
+
 /** Quyền của người xem với một thẻ: kéo / đổi cột, xoá (BR-19). */
 function withPermissions(access: WorkAccess, card: TaskCard): BoardTask {
   const { createdById, ...rest } = card;
-  const permissions = taskPermissions(access, {
-    isAssignee: card.assignee.id === access.employeeId,
-    isCollaborator: card.collaborators.some((person) => person.id === access.employeeId),
-    isCreator: createdById === access.accountId,
-  });
+  const permissions = taskPermissions(access, relationTo(access, { ...card, createdById }));
   return { ...rest, canMove: permissions.canEdit, canArchive: permissions.canArchive };
 }
 
@@ -70,15 +87,14 @@ export async function getBoard(scope: RequestScope, boardId: string, doneLimit: 
 /** BR-11, BR-12: department_id theo Dashboard (RPC), đúng 1 người phụ trách. */
 export async function createTask(scope: RequestScope, boardId: string, input: CreateTaskInput) {
   const access = await requireBoardAccess(scope, boardId);
-  if (!boardPermissions(access).canWrite) throw forbidden();
+  requireWrite(access, boardPermissions(access).canWrite);
   const taskId = await tasksRepository.createTask(scope.env, scope.actor.id, { boardId, ...input });
   const card = await boardRepository.findCard(scope.env, taskId);
   if (!card) throw taskNotFound();
   return withPermissions(access, card);
 }
 
-export async function getTask(scope: RequestScope, taskId: string): Promise<TaskDetail> {
-  const access = await requireTaskAccess(scope, taskId);
+async function taskDetail(scope: RequestScope, access: WorkAccess, taskId: string) {
   const task = await tasksRepository.findTask(scope.env, taskId);
   if (!task) throw taskNotFound();
   const names = await tasksRepository.findAccountNames(
@@ -86,49 +102,65 @@ export async function getTask(scope: RequestScope, taskId: string): Promise<Task
     [task.createdById, task.completedById].flatMap((id) => (id ? [id] : [])),
   );
   const { completedById, createdById, ...detail } = task;
-  const { canEdit, canArchive } = taskPermissions(access, access);
+  const { canEdit, canReassign, canArchive } = taskPermissions(access, relationTo(access, task));
   return {
     ...detail,
     completedBy: completedById ? (names.get(completedById) ?? null) : null,
     createdBy: names.get(createdById) ?? null,
-    permissions: { canEdit, canArchive, canComment: boardPermissions(access).canWrite },
-  };
+    permissions: {
+      canEdit,
+      canReassign,
+      canArchive,
+      canComment: boardPermissions(access).canWrite,
+    },
+  } satisfies TaskDetail;
 }
 
-async function requireEditable(scope: RequestScope, taskId: string) {
-  const access = await requireTaskAccess(scope, taskId);
-  if (!taskPermissions(access, access).canEdit) throw forbidden();
+export async function getTask(scope: RequestScope, taskId: string): Promise<TaskDetail> {
+  return taskDetail(scope, await requireTaskAccess(scope, taskId), taskId);
 }
 
+/** Đổi người phụ trách cần canReassign; các trường khác cần canEdit. */
 export async function updateTask(scope: RequestScope, taskId: string, input: UpdateTaskInput) {
-  await requireEditable(scope, taskId);
+  const access = await requireTaskAccess(scope, taskId);
+  const permissions = taskPermissions(access, access);
+  const { assigneeId, ...otherFields } = input;
+  const changesOthers = Object.keys(otherFields).length > 0;
+  requireWrite(
+    access,
+    (assigneeId === undefined || permissions.canReassign) &&
+      (!changesOthers || permissions.canEdit),
+  );
   await tasksRepository.updateTask(scope.env, scope.actor.id, { taskId, ...input });
-  return getTask(scope, taskId);
+  return taskDetail(scope, access, taskId);
 }
 
 /** BR-13 → BR-15: kéo thả lưu DB; position, completed_* do RPC tính. */
 export async function moveTask(scope: RequestScope, taskId: string, input: MoveTaskInput) {
-  await requireEditable(scope, taskId);
+  const access = await requireTaskAccess(scope, taskId);
+  requireWrite(access, taskPermissions(access, access).canEdit);
   return tasksRepository.moveTask(scope.env, scope.actor.id, { taskId, ...input });
 }
 
+/** Người phụ trách hiện tại vẫn sửa được người phối hợp (canEdit). */
 export async function setCollaborators(scope: RequestScope, taskId: string, employeeIds: string[]) {
-  await requireEditable(scope, taskId);
+  const access = await requireTaskAccess(scope, taskId);
+  requireWrite(access, taskPermissions(access, access).canEdit);
   await tasksRepository.setCollaborators(scope.env, scope.actor.id, { taskId, employeeIds });
-  return getTask(scope, taskId);
+  return taskDetail(scope, access, taskId);
 }
 
 /** BR-19: lưu trữ (không xoá) — người tạo, Trưởng phòng, Super Admin. */
 export async function archiveTask(scope: RequestScope, taskId: string) {
   const access = await requireTaskAccess(scope, taskId);
-  if (!taskPermissions(access, access).canArchive) throw forbidden();
+  requireWrite(access, taskPermissions(access, access).canArchive);
   await tasksRepository.archiveTask(scope.env, scope.actor.id, taskId);
 }
 
 /** Hoàn tác xoá: cùng quyền với xoá; task về cuối cột cũ (RPC crm_restore_task). */
 export async function restoreTask(scope: RequestScope, taskId: string) {
   const access = await requireTaskAccess(scope, taskId, { archived: true });
-  if (!taskPermissions(access, access).canArchive) throw forbidden();
+  requireWrite(access, taskPermissions(access, access).canArchive);
   await tasksRepository.restoreTask(scope.env, scope.actor.id, taskId);
   const card = await boardRepository.findCard(scope.env, taskId);
   if (!card) throw taskNotFound();

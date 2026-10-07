@@ -14,15 +14,17 @@ interface UseBoardMovesOptions {
 export function useBoardMoves({ board, visibleTasks, boardKey }: UseBoardMovesOptions) {
   const move = useMoveTask({ boardKey, relatedKeys: [dashboardKeys.all] });
 
-  /** `index` null: cuối cột (menu "Chuyển sang cột…"). */
+  /**
+   * `index` null: cuối cột (menu "Chuyển sang cột…") — không gửi task lân cận, server tự đặt sau thẻ
+   * cuối thật (cột Đã hoàn thành chỉ tải N thẻ mới nhất nên "thẻ cuối" phía client có thể sai).
+   */
   function moveTo(taskId: string, columnId: string, index: number | null) {
     const others = (tasks: BoardTask[]) =>
       columnTasks(tasks, columnId).filter((task) => task.id !== taskId);
-    const full = others(board.tasks);
     const neighbors =
       index === null
-        ? { previousTaskId: full[full.length - 1]?.id ?? null, nextTaskId: null }
-        : dropNeighbors(full, others(visibleTasks), index);
+        ? { previousTaskId: null, nextTaskId: null }
+        : dropNeighbors(others(board.tasks), others(visibleTasks), index);
     const next = { taskId, toColumnId: columnId, ...neighbors };
     if (!isSamePlace(board.tasks, next)) move.mutate(next);
   }

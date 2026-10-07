@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { DashboardCard } from '@/features/department-dashboards';
 import { ApiError } from '@/lib/api-client';
 import {
@@ -7,9 +7,6 @@ import {
   filterDashboards,
   initialDepartment,
 } from './workspace.utils';
-
-// api-client nạp supabase client (cần biến môi trường); test chỉ dùng lớp ApiError.
-vi.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 const card = (name: string, departmentName: string): DashboardCard => ({
   id: name,

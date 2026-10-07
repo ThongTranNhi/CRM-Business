@@ -19,6 +19,7 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 | Tạo phòng ban (kể cả trong hộp thoại Tạo Dashboard) | ✅                                    | ✅            | — _(chờ xác nhận)_   | —           | —                                 |
 | Tạo task trong Dashboard                            | ✅                                    | —             | 🏢                   | 🏢          | 🏢 (nếu là thành viên)            |
 | Sửa task                                            | ✅                                    | —             | 🏢                   | 🏢          | 👤 người phụ trách / phối hợp     |
+| Đổi người phụ trách                                 | ✅                                    | —             | 🏢                   | 🏢          | 👤 người tạo task                 |
 | Kéo thả task                                        | ✅                                    | —             | 🏢                   | 🏢          | 👤 task mình phụ trách / phối hợp |
 | Xoá (archive) task                                  | ✅                                    | —             | 🏢                   | —           | 👤 người tạo                      |
 | Quản lý phòng ban                                   | ✅                                    | ✅            | —                    | —           | —                                 |
@@ -48,3 +49,6 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 - HR Admin cũng là nhân viên của phòng mình (thường là phòng Nhân sự): trên Dashboard phòng đó, HR Admin ghi
   được như một thành viên bình thường (tạo task, bình luận, sửa / kéo task mình phụ trách hoặc phối hợp, lưu
   trữ task mình tạo); với Dashboard phòng khác chỉ đọc.
+- Đổi người phụ trách (`assigneeId`): Super Admin, Trưởng phòng, Trưởng nhóm của phòng và **người tạo task**. Người
+  phụ trách hiện tại sửa được các trường khác và người phối hợp nhưng không tự giao việc cho người khác.
+- Thao tác ghi trên Dashboard chỉ đọc (phòng đã xoá) trả `409 DASHBOARD_READ_ONLY` — kiểm tra trước quyền ghi (403).

@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getBoard } from '../api/tasks.api';
 import { taskKeys } from './task-keys';
 
@@ -17,7 +17,8 @@ export function useBoard(boardId: string | null, { doneLimit, isPaused }: UseBoa
     queryKey: taskKeys.board(boardId ?? '', doneLimit),
     queryFn: () => getBoard(boardId ?? '', doneLimit),
     enabled: boardId !== null,
-    placeholderData: keepPreviousData,
+    // [Xem thêm] đổi doneLimit: giữ thẻ đang hiện; sang board khác thì không giữ dữ liệu board cũ.
+    placeholderData: (previous) => (previous?.boardId === boardId ? previous : undefined),
     refetchInterval: isPaused ? false : REFRESH_MS,
     refetchOnWindowFocus: !isPaused,
   });
