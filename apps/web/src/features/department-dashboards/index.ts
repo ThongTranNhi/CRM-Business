@@ -1,2 +1,3 @@
 export { useCreateDashboard, useDashboards } from './hooks/useDashboards';
-export type { DashboardCard, DashboardLinkState, MemberPreview } from './types';
+export { BoardPage } from './pages/BoardPage';
+export type { DashboardCard, DashboardLinkState } from './types';

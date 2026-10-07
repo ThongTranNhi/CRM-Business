@@ -38,6 +38,9 @@ const DepartmentDetailPage = lazy(() =>
 const WorkspacePage = lazy(() =>
   import('@/features/workspace').then((m) => ({ default: m.WorkspacePage })),
 );
+const BoardPage = lazy(() =>
+  import('@/features/department-dashboards').then((m) => ({ default: m.BoardPage })),
+);
 
 function page(element: ReactNode) {
   return <Suspense fallback={<Skeleton className="h-40 w-full" />}>{element}</Suspense>;
@@ -60,7 +63,6 @@ const unfinishedPages: { path: string; title: string; permission?: Permission }[
       title: item.label,
       permission: item.permission,
     })),
-  { path: 'workspace/:dashboardId', title: 'Board phòng ban' },
   { path: 'projects/:id', title: 'Chi tiết dự án' },
   { path: 'payroll/:periodId', title: 'Chi tiết kỳ lương', permission: 'payroll.manage' },
   { path: 'notifications', title: 'Thông báo' },
@@ -75,6 +77,7 @@ const appRoutes: RouteObject[] = [
   { path: 'departments', element: page(<DepartmentListPage />) },
   { path: 'departments/:id', element: page(<DepartmentDetailPage />) },
   { path: 'workspace', element: page(<WorkspacePage />) },
+  { path: 'workspace/:dashboardId', element: page(<BoardPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>
     guarded(permission, { path, element: <PlaceholderPage title={title} /> }),
   ),

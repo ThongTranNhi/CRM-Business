@@ -12,6 +12,7 @@ export { Input } from './Input';
 export { Modal, ModalActions } from './Modal';
 export { PageHeader } from './PageHeader';
 export { Pagination } from './Pagination';
+export { ProgressBar } from './ProgressBar';
 export { SearchInput } from './SearchInput';
 export { Select, type SelectOption } from './Select';
 export { Skeleton } from './Skeleton';

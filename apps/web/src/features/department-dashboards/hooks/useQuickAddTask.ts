@@ -1,0 +1,41 @@
+import { useToast } from '@/components/ui';
+import { useCurrentUser } from '@/features/auth';
+import { useCreateTask } from '@/features/tasks';
+import { errorMessage } from '@/lib/api-client';
+import type { DashboardDetail } from '../types';
+import { dashboardKeys } from './dashboard-keys';
+
+/**
+ * Ô "+ Thêm công việc" trong cột: người phụ trách mặc định là mình nếu mình thuộc board; nếu không
+ * (vd. Super Admin ngoài phòng) mở modal đầy đủ với tên đã nhập để chọn người phụ trách.
+ */
+export function useQuickAddTask(dashboard: DashboardDetail, openForm: (title: string) => void) {
+  const toast = useToast();
+  const { data: user } = useCurrentUser();
+  const create = useCreateTask(dashboard.boardId, [dashboardKeys.all]);
+  const myEmployeeId = user?.employeeId ?? null;
+  const isMember = dashboard.members.some((member) => member.id === myEmployeeId);
+
+  async function submit(title: string) {
+    if (!myEmployeeId || !isMember) {
+      openForm(title);
+      return;
+    }
+    try {
+      await create.mutateAsync({
+        title,
+        assigneeId: myEmployeeId,
+        collaboratorIds: [],
+        priority: 'normal',
+        startDate: null,
+        dueDate: null,
+        description: null,
+      });
+      toast({ message: 'Đã tạo công việc' });
+    } catch (error) {
+      toast({ tone: 'error', message: errorMessage(error) });
+    }
+  }
+
+  return { onSubmit: submit, isPending: create.isPending };
+}
