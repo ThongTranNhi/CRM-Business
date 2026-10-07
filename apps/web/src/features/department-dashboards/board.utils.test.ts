@@ -61,6 +61,7 @@ const task = (overrides: Partial<BoardTask>): BoardTask => ({
   checklist: { done: 0, total: 0 },
   commentCount: 0,
   canMove: true,
+  canArchive: false,
   ...overrides,
 });
 

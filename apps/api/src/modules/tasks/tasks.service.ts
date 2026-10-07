@@ -29,22 +29,30 @@ async function requireBoardAccess({ env, actor }: RequestScope, boardId: string)
   return access;
 }
 
-/** null hoặc taskId null (task đã lưu trữ / không thuộc board) → 404. */
-async function requireTaskAccess({ env, actor }: RequestScope, taskId: string) {
+/**
+ * null / taskId null → 404. Task đã lưu trữ cũng 404, trừ khi gọi để hoàn tác (`archived: true`
+ * thì ngược lại: chỉ task đã lưu trữ).
+ */
+async function requireTaskAccess(
+  { env, actor }: RequestScope,
+  taskId: string,
+  { archived = false }: { archived?: boolean } = {},
+) {
   const access = await boardRepository.findWorkAccess(env, actor.id, { taskId });
-  if (!access?.taskId) throw taskNotFound();
+  if (!access?.taskId || access.isArchived !== archived) throw taskNotFound();
   if (!boardPermissions(access).canView) throw forbidden();
   return access;
 }
 
-/** Quyền kéo / sửa một thẻ theo người xem (thẻ trên board không cần biết người tạo). */
-function withCanMove(access: WorkAccess, card: TaskCard): BoardTask {
-  const relation = {
+/** Quyền của người xem với một thẻ: kéo / đổi cột, xoá (BR-19). */
+function withPermissions(access: WorkAccess, card: TaskCard): BoardTask {
+  const { createdById, ...rest } = card;
+  const permissions = taskPermissions(access, {
     isAssignee: card.assignee.id === access.employeeId,
     isCollaborator: card.collaborators.some((person) => person.id === access.employeeId),
-    isCreator: false,
-  };
-  return { ...card, canMove: taskPermissions(access, relation).canEdit };
+    isCreator: createdById === access.accountId,
+  });
+  return { ...rest, canMove: permissions.canEdit, canArchive: permissions.canArchive };
 }
 
 /** 1 request trả cột + việc đang mở + `doneLimit` việc xong gần nhất (department-dashboard.md). */
@@ -55,7 +63,7 @@ export async function getBoard(scope: RequestScope, boardId: string, doneLimit: 
     boardRepository.listOpenCards(scope.env, boardId),
     boardRepository.listDoneCards(scope.env, boardId, doneLimit),
   ]);
-  const tasks = [...openCards, ...done.cards].map((card) => withCanMove(access, card));
+  const tasks = [...openCards, ...done.cards].map((card) => withPermissions(access, card));
   return { boardId, columns, tasks, doneTotal: done.total } satisfies BoardData;
 }
 
@@ -66,7 +74,7 @@ export async function createTask(scope: RequestScope, boardId: string, input: Cr
   const taskId = await tasksRepository.createTask(scope.env, scope.actor.id, { boardId, ...input });
   const card = await boardRepository.findCard(scope.env, taskId);
   if (!card) throw taskNotFound();
-  return withCanMove(access, card);
+  return withPermissions(access, card);
 }
 
 export async function getTask(scope: RequestScope, taskId: string): Promise<TaskDetail> {
@@ -115,4 +123,14 @@ export async function archiveTask(scope: RequestScope, taskId: string) {
   const access = await requireTaskAccess(scope, taskId);
   if (!taskPermissions(access, access).canArchive) throw forbidden();
   await tasksRepository.archiveTask(scope.env, scope.actor.id, taskId);
+}
+
+/** Hoàn tác xoá: cùng quyền với xoá; task về cuối cột cũ (RPC crm_restore_task). */
+export async function restoreTask(scope: RequestScope, taskId: string) {
+  const access = await requireTaskAccess(scope, taskId, { archived: true });
+  if (!taskPermissions(access, access).canArchive) throw forbidden();
+  await tasksRepository.restoreTask(scope.env, scope.actor.id, taskId);
+  const card = await boardRepository.findCard(scope.env, taskId);
+  if (!card) throw taskNotFound();
+  return withPermissions(access, card);
 }

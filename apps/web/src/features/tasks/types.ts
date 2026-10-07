@@ -32,6 +32,8 @@ export interface BoardTask {
   commentCount: number;
   /** Người xem kéo / đổi cột được thẻ này. */
   canMove: boolean;
+  /** Người xem xoá (lưu trữ) được: người tạo, Trưởng phòng, Super Admin (BR-19). */
+  canArchive: boolean;
 }
 
 export interface BoardData {

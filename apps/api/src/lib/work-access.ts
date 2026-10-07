@@ -16,6 +16,8 @@ export const workAccessSchema = z.object({
   isDepartmentManager: z.boolean(),
   isBoardMember: z.boolean(),
   taskId: z.uuid().nullable(),
+  /** Task đã lưu trữ (20261007090000); bản RPC cũ không trả trường này → false. */
+  isArchived: z.boolean().default(false),
   isAssignee: z.boolean(),
   isCollaborator: z.boolean(),
   isCreator: z.boolean(),

@@ -1,6 +1,15 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../../lib/app-env';
-import { archive, board, collaborators, create, detail, move, update } from './tasks.controller';
+import {
+  archive,
+  board,
+  collaborators,
+  create,
+  detail,
+  move,
+  restore,
+  update,
+} from './tasks.controller';
 
 // Mọi role đều qua được route; quyền theo dữ liệu (thành viên phòng / board) kiểm tra ở service.
 
@@ -9,10 +18,11 @@ export const boardRoutes = new Hono<AppEnv>();
 boardRoutes.get('/:boardId', board);
 boardRoutes.post('/:boardId/tasks', create);
 
-/** /api/tasks/:id — chi tiết, sửa, kéo thả, người phối hợp, lưu trữ. */
+/** /api/tasks/:id — chi tiết, sửa, kéo thả, người phối hợp, lưu trữ (xoá mềm), hoàn tác. */
 export const taskRoutes = new Hono<AppEnv>();
 taskRoutes.get('/:id', detail);
 taskRoutes.patch('/:id', update);
 taskRoutes.delete('/:id', archive);
+taskRoutes.post('/:id/restore', restore);
 taskRoutes.patch('/:id/move', move);
 taskRoutes.put('/:id/collaborators', collaborators);

@@ -2,6 +2,7 @@ import type { DragEvent, HTMLAttributes, ReactNode } from 'react';
 import {
   MoveToColumnMenu,
   TaskCard,
+  TaskCardMenu,
   type BoardColumn as Column,
   type BoardTask,
   type TaskStatus,
@@ -24,6 +25,7 @@ export interface ColumnContext {
   draggingId: string | null;
   cardDragProps: (taskId: string) => HTMLAttributes<HTMLElement> & { draggable: boolean };
   onMoveToColumn: (taskId: string, columnId: string) => void;
+  onRequestDelete: (task: BoardTask) => void;
 }
 
 interface BoardColumnProps {
@@ -100,6 +102,11 @@ function ColumnCard({ task, context }: { task: BoardTask; context: ColumnContext
       avatarOf={context.avatarOf}
       isDragging={task.id === context.draggingId}
       dragProps={task.canMove ? context.cardDragProps(task.id) : undefined}
+      actionsMenu={
+        task.canArchive && (
+          <TaskCardMenu taskTitle={task.title} onDelete={() => context.onRequestDelete(task)} />
+        )
+      }
       moveMenu={
         task.canMove && (
           <MoveToColumnMenu

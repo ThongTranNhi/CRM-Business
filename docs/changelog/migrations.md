@@ -21,10 +21,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 11  | `20261006090600_work_management_tables.sql`           |                            |
 | 12  | `20261006090700_work_management_rpcs.sql`             |                            |
 | 13  | `20261006090800_employee_delete_handover.sql`         |                            |
+| 14  | `20261007090000_task_restore.sql`                     |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -34,6 +35,9 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261007090000_task_restore.sql`: hoàn tác xoá công việc — RPC `crm_restore_task` (về cuối cột cũ, activity
+  `restored`, audit `task.restore`); `crm_work_access` thấy task đã lưu trữ (`isArchived`); view `task_cards` thêm
+  `created_by` (quyền xoá từng thẻ).
 - `20261006090800_employee_delete_handover.sql`: `crm_delete_employee` thêm tham số tuỳ chọn
   `handover_employee_uuid` (BR-53) — chuyển việc đang mở sang người nhận (phải thuộc board của từng việc),
   ghi activity `assignee_changed`, audit ghi `handoverEmployeeId`, `handedOverTaskCount`.

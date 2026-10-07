@@ -10,7 +10,7 @@ Bảng `task_activities` — **chỉ INSERT**, không UPDATE/DELETE (BR-21).
 
 ## Hành động ghi lại
 
-`created`, `assigned`, `assignee_changed`, `collaborators_changed`, `due_date_changed`, `priority_changed`, `checklist_changed`, `attachment_added`, `attachment_removed`, `moved`, `completed`, `reopened`, `archived`, `title_changed`.
+`created`, `assigned`, `assignee_changed`, `collaborators_changed`, `due_date_changed`, `priority_changed`, `checklist_changed`, `attachment_added`, `attachment_removed`, `moved`, `completed`, `reopened`, `archived`, `restored` (hoàn tác xoá), `title_changed`.
 Bình luận không ghi vào activity (đã có bảng riêng).
 
 ## Hiển thị (mục Lịch sử hoạt động trong chi tiết task)

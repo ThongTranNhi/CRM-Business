@@ -55,6 +55,7 @@ const cardRow = {
   checklist_total: 0,
   checklist_done: 0,
   comment_count: 0,
+  created_by: ids.account,
 };
 const rpcError = (message, code = 'P0001') => Response.json({ code, message }, { status: 400 });
 const moveInput = { toColumnId: ids.column, previousTaskId: null, nextTaskId: null };
@@ -189,4 +190,63 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
       code: 'FORBIDDEN',
     });
   });
+  await t.test('the creator sees the card as deletable; others do not (BR-19)', async () => {
+    const database = (createdBy) =>
+      fakeDatabase({
+        crm_work_access: access('employee', { isDepartmentMember: true }),
+        'status=in.': [{ ...cardRow, created_by: createdBy }],
+        board_columns: [],
+      }).fetch;
+    globalThis.fetch = database(ids.account);
+    assert.equal(
+      (await service.getBoard(scopeAs('employee'), ids.board, 20)).tasks[0].canArchive,
+      true,
+    );
+    globalThis.fetch = database(ids.other);
+    assert.equal(
+      (await service.getBoard(scopeAs('employee'), ids.board, 20)).tasks[0].canArchive,
+      false,
+    );
+  });
+  await t.test('restore: only an archived task, with the same rights as deleting', async () => {
+    const database = fakeDatabase({
+      crm_work_access: access('employee', {
+        isDepartmentMember: true,
+        isCreator: true,
+        isArchived: true,
+      }),
+      crm_restore_task: null,
+      task_cards: [cardRow],
+    });
+    globalThis.fetch = database.fetch;
+    const card = await service.restoreTask(scopeAs('employee'), ids.task);
+    assert.equal(card.id, ids.task);
+    assert.equal(card.canArchive, true);
+    assert.ok(database.rpcCalls.some((path) => path.endsWith('crm_restore_task')));
+  });
+  await t.test('restore by someone who may not delete → 403, no RPC', async () => {
+    const database = fakeDatabase({
+      crm_work_access: access('employee', { isDepartmentMember: true, isArchived: true }),
+    });
+    globalThis.fetch = database.fetch;
+    await assert.rejects(() => service.restoreTask(scopeAs('employee'), ids.task), {
+      code: 'FORBIDDEN',
+    });
+    assert.deepEqual(database.rpcCalls, []);
+  });
+  await t.test(
+    'restore a task that is not archived → 404; archived task is hidden elsewhere',
+    async () => {
+      globalThis.fetch = fakeDatabase({ crm_work_access: access('super_admin') }).fetch;
+      await assert.rejects(() => service.restoreTask(scopeAs('super_admin'), ids.task), {
+        code: 'TASK_NOT_FOUND',
+      });
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: access('super_admin', { isArchived: true }),
+      }).fetch;
+      await assert.rejects(() => service.getTask(scopeAs('super_admin'), ids.task), {
+        code: 'TASK_NOT_FOUND',
+      });
+    },
+  );
 });

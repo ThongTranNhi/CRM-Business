@@ -36,11 +36,14 @@ export interface TaskCard {
   collaborators: PersonRef[];
   checklist: { done: number; total: number };
   commentCount: number;
+  /** app_accounts.id người tạo — tính quyền xoá (BR-19), không trả ra API. */
+  createdById: string;
 }
 
-/** Thẻ kèm quyền của người xem: kéo / đổi cột được không. */
-export interface BoardTask extends TaskCard {
+/** Thẻ kèm quyền của người xem: kéo / đổi cột, xoá (lưu trữ). */
+export interface BoardTask extends Omit<TaskCard, 'createdById'> {
   canMove: boolean;
+  canArchive: boolean;
 }
 
 export interface BoardData {

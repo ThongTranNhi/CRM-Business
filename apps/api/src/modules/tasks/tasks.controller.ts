@@ -49,3 +49,7 @@ export async function archive(c: Context<AppEnv>) {
   await tasksService.archiveTask(requestScope(c), taskId(c));
   return c.body(null, 204);
 }
+
+export async function restore(c: Context<AppEnv>) {
+  return c.json({ data: await tasksService.restoreTask(requestScope(c), taskId(c)) });
+}

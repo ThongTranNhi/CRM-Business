@@ -18,6 +18,7 @@ const task = (id: string, columnId: string, position: number): BoardTask => ({
   checklist: { done: 0, total: 0 },
   commentCount: 0,
   canMove: true,
+  canArchive: false,
 });
 
 const board: BoardData = {

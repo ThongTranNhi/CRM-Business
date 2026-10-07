@@ -15,6 +15,8 @@ interface TaskCardProps {
   isDragging?: boolean;
   /** Menu "Chuyển sang cột…" (cảm ứng, bàn phím). */
   moveMenu?: ReactNode;
+  /** Menu ⋯ (vd. Xoá công việc) ở góc phải, cạnh tên. */
+  actionsMenu?: ReactNode;
 }
 
 /** Thẻ task trên board (task-management.md, demo): tên, ưu tiên, hạn, checklist, người phụ trách. */
@@ -25,6 +27,7 @@ export function TaskCard({
   dragProps,
   isDragging,
   moveMenu,
+  actionsMenu,
 }: TaskCardProps) {
   const priority = PRIORITY_META[task.priority];
   const due = dueBadge(task, today);
@@ -41,14 +44,17 @@ export function TaskCard({
       )}
       {...dragProps}
     >
-      <p
-        className={cn(
-          'text-sm font-medium leading-snug text-gray-900',
-          isDone && 'text-gray-500 line-through decoration-gray-300',
-        )}
-      >
-        {task.title}
-      </p>
+      <div className="flex items-start gap-2">
+        <p
+          className={cn(
+            'min-w-0 flex-1 text-sm font-medium leading-snug text-gray-900',
+            isDone && 'text-gray-500 line-through decoration-gray-300',
+          )}
+        >
+          {task.title}
+        </p>
+        {actionsMenu}
+      </div>
       <div className="flex flex-wrap gap-1.5">
         <Badge tone={priority.tone}>{priority.label}</Badge>
         {due && (

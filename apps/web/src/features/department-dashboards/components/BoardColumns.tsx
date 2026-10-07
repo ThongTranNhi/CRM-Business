@@ -1,7 +1,9 @@
 import type { QueryKey } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Button } from '@/components/ui';
-import type { BoardData, BoardTask } from '@/features/tasks';
+import { DeleteTaskDialog, type BoardData, type BoardTask } from '@/features/tasks';
 import { columnTasks } from '../board.utils';
+import { dashboardKeys } from '../hooks/dashboard-keys';
 import { useBoardDrag } from '../hooks/useBoardDrag';
 import { useBoardMoves } from '../hooks/useBoardMoves';
 import { BoardColumn, type ColumnContext } from './BoardColumn';
@@ -26,6 +28,7 @@ export function BoardColumns(props: BoardColumnsProps) {
   const { board, visibleTasks } = props;
   const moves = useBoardMoves({ board, visibleTasks, boardKey: props.boardKey });
   const drag = useBoardDrag({ onDrop: moves.dropAt, onDraggingChange: props.onDraggingChange });
+  const [deleting, setDeleting] = useState<BoardTask | null>(null);
   const context: ColumnContext = {
     columns: board.columns,
     today: props.today,
@@ -34,35 +37,44 @@ export function BoardColumns(props: BoardColumnsProps) {
     draggingId: drag.draggingId,
     cardDragProps: drag.cardDragProps,
     onMoveToColumn: moves.moveToEnd,
+    onRequestDelete: setDeleting,
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-2">
-      {board.columns.map((column) => (
-        <BoardColumn
-          key={column.id}
-          column={column}
-          tasks={columnTasks(visibleTasks, column.id)}
-          context={context}
-          placeholderIndex={drag.over?.columnId === column.id ? drag.over.index : null}
-          dropProps={drag.columnDropProps(column.id)}
-          footer={
-            <>
-              {column.status === 'todo' && props.quickAdd && <QuickAddTask {...props.quickAdd} />}
-              {column.status === 'done' && props.onShowMoreDone && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mx-2.5 mb-2.5"
-                  onClick={props.onShowMoreDone}
-                >
-                  Xem thêm việc đã hoàn thành
-                </Button>
-              )}
-            </>
-          }
-        />
-      ))}
-    </div>
+    <>
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {board.columns.map((column) => (
+          <BoardColumn
+            key={column.id}
+            column={column}
+            tasks={columnTasks(visibleTasks, column.id)}
+            context={context}
+            placeholderIndex={drag.over?.columnId === column.id ? drag.over.index : null}
+            dropProps={drag.columnDropProps(column.id)}
+            footer={
+              <>
+                {column.status === 'todo' && props.quickAdd && <QuickAddTask {...props.quickAdd} />}
+                {column.status === 'done' && props.onShowMoreDone && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mx-2.5 mb-2.5"
+                    onClick={props.onShowMoreDone}
+                  >
+                    Xem thêm việc đã hoàn thành
+                  </Button>
+                )}
+              </>
+            }
+          />
+        ))}
+      </div>
+      <DeleteTaskDialog
+        task={deleting}
+        boardKey={props.boardKey}
+        relatedKeys={[dashboardKeys.all]}
+        onClose={() => setDeleting(null)}
+      />
+    </>
   );
 }

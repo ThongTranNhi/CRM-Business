@@ -5,15 +5,16 @@ Module `apps/api/src/modules/tasks`. Mọi endpoint yêu cầu đăng nhập. Gh
 Đọc từ view `task_cards`, bảng `board_columns`, `tasks`. Quyền theo dữ liệu tính bằng
 `apps/api/src/lib/work-access.ts` từ RPC `crm_work_access` (docs/architecture/permission-model.md).
 
-| Method | Endpoint                       | Quyền                                                                       | Mô tả                                          |
-| ------ | ------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------- |
-| GET    | `/api/boards/:boardId`         | Xem board (thành viên phòng / board, Super Admin, HR Admin)                 | Cột + việc đang mở + việc xong gần nhất        |
-| POST   | `/api/boards/:boardId/tasks`   | Ghi board (thành viên, Trưởng phòng, Super Admin; HR chỉ khi là thành viên) | Tạo việc (BR-11, BR-12)                        |
-| GET    | `/api/tasks/:id`               | Xem board                                                                   | Chi tiết + quyền của người xem                 |
-| PATCH  | `/api/tasks/:id`               | Sửa task                                                                    | Đổi tên, mô tả, người phụ trách, ưu tiên, ngày |
-| PATCH  | `/api/tasks/:id/move`          | Sửa task                                                                    | Kéo thả (BR-13 → BR-15)                        |
-| PUT    | `/api/tasks/:id/collaborators` | Sửa task                                                                    | Thay danh sách người phối hợp                  |
-| DELETE | `/api/tasks/:id`               | Người tạo, Trưởng phòng, Super Admin                                        | Lưu trữ (BR-19), không xoá                     |
+| Method | Endpoint                       | Quyền                                                                       | Mô tả                                                        |
+| ------ | ------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| GET    | `/api/boards/:boardId`         | Xem board (thành viên phòng / board, Super Admin, HR Admin)                 | Cột + việc đang mở + việc xong gần nhất                      |
+| POST   | `/api/boards/:boardId/tasks`   | Ghi board (thành viên, Trưởng phòng, Super Admin; HR chỉ khi là thành viên) | Tạo việc (BR-11, BR-12)                                      |
+| GET    | `/api/tasks/:id`               | Xem board                                                                   | Chi tiết + quyền của người xem                               |
+| PATCH  | `/api/tasks/:id`               | Sửa task                                                                    | Đổi tên, mô tả, người phụ trách, ưu tiên, ngày               |
+| PATCH  | `/api/tasks/:id/move`          | Sửa task                                                                    | Kéo thả (BR-13 → BR-15)                                      |
+| PUT    | `/api/tasks/:id/collaborators` | Sửa task                                                                    | Thay danh sách người phối hợp                                |
+| DELETE | `/api/tasks/:id`               | Người tạo, Trưởng phòng, Super Admin                                        | Lưu trữ (BR-19), không xoá                                   |
+| POST   | `/api/tasks/:id/restore`       | Như DELETE                                                                  | Hoàn tác xoá: task về cuối cột cũ (migration 20261007090000) |
 
 "Sửa task": Super Admin, Trưởng phòng (role `department_manager` và là trưởng phòng của phòng đó), Trưởng nhóm
 trong phòng; nhân viên / thành viên board chỉ với task mình phụ trách hoặc phối hợp. Phòng đã xoá → mọi thao tác
@@ -42,7 +43,8 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
         "collaborators": [{ "id": "uuid", "fullName": "Trần Thị B" }],
         "checklist": { "done": 2, "total": 5 },
         "commentCount": 3,
-        "canMove": true
+        "canMove": true,
+        "canArchive": false
       }
     ],
     "doneTotal": 42
@@ -53,7 +55,8 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
 - Cột vẽ theo `columns` (sắp theo `position`); `status` là nhóm trạng thái của cột (BR-10).
 - `tasks`: mọi việc chưa xong + `doneLimit` việc xong gần nhất; thứ tự trong cột theo `position`.
 - `assignee.isArchived`: người phụ trách đã nghỉ (BR-53) → giao diện hiện "Đã nghỉ".
-- `canMove`: người xem kéo / đổi cột được thẻ này không. Avatar lấy theo id từ `members` của
+- `canMove`: người xem kéo / đổi cột được thẻ này không. `canArchive`: xoá (lưu trữ) được không — người tạo,
+  Trưởng phòng, Super Admin (BR-19). Avatar lấy theo id từ `members` của
   `GET /api/department-dashboards/:id`.
 - Quá hạn tính ở giao diện theo giờ Việt Nam (BR-16), không trả cờ.
 
@@ -109,3 +112,9 @@ Trả thông tin task, `department`, `assignee`, `collaborators`, `completedBy` 
 | `409 DASHBOARD_READ_ONLY`                   | Phòng ban đã xoá (BR-06)                                               |
 | `422 EMPLOYEE_NOT_IN_BOARD`                 | Người được giao / phối hợp không thuộc phòng, không được mời vào board |
 | `422 COLLABORATOR_IS_ASSIGNEE`              | Người phụ trách nằm trong danh sách phối hợp                           |
+
+## DELETE `/api/tasks/:id` và POST `/api/tasks/:id/restore`
+
+Xoá = lưu trữ (`archived_at`, BR-19), không xoá cứng; ghi activity `archived` + audit `task.archive`. Trả `204`.
+Hoàn tác (toast [Hoàn tác] 5 giây): RPC `crm_restore_task` bỏ `archived_at`, đặt task về **cuối cột cũ**, ghi activity
+`restored` + audit `task.restore`; trả thẻ như GET board. Cùng quyền với xoá. Task chưa lưu trữ → `404 TASK_NOT_FOUND`.

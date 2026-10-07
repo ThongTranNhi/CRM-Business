@@ -180,3 +180,10 @@ export const archiveTask = (env: Env, actorId: string, taskId: string) =>
     args: { actor_uuid: actorId, task_uuid: taskId },
     errors: WORK_ERRORS,
   });
+
+export const restoreTask = (env: Env, actorId: string, taskId: string) =>
+  callRpc(env, {
+    name: 'crm_restore_task',
+    args: { actor_uuid: actorId, task_uuid: taskId },
+    errors: WORK_ERRORS,
+  });

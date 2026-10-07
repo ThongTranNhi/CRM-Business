@@ -45,10 +45,11 @@ interface CardRow {
   checklist_total: number;
   checklist_done: number;
   comment_count: number;
+  created_by: string;
 }
 const CARD_SELECT =
   'id,column_id,status,title,position,priority,due_date,completed_at,assignee_id,assignee_name,' +
-  'assignee_archived,collaborators,checklist_total,checklist_done,comment_count';
+  'assignee_archived,collaborators,checklist_total,checklist_done,comment_count,created_by';
 
 const mapCard = (row: CardRow): TaskCard => ({
   id: row.id,
@@ -63,6 +64,7 @@ const mapCard = (row: CardRow): TaskCard => ({
   collaborators: row.collaborators.map((person) => ({ id: person.id, fullName: person.name })),
   checklist: { done: row.checklist_done, total: row.checklist_total },
   commentCount: row.comment_count,
+  createdById: row.created_by,
 });
 
 const cardsPath = (filter: Record<string, string>) =>

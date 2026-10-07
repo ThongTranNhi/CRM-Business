@@ -12,3 +12,10 @@ export const createTask = (boardId: string, input: CreateTaskInput) =>
 
 export const moveTask = ({ taskId, ...move }: TaskMove) =>
   apiRequest<unknown>(`/api/tasks/${taskId}/move`, { method: 'PATCH', body: JSON.stringify(move) });
+
+/** Xoá = lưu trữ (BR-19). */
+export const archiveTask = (taskId: string) =>
+  apiRequest<void>(`/api/tasks/${taskId}`, { method: 'DELETE' });
+
+export const restoreTask = (taskId: string) =>
+  apiRequest<BoardTask>(`/api/tasks/${taskId}/restore`, { method: 'POST' });

@@ -36,7 +36,9 @@ board_columns(id, board_id, status)`: cột cùng board và status luôn khớp 
   Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra tài khoản còn hoạt động, phòng chưa xoá (BR-06) và
   người được giao / người phối hợp **mới thêm** thuộc phòng / board (người phối hợp cũ đã chuyển phòng vẫn
   giữ hoặc gỡ được).
-- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql` (tự ROLLBACK).
+- Migration `20261007090000_task_restore.sql`: `crm_restore_task` (hoàn tác xoá, task về cuối cột cũ); activity
+  `restored`; `crm_work_access` trả thêm `isArchived`; `task_cards` thêm `created_by`.
+- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql` (tự ROLLBACK).
 
 ## Phòng ban, xoá mềm, view đọc (Đợt 1 — 2026-10-06)
 
