@@ -36,10 +36,13 @@ export function CommentComposer(props: CommentComposerProps) {
       event.preventDefault();
       void send();
     }
-    if (event.key === 'Escape' && props.onCancel) {
-      // Esc đóng ô trả lời, không đóng drawer.
+    if (event.key !== 'Escape') return;
+    // Esc đóng ô trả lời; ô bình luận còn chữ chưa gửi thì giữ drawer mở (không mất chữ).
+    if (props.onCancel) {
       event.preventDefault();
       props.onCancel();
+    } else if (text) {
+      event.preventDefault();
     }
   }
 

@@ -10,11 +10,11 @@ interface RequireAccessProps {
 
 /**
  * Vào thẳng URL không có quyền → trang 403 (frontend-spec 1.2). Backend vẫn chặn lại.
- * Chờ biết người dùng (F5, mở link chia sẻ) rồi mới quyết định — trước đó chưa có role để kiểm tra.
+ * Chỉ chờ khi chưa biết người dùng (F5, mở link chia sẻ); lần tải lại sau đó giữ nguyên trang.
  */
 export function RequireAccess({ permission }: RequireAccessProps) {
   const canDo = useCan();
-  const { isPending } = useCurrentUser();
-  if (isPending) return <Skeleton className="h-64 w-full" />;
+  const { data: user } = useCurrentUser();
+  if (!user) return <Skeleton className="h-64 w-full" />;
   return canDo(permission) ? <Outlet /> : <Navigate to="/app/403" replace />;
 }

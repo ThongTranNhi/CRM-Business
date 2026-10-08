@@ -8,7 +8,9 @@ GET `/api/users/employees?status=active|locked|deleted&q=&page=&pageSize=`: mặ
 GET `/api/users/employees/department-options`: phòng ban chưa xoá (view `active_departments`, tối đa 100).
 GET `/api/users/employees/:id`: hồ sơ chi tiết (kể cả người đã xoá), signed avatar URL, `archivedAt`,
 `managedDepartment: { id, name } | null` (phòng mà người này đang làm trưởng phòng), `openTaskCount` (số việc
-chưa xong, chưa lưu trữ người này đang phụ trách — hộp xoá nhân viên hiện "đang phụ trách N việc chưa xong").
+chưa xong, chưa lưu trữ người này đang phụ trách trên Dashboard **còn ghi được** — không tính phòng đã xoá,
+BR-06; view `open_assigned_tasks` — hộp xoá nhân viên hiện "đang phụ trách N việc chưa xong"). PATCH, khôi
+phục, đặt lại mật khẩu không đếm việc.
 PATCH `/api/users/employees/:id`: fullName, jobTitle, departmentId, status (active/disabled).
 Đổi phòng của một trưởng phòng → phòng cũ thành "Chưa có trưởng phòng"; phòng mới phải chưa bị xoá.
 POST `/api/users/employees/:id/reset-password`: `{password}` 12–128 ký tự; tài khoản
@@ -16,11 +18,13 @@ username active, không super_admin. Phải đổi mật khẩu, phiên cũ bị
 
 DELETE `/api/users/employees/:id` `{ "newManagerId": "uuid | null", "handoverEmployeeId": "uuid | null" }` —
 xoá mềm (BR-53): khoá tài khoản, xoá mọi `auth.sessions`, ẩn khỏi danh sách và ô chọn người. Nếu là trưởng
-phòng → phòng thành "Chưa có trưởng phòng" hoặc nhận `newManagerId`. Có `handoverEmployeeId` → **mọi** việc
-đang mở chuyển cho người đó trong cùng giao dịch (activity `assignee_changed`; người nhận đang phối hợp thì gỡ
+phòng → phòng thành "Chưa có trưởng phòng" hoặc nhận `newManagerId`. Có `handoverEmployeeId` → mọi việc
+đang mở trên Dashboard còn ghi được chuyển (việc ở Dashboard chỉ đọc giữ nguyên) cho người đó trong cùng giao dịch (activity `assignee_changed`; người nhận đang phối hợp thì gỡ
 khỏi phối hợp); người nhận phải thuộc phòng / được mời vào board của **từng** việc, sai một việc → không bàn giao
-việc nào và không xoá (`422 HANDOVER_EMPLOYEE_NOT_IN_BOARD`). Bỏ qua → việc giữ nguyên, thẻ hiện "Đã nghỉ".
-Trả `{ deleted: true, openTaskCount, handedOverTaskCount }`. Lỗi khác: `422 CANNOT_DELETE_SELF`,
+việc nào và không xoá (`422 HANDOVER_EMPLOYEE_NOT_IN_BOARD`, câu báo nêu tối đa 3 việc kèm Dashboard,
+`details.blockedTasks: [{ taskId, title, dashboardName }]`). Bỏ qua → việc giữ nguyên, thẻ hiện "Đã nghỉ".
+Trả `{ deleted: true, openTaskCount, handedOverTaskCount }` — cả hai số do RPC đếm trong giao dịch
+(migration 20261008090000). Lỗi khác: `422 CANNOT_DELETE_SELF`,
 `422 CANNOT_DELETE_ADMIN`, `422 INVALID_HANDOVER_EMPLOYEE` (người nhận là chính người bị xoá),
 `422 HANDOVER_EMPLOYEE_NOT_FOUND` (người nhận đã nghỉ). Audit `employee.delete` (gồm `handoverEmployeeId`,
 `handedOverTaskCount`).

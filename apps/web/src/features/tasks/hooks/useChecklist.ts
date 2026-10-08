@@ -32,13 +32,17 @@ function sendChange(taskId: string, change: ChecklistChange): Promise<ChecklistI
 
 /**
  * Thêm / sửa / tick / xoá mục checklist (BR-17): danh sách và số x/y trên thẻ board đổi ngay; lỗi thì
- * trả lại + toast. Server trả danh sách mới → thay luôn (mục mới có id thật).
+ * trả lại + toast. Tick nhanh nhiều mục: chỉ lấy danh sách server trả khi không còn thay đổi nào
+ * khác đang gửi (nếu không, phản hồi của lần trước sẽ ghi đè lần tick sau), rồi tải lại một lần.
  */
 export function useChecklistChange(taskId: string, boardKey: QueryKey) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const listKey = taskKeys.checklist(taskId);
-  const refresh = useInvalidateQueries([taskKeys.activities(taskId), taskKeys.boards()]);
+  const mutationKey = [...taskKeys.checklist(taskId), 'change'];
+  const refresh = useInvalidateQueries([listKey, taskKeys.activities(taskId), taskKeys.boards()]);
+  // Trong onSuccess / onSettled, chính lần gửi này vẫn đang được đếm.
+  const isLastChange = () => queryClient.isMutating({ mutationKey }) <= 1;
   const showCounts = (items: ChecklistItem[]) => {
     const board = queryClient.getQueryData<BoardData>(boardKey);
     if (board) {
@@ -49,6 +53,7 @@ export function useChecklistChange(taskId: string, boardKey: QueryKey) {
     }
   };
   return useMutation({
+    mutationKey,
     mutationFn: (change: ChecklistChange) => sendChange(taskId, change),
     onMutate: async (change) => {
       await queryClient.cancelQueries({ queryKey: listKey });
@@ -61,16 +66,20 @@ export function useChecklistChange(taskId: string, boardKey: QueryKey) {
       return { previous };
     },
     onError: (error, _change, context) => {
-      if (context?.previous) {
+      // Còn lần gửi khác: bản cũ đã lỗi thời, để lần tải lại cuối cùng sửa danh sách.
+      if (context?.previous && isLastChange()) {
         queryClient.setQueryData(listKey, context.previous);
         showCounts(context.previous);
       }
       toast({ tone: 'error', message: errorMessage(error) });
     },
     onSuccess: (items) => {
+      if (!isLastChange()) return;
       queryClient.setQueryData(listKey, items);
       showCounts(items);
     },
-    onSettled: refresh,
+    onSettled: async () => {
+      if (isLastChange()) await refresh();
+    },
   });
 }

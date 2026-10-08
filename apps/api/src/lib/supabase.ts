@@ -2,14 +2,23 @@ import { z } from 'zod';
 import type { Env } from '../config/env';
 import { AppError } from './app-error';
 
+/** `detail` của lỗi Postgres (`raise exception 'CODE' using detail = …`), vd. danh sách việc bị chặn. */
+export interface DatabaseErrorInfo {
+  detail: string | null;
+}
+
 /** Mã lỗi RPC (`raise exception 'CODE'`) hoặc SQLSTATE → lỗi nghiệp vụ có nghĩa. */
-export type DatabaseErrorMap = Record<string, () => AppError>;
+export type DatabaseErrorMap = Record<string, (info: DatabaseErrorInfo) => AppError>;
 
 export interface SupabaseRequestInit extends RequestInit {
   errors?: DatabaseErrorMap;
 }
 
-const postgrestErrorSchema = z.object({ code: z.string(), message: z.string() });
+const postgrestErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  details: z.string().nullish(),
+});
 
 const databaseUnavailable = () =>
   new AppError('DATABASE_UNAVAILABLE', 'Không thể xử lý dữ liệu, vui lòng thử lại', 503);
@@ -20,11 +29,11 @@ const constraintName = (message: string) => /constraint "([^"]+)"/.exec(message)
 async function toAppError(response: Response, errors: DatabaseErrorMap): Promise<AppError> {
   const parsed = postgrestErrorSchema.safeParse(await response.json().catch(() => null));
   if (!parsed.success) return databaseUnavailable();
-  const { message, code } = parsed.data;
+  const { message, code, details } = parsed.data;
   const key = [message, constraintName(message), code].find(
     (candidate) => candidate !== undefined && Object.hasOwn(errors, candidate),
   );
-  return key ? errors[key]!() : databaseUnavailable();
+  return key ? errors[key]!({ detail: details ?? null }) : databaseUnavailable();
 }
 
 async function send(env: Env, path: string, init: SupabaseRequestInit) {

@@ -97,16 +97,20 @@ export async function findAccountNames(env: Env, accountIds: string[]) {
   );
 }
 
-/** Số việc chưa xong (chưa lưu trữ) một nhân viên đang phụ trách — BR-53 bàn giao khi xoá. */
+/**
+ * Số việc chưa xong một nhân viên đang phụ trách trên Dashboard còn ghi được — BR-53 bàn giao khi xoá.
+ * View open_assigned_tasks (20261008090000) bỏ việc của phòng đã xoá (Dashboard chỉ đọc, BR-06).
+ */
 export async function countOpenTasks(env: Env, employeeId: string): Promise<number> {
   const params = new URLSearchParams({
     select: 'id',
     assignee_id: `eq.${employeeId}`,
-    status: 'neq.done',
-    archived_at: 'is.null',
     limit: '1',
   });
-  const { total } = await supabaseList<{ id: string }>(env, `/rest/v1/tasks?${params}`);
+  const { total } = await supabaseList<{ id: string }>(
+    env,
+    `/rest/v1/open_assigned_tasks?${params}`,
+  );
   return total;
 }
 

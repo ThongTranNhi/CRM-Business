@@ -4,6 +4,7 @@ import {
   checklistCounts,
   isDateRangeValid,
   sentenceCase,
+  uniqueById,
 } from './task-detail.utils';
 
 const items = [
@@ -21,6 +22,34 @@ describe('task drawer helpers', () => {
     const ticked = applyChecklistChange(items, { kind: 'update', itemId: 'i-2', isDone: true });
     expect(checklistCounts(ticked)).toEqual({ done: 2, total: 2 });
     expect(applyChecklistChange(items, { kind: 'remove', itemId: 'i-1' })).toHaveLength(1);
+  });
+  it('gives every optimistic item a distinct temporary id', () => {
+    const once = applyChecklistChange(items, { kind: 'add', content: 'A' });
+    const removed = applyChecklistChange(once, { kind: 'remove', itemId: 'i-1' });
+    const twice = applyChecklistChange(removed, { kind: 'add', content: 'B' });
+    const ids = twice.map((item) => item.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+  it('drops rows repeated across offset pages, keeping the newer page', () => {
+    const pages = [
+      {
+        data: [
+          { id: 'c-3', body: 'mới' },
+          { id: 'c-2', body: 'giữa' },
+        ],
+      },
+      {
+        data: [
+          { id: 'c-2', body: 'cũ' },
+          { id: 'c-1', body: 'đầu' },
+        ],
+      },
+    ];
+    expect(uniqueById(pages)).toEqual([
+      { id: 'c-3', body: 'mới' },
+      { id: 'c-2', body: 'giữa' },
+      { id: 'c-1', body: 'đầu' },
+    ]);
   });
   it('sentence-cases Vietnamese column names', () => {
     expect(sentenceCase('ĐÃ HOÀN THÀNH')).toBe('Đã hoàn thành');

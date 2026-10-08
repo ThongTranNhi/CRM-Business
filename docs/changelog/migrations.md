@@ -23,6 +23,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 13  | `20261006090800_employee_delete_handover.sql`         | 06/10/2026                 |
 | 14  | `20261007090000_task_restore.sql`                     | 07/10/2026                 |
 | 15  | `20261007100000_task_trash.sql`                       | 07/10/2026                 |
+| 16  | `20261008090000_handover_writable_boards.sql`         |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 `supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql` (tự ROLLBACK, thấy
@@ -36,19 +37,23 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
-- `20261007100000_task_trash.sql`: thùng rác công việc — view `task_trash` (việc đã xoá kèm cột cũ, người phụ||| 07/10/2026
+- `20261008090000_handover_writable_boards.sql` (sửa review L6, BR-53): view `open_assigned_tasks` — việc
+  đang mở trên Dashboard còn ghi được (bỏ phòng đã xoá, BR-06), dùng cho số đếm và bàn giao; người nhận
+  không thuộc board → lỗi kèm danh sách việc / Dashboard bị chặn (`detail` JSON); `crm_delete_employee`
+  trả `{ openTaskCount, handedOverTaskCount }`. Kiểm tra: `supabase/tests/employee_handover.sql`. Chưa áp.
+- `20261007100000_task_trash.sql`: thùng rác công việc — view `task_trash` (việc đã xoá kèm cột cũ, người phụ
   trách, người xoá; chỉ `service_role`) cho `GET /api/boards/:boardId/trash`; index
   `tasks_board_archived_idx`. Không đổi dữ liệu.
-- `20261007090000_task_restore.sql`: hoàn tác xoá công việc — RPC `crm_restore_task` (về cuối cột cũ, activity||| 07/10/2026
+- `20261007090000_task_restore.sql`: hoàn tác xoá công việc — RPC `crm_restore_task` (về cuối cột cũ, activity
   `restored`, audit `task.restore`); `crm_work_access` thấy task đã lưu trữ (`isArchived`); view `task_cards` thêm
   `created_by` (quyền xoá từng thẻ).
-- `20261006090800_employee_delete_handover.sql`: `crm_delete_employee` thêm tham số tuỳ chọn||| 06/10/2026
+- `20261006090800_employee_delete_handover.sql`: `crm_delete_employee` thêm tham số tuỳ chọn
   `handover_employee_uuid` (BR-53) — chuyển việc đang mở sang người nhận (phải thuộc board của từng việc),
   ghi activity `assignee_changed`, audit ghi `handoverEmployeeId`, `handedOverTaskCount`.
-- `20261006090700_work_management_rpcs.sql`: RPC tạo Dashboard + board + 3 cột mặc định (BR-04, BR-10), tạo /||| 06/10/2026
+- `20261006090700_work_management_rpcs.sql`: RPC tạo Dashboard + board + 3 cột mặc định (BR-04, BR-10), tạo /
   sửa / kéo thả theo cột / lưu trữ task, người phối hợp, checklist, bình luận trả lời 1 cấp (BR-11 → BR-14, BR-19); `crm_work_access` (dữ liệu để API
   kiểm tra quyền), `crm_list_dashboards` (BR-03, BR-41). Mỗi thao tác ghi `task_activities` cùng giao dịch.
-- `20261006090600_work_management_tables.sql`: bảng `department_dashboards`, `boards`, `board_columns`,||| 06/10/2026
+- `20261006090600_work_management_tables.sql`: bảng `department_dashboards`, `boards`, `board_columns`,
   `board_members`, `tasks` (khoá ngoại ghép cột ↔ nhóm trạng thái), `task_collaborators`, `task_checklist_items`,
   `task_comments` (`parent_id`), `task_activities` (chỉ INSERT); view `dashboard_summaries`, `task_cards`, `account_profiles`, `task_activity_feed`,
   `task_comment_feed`.

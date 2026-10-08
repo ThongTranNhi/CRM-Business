@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Button, Textarea } from '@/components/ui';
 import type { TaskUpdater } from '../hooks/useTaskEdits';
 import type { TaskDetail } from '../types';
@@ -34,6 +34,11 @@ export function TaskDescriptionField({ task, update }: TaskDescriptionFieldProps
   const error =
     draft.trim().length > DESCRIPTION_MAX ? `Mô tả tối đa ${DESCRIPTION_MAX} ký tự` : undefined;
 
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    // Esc khi còn chữ chưa lưu: giữ drawer mở, không mất nội dung đang sửa.
+    if (event.key === 'Escape' && isDirty) event.preventDefault();
+  }
+
   function save() {
     const description = draft.trim() || null;
     update.mutate({ changes: { description }, preview: { description } });
@@ -48,6 +53,7 @@ export function TaskDescriptionField({ task, update }: TaskDescriptionFieldProps
         placeholder="Thêm mô tả chi tiết cho công việc"
         error={error}
         onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={onKeyDown}
       />
       {isDirty && (
         <div className="flex justify-end gap-2">

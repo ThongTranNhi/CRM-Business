@@ -19,6 +19,7 @@ import type {
   AdminEmployeeUpdate,
   AvatarOwner,
   DeleteEmployeeTarget,
+  DirectoryEmployee,
   DirectoryQuery,
   EmployeeDetail,
   ProfileUpdate,
@@ -38,20 +39,27 @@ export async function getEmployeeDirectory(env: Env, actorId: string, query: Dir
   await requireAdmin(env, actorId);
   return listDirectory(env, query);
 }
+/** Hồ sơ + ảnh đại diện, không đếm việc (dùng khi sửa / khôi phục / đặt lại mật khẩu). */
+async function loadEmployee(env: Env, employeeId: string): Promise<DirectoryEmployee> {
+  const found = await directoryEmployee(env, employeeId);
+  if (!found) throw notFound();
+  const { employee, authUserId } = found;
+  const avatarUrls = await getAvatarUrls(env, [{ ...employee, authUserId }]);
+  return { ...employee, avatarUrl: avatarUrls.get(employee.id) ?? null };
+}
+
+/** GET chi tiết: kèm số việc đang mở để hộp thoại xoá nêu số việc cần bàn giao (BR-53). */
 export async function getEmployeeDetail(
   env: Env,
   actorId: string,
   employeeId: string,
 ): Promise<EmployeeDetail> {
   await requireAdmin(env, actorId);
-  const found = await directoryEmployee(env, employeeId);
-  if (!found) throw notFound();
-  const { employee, authUserId } = found;
-  const [avatarUrls, openTaskCount] = await Promise.all([
-    getAvatarUrls(env, [{ ...employee, authUserId }]),
+  const [employee, openTaskCount] = await Promise.all([
+    loadEmployee(env, employeeId),
     countOpenTasks(env, employeeId),
   ]);
-  return { ...employee, avatarUrl: avatarUrls.get(employee.id) ?? null, openTaskCount };
+  return { ...employee, openTaskCount };
 }
 export async function getDepartmentOptions(env: Env, actorId: string) {
   await requireAdmin(env, actorId);
@@ -71,10 +79,11 @@ export async function updateEmployee(
   actorId: string,
   change: { employeeId: string } & AdminEmployeeUpdate,
 ) {
-  const target = await getEmployeeDetail(env, actorId, change.employeeId);
+  await requireAdmin(env, actorId);
+  const target = await loadEmployee(env, change.employeeId);
   if (target.role === 'super_admin') throw forbidden();
   await editEmployee(env, actorId, change);
-  return getEmployeeDetail(env, actorId, change.employeeId);
+  return loadEmployee(env, change.employeeId);
 }
 /**
  * BR-53: xoá mềm. RPC chặn tự xoá, xoá Super Admin; khoá tài khoản, thu hồi phiên; có người nhận thì
@@ -82,22 +91,22 @@ export async function updateEmployee(
  */
 export async function deleteEmployee(env: Env, actorId: string, target: DeleteEmployeeTarget) {
   await requireAdmin(env, actorId);
-  const openTaskCount = await countOpenTasks(env, target.employeeId);
-  await deleteEmployeeRecord(env, actorId, target);
-  const handedOverTaskCount = target.handoverEmployeeId ? openTaskCount : 0;
-  return { deleted: true, openTaskCount, handedOverTaskCount };
+  // RPC trả số việc đang mở (Dashboard còn ghi được) và số việc đã bàn giao thật.
+  const result = await deleteEmployeeRecord(env, actorId, target);
+  return { deleted: true, ...result };
 }
 export async function restoreEmployee(env: Env, actorId: string, employeeId: string) {
   await requireAdmin(env, actorId);
   await restoreEmployeeRecord(env, actorId, employeeId);
-  return getEmployeeDetail(env, actorId, employeeId);
+  return loadEmployee(env, employeeId);
 }
 export async function resetEmployeePassword(
   env: Env,
   actorId: string,
   reset: { employeeId: string; password: string },
 ) {
-  const target = await getEmployeeDetail(env, actorId, reset.employeeId);
+  await requireAdmin(env, actorId);
+  const target = await loadEmployee(env, reset.employeeId);
   if (!target.username || target.role === 'super_admin' || target.status !== 'active')
     throw forbidden();
   const userId = await beginPasswordReset(env, actorId, reset.employeeId);

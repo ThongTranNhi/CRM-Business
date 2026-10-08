@@ -1,5 +1,6 @@
+import { z } from 'zod';
 import { AppError, forbidden } from './app-error';
-import type { DatabaseErrorMap } from './supabase';
+import type { DatabaseErrorInfo, DatabaseErrorMap } from './supabase';
 
 // Mã lỗi do các RPC phòng ban / nhân viên raise (supabase/migrations/20261006090200_*, *090300_*).
 // Hai module departments và users dùng chung vì các RPC dùng chung hàm kiểm tra trong DB.
@@ -11,6 +12,36 @@ export const employeeNotFound = () =>
 
 export const departmentNameExists = () =>
   new AppError('DEPARTMENT_NAME_EXISTS', 'Phòng ban này đã tồn tại', 409);
+
+// detail của HANDOVER_EMPLOYEE_NOT_IN_BOARD (migration 20261008090000): các việc người nhận không nhận được.
+const blockedTasksSchema = z.array(
+  z.object({ taskId: z.string(), title: z.string(), dashboardName: z.string() }),
+);
+const SHOWN_BLOCKED_TASKS = 3;
+
+function readBlockedTasks(detail: string | null) {
+  try {
+    const parsed = blockedTasksSchema.safeParse(JSON.parse(detail ?? '[]'));
+    return parsed.success ? parsed.data : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Nêu rõ việc / Dashboard nào chặn bàn giao (BR-53) để người xoá chọn lại người nhận. */
+function handoverBlocked({ detail }: DatabaseErrorInfo): AppError {
+  const blockedTasks = readBlockedTasks(detail);
+  const named = blockedTasks
+    .slice(0, SHOWN_BLOCKED_TASKS)
+    .map((task) => `“${task.title}” (${task.dashboardName})`)
+    .join(', ');
+  const others = blockedTasks.length - SHOWN_BLOCKED_TASKS;
+  const list = others > 0 ? `${named} và ${others} việc khác` : named;
+  const message = blockedTasks.length
+    ? `Người nhận không thuộc Dashboard của ${blockedTasks.length} việc: ${list}. Hãy chọn người cùng phòng, mời họ vào Dashboard đó, hoặc bỏ qua bàn giao.`
+    : 'Người nhận không thuộc phòng ban (hoặc Dashboard) của một số việc đang mở. Hãy chọn người cùng phòng, hoặc bỏ qua bàn giao.';
+  return new AppError('HANDOVER_EMPLOYEE_NOT_IN_BOARD', message, 422, { blockedTasks });
+}
 
 export const DIRECTORY_ERRORS: DatabaseErrorMap = {
   FORBIDDEN: forbidden,
@@ -42,12 +73,7 @@ export const DIRECTORY_ERRORS: DatabaseErrorMap = {
       'Người nhận bàn giao không còn làm việc, hãy chọn người khác',
       422,
     ),
-  HANDOVER_EMPLOYEE_NOT_IN_BOARD: () =>
-    new AppError(
-      'HANDOVER_EMPLOYEE_NOT_IN_BOARD',
-      'Người nhận không thuộc phòng ban (hoặc Dashboard) của một số việc đang mở. Hãy chọn người cùng phòng, hoặc bỏ qua bàn giao.',
-      422,
-    ),
+  HANDOVER_EMPLOYEE_NOT_IN_BOARD: handoverBlocked,
   EMPLOYEE_CODE_EXISTS: () =>
     new AppError(
       'EMPLOYEE_CODE_EXISTS',

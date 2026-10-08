@@ -1,6 +1,7 @@
 import type { QueryKey } from '@tanstack/react-query';
 import { Button, Skeleton } from '@/components/ui';
 import { useAddComment, useComments } from '../hooks/useTaskFeeds';
+import { uniqueById } from '../task-detail.utils';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
 import { DrawerSection, SectionError } from './DrawerSection';
@@ -17,7 +18,7 @@ export function TaskCommentsSection(props: TaskCommentsSectionProps) {
   const comments = useComments(props.taskId);
   const add = useAddComment(props.taskId, props.relatedKeys);
   // Mỗi trang: bình luận gốc mới nhất trước → đảo lại để cũ ở trên, mới ở dưới.
-  const list = (comments.data?.pages.flatMap((page) => page.data) ?? []).reverse();
+  const list = uniqueById(comments.data?.pages ?? []).reverse();
   const total = comments.data?.pages[0]?.meta.total ?? 0;
   const pendingParent = add.isPending ? add.variables.parentId : undefined;
   const reply = (parentId: string) => (body: string) => add.mutateAsync({ body, parentId });
