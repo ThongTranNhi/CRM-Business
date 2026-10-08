@@ -1,6 +1,11 @@
 import { forbidden } from '../../lib/app-error';
 import { assertRole, type RequestScope } from '../../lib/request-scope';
-import { boardPermissions, canCreateDashboard, type BoardViewer } from '../../lib/work-access';
+import {
+  boardPermissions,
+  canCreateDashboard,
+  trashScope,
+  type BoardViewer,
+} from '../../lib/work-access';
 import { dashboardAlreadyExists, dashboardNotFound } from '../../lib/work-errors';
 import { getEmployeeSummary } from '../auth/auth.service';
 import { getBoardAccess } from '../tasks/tasks.service';
@@ -122,7 +127,7 @@ export async function getDashboard(
       avatarUrl: avatarUrls.get(member.id) ?? null,
       isManager: member.id === manager?.id,
     })),
-    viewer,
+    viewer: { ...viewer, trashScope: trashScope(access) },
   };
 }
 

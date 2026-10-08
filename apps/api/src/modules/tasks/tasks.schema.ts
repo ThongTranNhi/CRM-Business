@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationSchema, searchSchema } from '../../lib/pagination';
 
 export const uuidSchema = z.uuid();
 
@@ -26,6 +27,9 @@ const DATE_RANGE_ERROR = { message: 'Hạn không được trước ngày bắt 
 export const boardQuerySchema = z.object({
   doneLimit: z.coerce.number().int().min(20).max(200).default(20),
 });
+
+/** Thùng rác: `?page=&pageSize=&q=` (q tìm theo tên việc). */
+export const trashQuerySchema = paginationSchema.extend({ q: searchSchema });
 
 export const createTaskSchema = z
   .object({

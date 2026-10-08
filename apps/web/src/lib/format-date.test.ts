@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, formatDayMonth, startOfWeek, todayInVietnam } from './format-date';
+import {
+  addDays,
+  formatDateTime,
+  formatDayMonth,
+  startOfWeek,
+  todayInVietnam,
+} from './format-date';
 
 describe('Vietnam calendar dates', () => {
   it('uses the Asia/Ho_Chi_Minh day, not the UTC day', () => {
@@ -16,5 +22,8 @@ describe('Vietnam calendar dates', () => {
   });
   it('formats dd/MM', () => {
     expect(formatDayMonth('2026-10-09')).toBe('09/10');
+  });
+  it('formats time and date in Vietnam time', () => {
+    expect(formatDateTime(new Date('2026-10-06T18:30:00Z'))).toBe('01:30 07/10/2026');
   });
 });

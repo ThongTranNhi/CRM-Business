@@ -39,6 +39,8 @@ export interface BoardViewer {
   canView: boolean;
   canWrite: boolean;
   canEditAllTasks: boolean;
+  /** Thùng rác: `all` mọi việc đã xoá, `own` việc mình tạo; null → ẩn nút. */
+  trashScope: 'all' | 'own' | null;
 }
 
 export interface DashboardDetail {

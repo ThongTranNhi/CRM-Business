@@ -8,14 +8,16 @@ import {
   detail,
   move,
   restore,
+  trash,
   update,
 } from './tasks.controller';
 
 // Mọi role đều qua được route; quyền theo dữ liệu (thành viên phòng / board) kiểm tra ở service.
 
-/** /api/boards/:boardId — board + cột + việc (1 request), tạo việc trong board. */
+/** /api/boards/:boardId — board + cột + việc (1 request), tạo việc, thùng rác của board. */
 export const boardRoutes = new Hono<AppEnv>();
 boardRoutes.get('/:boardId', board);
+boardRoutes.get('/:boardId/trash', trash);
 boardRoutes.post('/:boardId/tasks', create);
 
 /** /api/tasks/:id — chi tiết, sửa, kéo thả, người phối hợp, lưu trữ (xoá mềm), hoàn tác. */

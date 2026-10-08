@@ -2,7 +2,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button, Card, EmptyState, ErrorState } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth';
-import { CreateTaskModal, type BoardData } from '@/features/tasks';
+import { CreateTaskModal, TaskTrashModal, type BoardData } from '@/features/tasks';
 import { todayInVietnam } from '@/lib/format-date';
 import { hasFilters, matchesFilters } from '../board.utils';
 import { dashboardKeys } from '../hooks/dashboard-keys';
@@ -28,6 +28,8 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
   const { data: user } = useCurrentUser();
   const { filters, update, clear } = useBoardFilters();
   const [form, setForm] = useState<{ title: string } | null>(null);
+  const [isTrashOpen, setTrashOpen] = useState(false);
+  const { trashScope } = dashboard.viewer;
   const quickAdd = useQuickAddTask(dashboard, (title) => setForm({ title }));
   const canWrite = dashboard.viewer.canWrite;
   const avatars = new Map(dashboard.members.map((member) => [member.id, member.avatarUrl]));
@@ -81,6 +83,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
       <BoardHeader
         dashboard={dashboard}
         onAddTask={canWrite ? () => setForm({ title: '' }) : null}
+        onOpenTrash={trashScope ? () => setTrashOpen(true) : null}
       />
       {!canWrite && <ReadOnlyBanner isDepartmentArchived={dashboard.departmentArchived} />}
       <BoardFilters filters={filters} onChange={update} onClear={clear} />
@@ -94,6 +97,15 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         relatedKeys={[dashboardKeys.all]}
         initialTitle={form?.title}
       />
+      {trashScope && (
+        <TaskTrashModal
+          open={isTrashOpen}
+          onClose={() => setTrashOpen(false)}
+          boardId={dashboard.boardId}
+          scope={trashScope}
+          relatedKeys={[dashboardKeys.all]}
+        />
+      )}
     </>
   );
 }

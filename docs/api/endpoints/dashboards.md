@@ -63,7 +63,7 @@ Super Admin, HR Admin thấy mọi Dashboard; người khác thấy Dashboard c�
         "isManager": true
       }
     ],
-    "viewer": { "canView": true, "canWrite": true, "canEditAllTasks": true }
+    "viewer": { "canView": true, "canWrite": true, "canEditAllTasks": true, "trashScope": "all" }
   }
 }
 ```
@@ -72,6 +72,8 @@ Super Admin, HR Admin thấy mọi Dashboard; người khác thấy Dashboard c�
   người phụ trách / phối hợp.
 - `viewer.canWrite`: tạo task, bình luận. `viewer.canEditAllTasks`: sửa / kéo mọi task (Super Admin, Trưởng
   phòng, Trưởng nhóm của phòng). Phòng đã xoá → cả hai `false` (BR-06).
+- `viewer.trashScope`: thùng rác board hiện gì — `all` (Super Admin, Trưởng phòng), `own` (việc mình tạo), `null`
+  (không ghi được board → ẩn nút Thùng rác). Xem `GET /api/boards/:boardId/trash` trong tasks.md.
 - Lỗi: `400 VALIDATION_ERROR` (id không phải UUID), `404 DASHBOARD_NOT_FOUND`, `403 FORBIDDEN`
   (không thuộc phòng / board).
 

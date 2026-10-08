@@ -22,10 +22,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 12  | `20261006090700_work_management_rpcs.sql`             |                            |
 | 13  | `20261006090800_employee_delete_handover.sql`         |                            |
 | 14  | `20261007090000_task_restore.sql`                     |                            |
+| 15  | `20261007100000_task_trash.sql`                       |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -35,6 +36,9 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261007100000_task_trash.sql`: thùng rác công việc — view `task_trash` (việc đã xoá kèm cột cũ, người phụ
+  trách, người xoá; chỉ `service_role`) cho `GET /api/boards/:boardId/trash`; index
+  `tasks_board_archived_idx`. Không đổi dữ liệu.
 - `20261007090000_task_restore.sql`: hoàn tác xoá công việc — RPC `crm_restore_task` (về cuối cột cũ, activity
   `restored`, audit `task.restore`); `crm_work_access` thấy task đã lưu trữ (`isArchived`); view `task_cards` thêm
   `created_by` (quyền xoá từng thẻ).

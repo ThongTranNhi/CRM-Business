@@ -17,7 +17,7 @@ export function DeleteTaskDialog({ task, boardKey, relatedKeys, onClose }: Delet
     <ConfirmDialog
       open={task !== null}
       title="Xoá công việc"
-      description={`Xoá công việc '${task?.title ?? ''}'? Công việc sẽ bị ẩn khỏi board.`}
+      description={`Xoá công việc '${task?.title ?? ''}'? Công việc sẽ chuyển vào Thùng rác của board và khôi phục được.`}
       confirmLabel="Xoá công việc"
       tone="danger"
       onConfirm={() => {

@@ -38,7 +38,11 @@ board_columns(id, board_id, status)`: cột cùng board và status luôn khớp 
   giữ hoặc gỡ được).
 - Migration `20261007090000_task_restore.sql`: `crm_restore_task` (hoàn tác xoá, task về cuối cột cũ); activity
   `restored`; `crm_work_access` trả thêm `isArchived`; `task_cards` thêm `created_by`.
-- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql` (tự ROLLBACK).
+- Migration `20261007100000_task_trash.sql`: view `task_trash` (task đã lưu trữ + `board_id`, `created_by`, tên
+  cột cũ, người phụ trách, người xoá theo activity `archived` mới nhất — một truy vấn, chỉ `service_role`);
+  index `tasks_board_archived_idx (board_id, archived_at desc) where archived_at is not null`.
+- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
+  `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
 ## Phòng ban, xoá mềm, view đọc (Đợt 1 — 2026-10-06)
 

@@ -7,6 +7,7 @@ import {
   collaboratorsSchema,
   createTaskSchema,
   moveTaskSchema,
+  trashQuerySchema,
   updateTaskSchema,
   uuidSchema,
 } from './tasks.schema';
@@ -18,6 +19,11 @@ const taskId = (c: Context<AppEnv>) => parseInput(uuidSchema, c.req.param('id'))
 export async function board(c: Context<AppEnv>) {
   const { doneLimit } = parseInput(boardQuerySchema, c.req.query());
   return c.json({ data: await tasksService.getBoard(requestScope(c), boardId(c), doneLimit) });
+}
+
+export async function trash(c: Context<AppEnv>) {
+  const query = parseInput(trashQuerySchema, c.req.query());
+  return c.json(await tasksService.listTrash(requestScope(c), boardId(c), query));
 }
 
 export async function create(c: Context<AppEnv>) {

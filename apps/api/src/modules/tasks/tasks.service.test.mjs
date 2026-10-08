@@ -298,6 +298,61 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
       );
     },
   );
+  await t.test('trash: member sees only what they created; manager sees everything', async () => {
+    const trashRow = {
+      id: ids.task,
+      title: 'Gọi khách hàng',
+      archived_at: '2026-10-07T08:00:00Z',
+      column_name: 'VIỆC CẦN LÀM',
+      assignee_id: ids.other,
+      assignee_name: 'Nguyễn Văn An',
+      archived_by_id: ids.account,
+      archived_by_name: 'Người xem',
+    };
+    const trashAs = async (facts) => {
+      const paths = [];
+      const database = fakeDatabase({ crm_work_access: access(facts.role, facts) });
+      globalThis.fetch = async (url) => {
+        if (!String(url).includes('task_trash')) return database.fetch(url);
+        paths.push(decodeURIComponent(String(url)));
+        return Response.json([trashRow], { headers: { 'Content-Range': '0-0/1' } });
+      };
+      const page = await service.listTrash(scopeAs(facts.role), ids.board, {
+        page: 1,
+        pageSize: 20,
+        q: 'khách',
+      });
+      return { page, path: paths[0] };
+    };
+    const member = await trashAs({ role: 'employee', isDepartmentMember: true });
+    assert.ok(member.path.includes(`created_by=eq.${ids.account}`));
+    assert.ok(member.path.includes('title=ilike.*khách*'));
+    assert.deepEqual(member.page.meta, { page: 1, pageSize: 20, total: 1 });
+    assert.deepEqual(member.page.data[0].archivedBy, { id: ids.account, fullName: 'Người xem' });
+    assert.equal(member.page.data[0].columnName, 'VIỆC CẦN LÀM');
+    const manager = await trashAs({
+      role: 'department_manager',
+      isDepartmentMember: true,
+      isDepartmentManager: true,
+    });
+    assert.ok(!manager.path.includes('created_by'));
+  });
+  await t.test(
+    'trash: HR Admin outside the department → 403; archived department → 409',
+    async () => {
+      const query = { page: 1, pageSize: 20 };
+      globalThis.fetch = fakeDatabase({ crm_work_access: access('hr_admin') }).fetch;
+      await assert.rejects(() => service.listTrash(scopeAs('hr_admin'), ids.board, query), {
+        code: 'FORBIDDEN',
+      });
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: access('super_admin', { isReadOnly: true }),
+      }).fetch;
+      await assert.rejects(() => service.listTrash(scopeAs('super_admin'), ids.board, query), {
+        code: 'DASHBOARD_READ_ONLY',
+      });
+    },
+  );
   await t.test('the creator may hand the task to someone else (Q: reassign)', async () => {
     const database = fakeDatabase({
       crm_work_access: access('employee', { isDepartmentMember: true, isCreator: true }),

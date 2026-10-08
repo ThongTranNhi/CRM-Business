@@ -18,6 +18,16 @@ Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nế
 - Mô tả · Checklist (tick được, có % tiến độ) · Bình luận · File · Lịch sử hoạt động.
 - Đóng bằng nút X, bấm ra ngoài hoặc phím Esc.
 
+## Xoá và Thùng rác
+
+- Xoá = lưu trữ (`archived_at`, BR-19): người tạo, Trưởng phòng, Super Admin. Thẻ biến mất ngay, toast
+  "Đã xoá công việc" kèm [Hoàn tác] 5 giây.
+- Không có xoá vĩnh viễn. Nút **Thùng rác** ở header board mở danh sách việc đã xoá (mới xoá trước, tìm theo
+  tên, 10 việc / trang): tên, cột cũ, người phụ trách, người xoá + thời điểm, [Khôi phục] → task về **cuối
+  cột cũ**, ghi activity `restored`.
+- Ai thấy gì (khớp quyền khôi phục): Super Admin, Trưởng phòng — mọi việc đã xoá của board; người khác ghi
+  được board — việc mình tạo; không ghi được board (HR Admin ngoài phòng, phòng đã xoá) — không có nút.
+
 ## Checklist
 
 Thêm/sửa/xoá/đánh dấu/đổi thứ tự mục. Tiến độ tự tính (BR-17).
@@ -49,6 +59,8 @@ Người phối hợp: `task_collaborators(task_id, user_id)`, không được t
 | GET                   | `/api/boards/:boardId` (cột + task, 1 request) |
 | POST                  | `/api/boards/:boardId/tasks`                   |
 | GET / PATCH / DELETE  | `/api/tasks/:id`                               |
+| POST                  | `/api/tasks/:id/restore` — hoàn tác xoá        |
+| GET                   | `/api/boards/:boardId/trash` — thùng rác       |
 | PATCH                 | `/api/tasks/:id/move` — xem drag-and-drop.md   |
 | PUT                   | `/api/tasks/:id/collaborators`                 |
 | POST / PATCH / DELETE | `/api/tasks/:id/checklist[/:itemId]`           |

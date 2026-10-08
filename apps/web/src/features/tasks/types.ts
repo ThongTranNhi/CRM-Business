@@ -61,6 +61,22 @@ export interface TaskMove {
   nextTaskId: string | null;
 }
 
+/** Một việc trong thùng rác board (GET /api/boards/:boardId/trash). */
+export interface TrashTask {
+  id: string;
+  title: string;
+  /** Cột trước khi xoá — khôi phục về cuối cột này. */
+  columnName: string;
+  archivedAt: string;
+  assignee: PersonRef;
+  archivedBy: PersonRef | null;
+}
+
+export interface TrashParams {
+  page: number;
+  q: string;
+}
+
 /** Người chọn được làm người phụ trách / phối hợp: thành viên phòng + người được mời vào board. */
 export interface MemberOption extends PersonRef {
   avatarUrl: string | null;

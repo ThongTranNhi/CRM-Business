@@ -18,6 +18,17 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+/** "15:00 07/10/2026" theo giờ Việt Nam. */
+export function formatDateTime(date: Date): string {
+  const time = new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone: TIME_ZONE,
+  }).format(date);
+  return `${time} ${formatDate(date)}`;
+}
+
 // Ngày dạng YYYY-MM-DD (cột date của DB) so sánh được bằng chuỗi; tính theo giờ Việt Nam (BR-16).
 
 /** Hôm nay theo giờ Việt Nam, dạng YYYY-MM-DD. */

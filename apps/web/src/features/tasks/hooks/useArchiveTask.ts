@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useToast } from '@/components/ui';
 import { errorMessage } from '@/lib/api-client';
-import { archiveTask, restoreTask } from '../api/tasks.api';
+import { useInvalidateQueries } from '@/lib/use-invalidate-queries';
+import { archiveTask } from '../api/tasks.api';
 import type { BoardData } from '../types';
 import { taskKeys } from './task-keys';
+import { useRestoreTask } from './useRestoreTask';
 
 interface UseArchiveTaskOptions {
   boardKey: QueryKey;
@@ -12,23 +14,13 @@ interface UseArchiveTaskOptions {
 
 /**
  * Xoá (lưu trữ, BR-19): thẻ biến mất ngay (optimistic), lỗi thì trả lại. Toast "Đã xoá công việc"
- * kèm [Hoàn tác] trong 5 giây → POST /restore, task về cuối cột cũ.
+ * kèm [Hoàn tác] trong 5 giây → POST /restore, task về cuối cột cũ. Việc đã xoá nằm trong Thùng rác.
  */
 export function useArchiveTask({ boardKey, relatedKeys }: UseArchiveTaskOptions) {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const refresh = () =>
-    Promise.all(
-      [taskKeys.boards(), ...relatedKeys].map((queryKey) =>
-        queryClient.invalidateQueries({ queryKey }),
-      ),
-    );
-  const restore = useMutation({
-    mutationFn: restoreTask,
-    onSuccess: () => toast({ message: 'Đã khôi phục công việc' }),
-    onError: (error) => toast({ tone: 'error', message: errorMessage(error) }),
-    onSettled: refresh,
-  });
+  const refresh = useInvalidateQueries([taskKeys.boards(), taskKeys.trashes(), ...relatedKeys]);
+  const restore = useRestoreTask(relatedKeys);
 
   return useMutation({
     mutationFn: archiveTask,

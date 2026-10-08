@@ -104,4 +104,19 @@ test('work permissions (permission-model.md)', async (t) => {
     const hr = viewer('hr_admin');
     assert.equal(access.taskPermissions(hr, relation({ isCreator: true })).canReassign, false);
   });
+  await t.test(
+    'trash: all for Super Admin and the manager, own for members, none otherwise',
+    () => {
+      assert.equal(access.trashScope(viewer('super_admin')), 'all');
+      const manager = viewer('department_manager', {
+        isDepartmentMember: true,
+        isDepartmentManager: true,
+      });
+      assert.equal(access.trashScope(manager), 'all');
+      assert.equal(access.trashScope(viewer('team_leader', { isDepartmentMember: true })), 'own');
+      assert.equal(access.trashScope(viewer('employee', { isDepartmentMember: true })), 'own');
+      assert.equal(access.trashScope(viewer('hr_admin')), null);
+      assert.equal(access.trashScope(viewer('super_admin', { isReadOnly: true })), null);
+    },
+  );
 });

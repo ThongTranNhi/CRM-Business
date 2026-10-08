@@ -4,12 +4,14 @@ import type { RequestScope } from '../../lib/request-scope';
 import {
   boardPermissions,
   taskPermissions,
+  trashScope,
   type TaskRelation,
   type WorkAccess,
 } from '../../lib/work-access';
 import { boardNotFound, dashboardReadOnly, taskNotFound } from '../../lib/work-errors';
 import * as boardRepository from './tasks.board.repository';
 import * as tasksRepository from './tasks.repository';
+import * as trashRepository from './tasks.trash.repository';
 import type {
   BoardData,
   BoardTask,
@@ -17,6 +19,7 @@ import type {
   MoveTaskInput,
   TaskCard,
   TaskDetail,
+  TrashQuery,
   UpdateTaskInput,
 } from './tasks.types';
 
@@ -155,6 +158,18 @@ export async function archiveTask(scope: RequestScope, taskId: string) {
   const access = await requireTaskAccess(scope, taskId);
   requireWrite(access, taskPermissions(access, access).canArchive);
   await tasksRepository.archiveTask(scope.env, scope.actor.id, taskId);
+}
+
+/**
+ * Thùng rác (không xoá vĩnh viễn — BR-19): chỉ hiện việc người xem khôi phục được (lib/work-access.ts:
+ * trashScope). Phòng đã xoá → 409 (BR-06), không ghi được board → 403.
+ */
+export async function listTrash(scope: RequestScope, boardId: string, query: TrashQuery) {
+  const access = await requireBoardAccess(scope, boardId);
+  const visible = trashScope(access);
+  requireWrite(access, visible !== null);
+  const createdBy = visible === 'own' ? access.accountId : null;
+  return trashRepository.listTrash(scope.env, { boardId, createdBy, ...query });
 }
 
 /** Hoàn tác xoá: cùng quyền với xoá; task về cuối cột cũ (RPC crm_restore_task). */

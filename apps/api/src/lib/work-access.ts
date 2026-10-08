@@ -81,6 +81,18 @@ export function taskPermissions(viewer: BoardViewer, relation: TaskRelation): Ta
   };
 }
 
+/**
+ * Thùng rác của board — ai thấy việc gì, khớp quyền khôi phục (= quyền xoá, BR-19): Super Admin, Trưởng
+ * phòng thấy mọi việc đã xoá (`all`); người khác ghi được board chỉ thấy việc mình tạo (`own`); không ghi
+ * được (HR Admin ngoài phòng, phòng đã xoá) → null.
+ */
+export type TrashScope = 'all' | 'own' | null;
+
+export function trashScope(viewer: BoardViewer): TrashScope {
+  if (!boardPermissions(viewer).canWrite) return null;
+  return viewer.role === 'super_admin' || isManagerOf(viewer) ? 'all' : 'own';
+}
+
 /** BR-05: Super Admin mọi phòng; Trưởng phòng chỉ phòng mình quản lý. */
 export function canCreateDashboard(
   role: Role,

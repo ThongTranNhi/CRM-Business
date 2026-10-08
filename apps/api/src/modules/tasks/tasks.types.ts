@@ -4,12 +4,14 @@ import type {
   createTaskSchema,
   movedTaskSchema,
   moveTaskSchema,
+  trashQuerySchema,
   updateTaskSchema,
 } from './tasks.schema';
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type MoveTaskInput = z.infer<typeof moveTaskSchema>;
+export type TrashQuery = z.infer<typeof trashQuerySchema>;
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -78,6 +80,17 @@ export interface TaskDetail {
   assignee: Assignee;
   collaborators: PersonRef[];
   permissions: { canEdit: boolean; canReassign: boolean; canArchive: boolean; canComment: boolean };
+}
+
+/** Một việc trong thùng rác (view task_trash): cột cũ, người phụ trách, người xoá. */
+export interface TrashTask {
+  id: string;
+  title: string;
+  columnName: string;
+  archivedAt: string;
+  assignee: PersonRef;
+  /** null: không còn activity 'archived' (dữ liệu cũ). */
+  archivedBy: PersonRef | null;
 }
 
 /** Kết quả crm_move_task. */
