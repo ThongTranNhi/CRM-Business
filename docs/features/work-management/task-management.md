@@ -16,7 +16,11 @@ Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nế
 - Thanh chọn trạng thái 3 nút (Việc cần làm / Việc đang làm / Đã hoàn thành).
 - Thuộc tính: phòng ban, người phụ trách, người phối hợp, deadline, ưu tiên, thời điểm + người hoàn thành.
 - Mô tả · Checklist (tick được, có % tiến độ) · Bình luận · File · Lịch sử hoạt động.
-- Đóng bằng nút X, bấm ra ngoài hoặc phím Esc.
+- Đóng bằng nút X, bấm ra ngoài hoặc phím Esc; nút Back của trình duyệt cũng đóng (mở từ board).
+- Mở bằng bấm thẻ hoặc Enter khi thẻ đang focus; URL `?task=<id>` chia sẻ được ([Sao chép link]).
+- Đầu drawer: tên sửa tại chỗ (Enter / rời ô để lưu, Esc huỷ), cột hiện tại + "Chuyển sang cột…", menu ⋯ → Xoá.
+- Mỗi trường lưu riêng (PATCH), drawer và thẻ board đổi ngay; lỗi thì trả lại + toast. Không có quyền → chỉ đọc.
+- Mỗi mục (thuộc tính, checklist, bình luận, lịch sử) có trạng thái đang tải / trống / lỗi riêng.
 
 ## Xoá và Thùng rác
 
@@ -54,19 +58,19 @@ Người phối hợp: `task_collaborators(task_id, user_id)`, không được t
 
 ## API
 
-| Method                | Endpoint                                       |
-| --------------------- | ---------------------------------------------- |
-| GET                   | `/api/boards/:boardId` (cột + task, 1 request) |
-| POST                  | `/api/boards/:boardId/tasks`                   |
-| GET / PATCH / DELETE  | `/api/tasks/:id`                               |
-| POST                  | `/api/tasks/:id/restore` — hoàn tác xoá        |
-| GET                   | `/api/boards/:boardId/trash` — thùng rác       |
-| PATCH                 | `/api/tasks/:id/move` — xem drag-and-drop.md   |
-| PUT                   | `/api/tasks/:id/collaborators`                 |
-| POST / PATCH / DELETE | `/api/tasks/:id/checklist[/:itemId]`           |
-| GET / POST            | `/api/tasks/:id/comments`                      |
-| POST / DELETE         | `/api/tasks/:id/attachments[/:fileId]`         |
-| GET                   | `/api/tasks/:id/activities`                    |
+| Method                      | Endpoint                                       |
+| --------------------------- | ---------------------------------------------- |
+| GET                         | `/api/boards/:boardId` (cột + task, 1 request) |
+| POST                        | `/api/boards/:boardId/tasks`                   |
+| GET / PATCH / DELETE        | `/api/tasks/:id`                               |
+| POST                        | `/api/tasks/:id/restore` — hoàn tác xoá        |
+| GET                         | `/api/boards/:boardId/trash` — thùng rác       |
+| PATCH                       | `/api/tasks/:id/move` — xem drag-and-drop.md   |
+| PUT                         | `/api/tasks/:id/collaborators`                 |
+| GET / POST / PATCH / DELETE | `/api/tasks/:id/checklist[/:itemId]`           |
+| GET / POST                  | `/api/tasks/:id/comments`                      |
+| POST / DELETE               | `/api/tasks/:id/attachments[/:fileId]`         |
+| GET                         | `/api/tasks/:id/activities`                    |
 
 ## Tiêu chí nghiệm thu
 

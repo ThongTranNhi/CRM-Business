@@ -54,3 +54,18 @@ export function formatDayMonth(isoDate: string): string {
   const [, month, day] = isoDate.split('-');
   return `${day}/${month}`;
 }
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+/** "vừa xong", "5 phút trước", "3 giờ trước", "hôm qua", "4 ngày trước"; quá 7 ngày → dd/MM/yyyy. */
+export function formatRelativeTime(date: Date, now: Date = new Date()): string {
+  const elapsed = Math.max(0, now.getTime() - date.getTime());
+  if (elapsed < MINUTE_MS) return 'vừa xong';
+  if (elapsed < HOUR_MS) return `${Math.floor(elapsed / MINUTE_MS)} phút trước`;
+  if (elapsed < DAY_MS) return `${Math.floor(elapsed / HOUR_MS)} giờ trước`;
+  const days = Math.floor(elapsed / DAY_MS);
+  if (days === 1) return 'hôm qua';
+  return days < 7 ? `${days} ngày trước` : formatDate(date);
+}

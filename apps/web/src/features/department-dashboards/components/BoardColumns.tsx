@@ -22,6 +22,7 @@ export interface BoardColumnsProps {
   /** [Xem thêm] ở cột Đã hoàn thành; null = đã hiện hết hoặc chạm giới hạn. */
   showMoreDone: { onClick: () => void; isLoading: boolean } | null;
   onDraggingChange: (isDragging: boolean) => void;
+  onOpenTask: (taskId: string) => void;
 }
 
 /** Chuyển cột bằng menu → thẻ sang cột mới (DOM mới): đưa focus về thẻ để dùng tiếp bằng bàn phím. */
@@ -49,6 +50,7 @@ export function BoardColumns(props: BoardColumnsProps) {
       focusCard(taskId);
     },
     onRequestDelete: setDeleting,
+    onOpenTask: props.onOpenTask,
   };
   // Thêm nhanh chỉ ở cột đầu tiên (cột mặc định nhóm todo — nơi task mới được đặt).
   const firstColumn = board.columns[0];

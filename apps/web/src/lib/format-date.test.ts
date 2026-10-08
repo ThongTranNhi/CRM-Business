@@ -3,6 +3,7 @@ import {
   addDays,
   formatDateTime,
   formatDayMonth,
+  formatRelativeTime,
   startOfWeek,
   todayInVietnam,
 } from './format-date';
@@ -25,5 +26,20 @@ describe('Vietnam calendar dates', () => {
   });
   it('formats time and date in Vietnam time', () => {
     expect(formatDateTime(new Date('2026-10-06T18:30:00Z'))).toBe('01:30 07/10/2026');
+  });
+});
+
+describe('relative time for comments', () => {
+  const now = new Date('2026-10-08T10:00:00Z');
+  const ago = (ms: number) => formatRelativeTime(new Date(now.getTime() - ms), now);
+  it('reads naturally in Vietnamese', () => {
+    expect(ago(20_000)).toBe('vừa xong');
+    expect(ago(5 * 60_000)).toBe('5 phút trước');
+    expect(ago(3 * 3_600_000)).toBe('3 giờ trước');
+    expect(ago(30 * 3_600_000)).toBe('hôm qua');
+    expect(ago(4 * 86_400_000)).toBe('4 ngày trước');
+  });
+  it('falls back to the date after a week', () => {
+    expect(ago(10 * 86_400_000)).toBe('28/09/2026');
   });
 });

@@ -8,10 +8,18 @@ interface DeleteTaskDialogProps {
   boardKey: QueryKey;
   relatedKeys: readonly QueryKey[];
   onClose: () => void;
+  /** Sau khi xác nhận xoá (vd. drawer chi tiết tự đóng). */
+  onDeleted?: () => void;
 }
 
 /** Xác nhận xoá (lưu trữ, BR-19). Đóng ngay khi xác nhận: thẻ biến mất tức thì, toast có [Hoàn tác]. */
-export function DeleteTaskDialog({ task, boardKey, relatedKeys, onClose }: DeleteTaskDialogProps) {
+export function DeleteTaskDialog({
+  task,
+  boardKey,
+  relatedKeys,
+  onClose,
+  onDeleted,
+}: DeleteTaskDialogProps) {
   const archive = useArchiveTask({ boardKey, relatedKeys });
   return (
     <ConfirmDialog
@@ -23,6 +31,7 @@ export function DeleteTaskDialog({ task, boardKey, relatedKeys, onClose }: Delet
       onConfirm={() => {
         if (task) archive.mutate(task.id);
         onClose();
+        onDeleted?.();
       }}
       onClose={onClose}
     />

@@ -19,4 +19,5 @@ export { Skeleton } from './Skeleton';
 export { Table, type TableColumn } from './Table';
 export { Tabs, type TabItem } from './Tabs';
 export { Textarea } from './Textarea';
+export { Timeline, type TimelineItem } from './Timeline';
 export { ToastProvider, useToast } from './Toast';

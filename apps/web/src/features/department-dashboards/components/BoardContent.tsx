@@ -2,12 +2,13 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button, Card, EmptyState, ErrorState } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth';
-import { CreateTaskModal, TaskTrashModal, type BoardData } from '@/features/tasks';
+import { CreateTaskModal, TaskDrawer, TaskTrashModal, type BoardData } from '@/features/tasks';
 import { todayInVietnam } from '@/lib/format-date';
 import { hasFilters, matchesFilters } from '../board.utils';
 import { dashboardKeys } from '../hooks/dashboard-keys';
 import { useBoardFilters } from '../hooks/useBoardFilters';
 import { useQuickAddTask } from '../hooks/useQuickAddTask';
+import { useTaskParam } from '../hooks/useTaskParam';
 import type { DashboardDetail } from '../types';
 import { BoardColumns, type BoardColumnsProps } from './BoardColumns';
 import { BoardFilters } from './BoardFilters';
@@ -30,6 +31,8 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
   const [form, setForm] = useState<{ title: string } | null>(null);
   const [isTrashOpen, setTrashOpen] = useState(false);
   const { trashScope } = dashboard.viewer;
+  const drawer = useTaskParam();
+  const relatedKeys = [dashboardKeys.all];
   const quickAdd = useQuickAddTask(dashboard, (title) => setForm({ title }));
   const canWrite = dashboard.viewer.canWrite;
   const avatars = new Map(dashboard.members.map((member) => [member.id, member.avatarUrl]));
@@ -74,6 +77,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         quickAdd={canWrite ? quickAdd : null}
         showMoreDone={props.showMoreDone}
         onDraggingChange={props.onDraggingChange}
+        onOpenTask={drawer.open}
       />
     );
   }
@@ -94,8 +98,18 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         boardId={dashboard.boardId}
         departmentName={dashboard.department.name}
         members={dashboard.members}
-        relatedKeys={[dashboardKeys.all]}
+        relatedKeys={relatedKeys}
         initialTitle={form?.title}
+      />
+      <TaskDrawer
+        taskId={drawer.taskId}
+        onClose={drawer.close}
+        board={{
+          data: board.data,
+          boardKey: props.boardKey,
+          relatedKeys,
+          members: dashboard.members,
+        }}
       />
       {trashScope && (
         <TaskTrashModal
@@ -103,7 +117,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
           onClose={() => setTrashOpen(false)}
           boardId={dashboard.boardId}
           scope={trashScope}
-          relatedKeys={[dashboardKeys.all]}
+          relatedKeys={relatedKeys}
         />
       )}
     </>

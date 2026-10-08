@@ -1,5 +1,4 @@
 import type { Env } from '../../config/env';
-import { forbidden } from '../../lib/app-error';
 import type { RequestScope } from '../../lib/request-scope';
 import {
   boardPermissions,
@@ -8,7 +7,8 @@ import {
   type TaskRelation,
   type WorkAccess,
 } from '../../lib/work-access';
-import { boardNotFound, dashboardReadOnly, taskNotFound } from '../../lib/work-errors';
+import { taskNotFound } from '../../lib/work-errors';
+import { requireBoardAccess, requireTaskAccess, requireWrite } from './tasks.access';
 import * as boardRepository from './tasks.board.repository';
 import * as tasksRepository from './tasks.repository';
 import * as trashRepository from './tasks.trash.repository';
@@ -29,34 +29,6 @@ import type {
 /** Cho module department-dashboards: dữ kiện quyền của người gọi với một board. */
 export const getBoardAccess = (env: Env, userId: string, boardId: string) =>
   boardRepository.findWorkAccess(env, userId, { boardId });
-
-async function requireBoardAccess({ env, actor }: RequestScope, boardId: string) {
-  const access = await boardRepository.findWorkAccess(env, actor.id, { boardId });
-  if (!access) throw boardNotFound();
-  if (!boardPermissions(access).canView) throw forbidden();
-  return access;
-}
-
-/**
- * null / taskId null → 404. Task đã lưu trữ cũng 404, trừ khi gọi để hoàn tác (`archived: true`
- * thì ngược lại: chỉ task đã lưu trữ).
- */
-async function requireTaskAccess(
-  { env, actor }: RequestScope,
-  taskId: string,
-  { archived = false }: { archived?: boolean } = {},
-) {
-  const access = await boardRepository.findWorkAccess(env, actor.id, { taskId });
-  if (!access?.taskId || access.isArchived !== archived) throw taskNotFound();
-  if (!boardPermissions(access).canView) throw forbidden();
-  return access;
-}
-
-/** Thao tác ghi: Dashboard chỉ đọc (BR-06) → 409 trước, rồi mới tới quyền → 403. */
-function requireWrite(access: WorkAccess, isAllowed: boolean) {
-  if (access.isReadOnly) throw dashboardReadOnly();
-  if (!isAllowed) throw forbidden();
-}
 
 /** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
 const relationTo = (

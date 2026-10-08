@@ -79,3 +79,50 @@ export const movedTaskSchema = z.object({
   completedAt: z.string().nullable(),
   completedBy: z.uuid().nullable(),
 });
+
+// ---------- Checklist, bình luận, lịch sử (drawer chi tiết task) ----------
+
+/** BR-17; khớp check task_checklist_items_content_check (1 → 500 ký tự, đã trim). */
+const checklistContent = z
+  .string()
+  .trim()
+  .min(1, 'Vui lòng nhập nội dung')
+  .max(500, 'Mục checklist tối đa 500 ký tự');
+
+export const addChecklistItemSchema = z.object({ content: checklistContent }).strict();
+
+export const updateChecklistItemSchema = z
+  .object({ content: checklistContent.optional(), isDone: z.boolean().optional() })
+  .strict()
+  .refine((input) => input.content !== undefined || input.isDone !== undefined, {
+    message: 'Không có thay đổi nào',
+  });
+
+/** Khớp check task_comments_body_check (1 → 5000 ký tự). parentId: trả lời 1 cấp. */
+export const addCommentSchema = z
+  .object({
+    body: z
+      .string()
+      .trim()
+      .min(1, 'Vui lòng nhập bình luận')
+      .max(5000, 'Bình luận tối đa 5000 ký tự'),
+    parentId: z.uuid().nullable().default(null),
+  })
+  .strict();
+
+/** Bình luận gốc và lịch sử: `?page=&pageSize=`, mới nhất trước. */
+export const feedQuerySchema = paginationSchema;
+
+/** from_value / to_value của task_activities (activity-log.md); khoá lạ bỏ qua. */
+export const activityValueSchema = z
+  .object({
+    title: z.string().optional(),
+    assigneeId: z.uuid().optional(),
+    employeeIds: z.array(z.uuid()).optional(),
+    priority: z.enum(PRIORITIES).optional(),
+    dueDate: z.string().nullable().optional(),
+    columnName: z.string().optional(),
+    content: z.string().optional(),
+    isDone: z.boolean().optional(),
+  })
+  .nullable();

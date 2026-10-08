@@ -49,4 +49,14 @@ export const WORK_ERRORS: DatabaseErrorMap = {
   tasks_title_check: () =>
     new AppError('VALIDATION_ERROR', 'Tên công việc cần từ 1 đến 200 ký tự', 400),
   tasks_description_check: () => new AppError('VALIDATION_ERROR', 'Mô tả tối đa 5000 ký tự', 400),
+  CHECKLIST_ITEM_NOT_FOUND: () =>
+    new AppError('CHECKLIST_ITEM_NOT_FOUND', 'Mục checklist không còn tồn tại', 404),
+  COMMENT_NOT_FOUND: () =>
+    new AppError('COMMENT_NOT_FOUND', 'Bình luận được trả lời không còn tồn tại', 404),
+  COMMENT_REPLY_TOO_DEEP: () =>
+    new AppError('COMMENT_REPLY_TOO_DEEP', 'Chỉ trả lời được bình luận gốc', 400),
+  task_checklist_items_content_check: () =>
+    new AppError('VALIDATION_ERROR', 'Mục checklist cần từ 1 đến 500 ký tự', 400),
+  task_comments_body_check: () =>
+    new AppError('VALIDATION_ERROR', 'Bình luận cần từ 1 đến 5000 ký tự', 400),
 };

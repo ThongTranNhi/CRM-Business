@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type { HTMLAttributes, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { Avatar, AvatarGroup, Badge, Icon, ProgressBar } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { checklistPercent, dueBadge, PRIORITY_META } from '../task.utils';
@@ -17,7 +17,14 @@ interface TaskCardProps {
   moveMenu?: ReactNode;
   /** Menu ⋯ (vd. Xoá công việc) ở góc phải, cạnh tên. */
   actionsMenu?: ReactNode;
+  /** Mở drawer chi tiết: bấm thẻ hoặc Enter khi thẻ đang focus. */
+  onOpen?: () => void;
 }
+
+/** Bấm vào nút / ô chọn bên trong thẻ (menu, chuyển cột) thì không mở chi tiết. */
+const isFromControl = (event: MouseEvent<HTMLElement>) =>
+  event.target instanceof Element &&
+  event.target.closest('button, select, a, input, [role="menu"]') !== null;
 
 /** Thẻ task trên board (task-management.md, demo): tên, ưu tiên, hạn, checklist, người phụ trách. */
 export function TaskCard({
@@ -28,6 +35,7 @@ export function TaskCard({
   isDragging,
   moveMenu,
   actionsMenu,
+  onOpen,
 }: TaskCardProps) {
   const priority = PRIORITY_META[task.priority];
   const due = dueBadge(task, today);
@@ -39,9 +47,19 @@ export function TaskCard({
       aria-label={task.title}
       // Tab tới được thẻ (bàn phím); focus trong thẻ làm hiện menu chuyển cột.
       tabIndex={0}
+      onClick={(event) => {
+        if (onOpen && !isFromControl(event)) onOpen();
+      }}
+      onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        if (onOpen && event.key === 'Enter' && event.target === event.currentTarget) {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
       className={cn(
         'group grid gap-2.5 rounded-lg border border-gray-200 bg-white p-3 shadow-sm',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300',
+        onOpen && 'cursor-pointer hover:border-primary-300',
         dragProps?.draggable && 'cursor-grab hover:border-primary-300',
         isDone && 'opacity-70',
         isDragging && 'opacity-40',

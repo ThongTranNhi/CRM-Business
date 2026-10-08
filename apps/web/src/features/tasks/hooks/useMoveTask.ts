@@ -61,7 +61,8 @@ export function useMoveTask({ boardKey, relatedKeys }: UseMoveTaskOptions) {
       // Lượt kéo này vẫn được tính trong isMutating: === 1 nghĩa là không còn lượt nào khác.
       if (queryClient.isMutating({ mutationKey: MOVE_KEY }) > 1) return;
       return Promise.all(
-        [taskKeys.boards(), ...relatedKeys].map((queryKey) =>
+        // details: drawer đang mở (cột, người hoàn thành, lịch sử) cập nhật theo.
+        [taskKeys.boards(), taskKeys.details(), ...relatedKeys].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey }),
         ),
       );

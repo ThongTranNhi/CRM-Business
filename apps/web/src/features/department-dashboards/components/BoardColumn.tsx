@@ -28,6 +28,8 @@ export interface ColumnContext {
   cardDragProps: (taskId: string) => HTMLAttributes<HTMLElement> & { draggable: boolean };
   onMoveToColumn: (taskId: string, columnId: string) => void;
   onRequestDelete: (task: BoardTask) => void;
+  /** Mở drawer chi tiết (`?task=`). */
+  onOpenTask: (taskId: string) => void;
 }
 
 interface BoardColumnProps {
@@ -103,6 +105,7 @@ function ColumnCard({ task, context }: { task: BoardTask; context: ColumnContext
       today={context.today}
       avatarOf={context.avatarOf}
       isDragging={task.id === context.draggingId}
+      onOpen={() => context.onOpenTask(task.id)}
       dragProps={task.canMove ? context.cardDragProps(task.id) : undefined}
       actionsMenu={
         task.canArchive && (
