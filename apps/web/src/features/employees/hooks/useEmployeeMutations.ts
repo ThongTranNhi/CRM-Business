@@ -3,14 +3,17 @@ import { useToast } from '@/components/ui';
 import { errorMessage } from '@/lib/api-client';
 import { useInvalidateQueries } from '@/lib/use-invalidate-queries';
 import { deleteEmployee, restoreEmployee, saveEmployee } from '../api/directory.api';
-import type { AdminEmployeeUpdate } from '../types';
+import type { AdminEmployeeUpdate, DeleteEmployeeInput } from '../types';
 
-// Đổi hồ sơ / xoá nhân viên làm thay đổi cả số người và trưởng phòng của phòng ban.
+// Đổi hồ sơ / xoá nhân viên làm thay đổi cả số người và trưởng phòng của phòng ban; bàn giao việc
+// (BR-53) đổi người phụ trách trên board và cờ "Đã nghỉ" trên thẻ.
 const AFFECTED_KEYS = [
   ['employee-directory'],
   ['employee-detail'],
   ['employee-options'],
   ['departments'],
+  ['tasks'],
+  ['department-dashboards'],
 ];
 
 export function useSaveEmployee(id: string) {
@@ -24,7 +27,7 @@ export function useSaveEmployee(id: string) {
 export function useDeleteEmployee(id: string) {
   const invalidate = useInvalidateQueries(AFFECTED_KEYS);
   return useMutation({
-    mutationFn: (newManagerId: string | null) => deleteEmployee(id, newManagerId),
+    mutationFn: (input: DeleteEmployeeInput) => deleteEmployee(id, input),
     onSuccess: invalidate,
   });
 }

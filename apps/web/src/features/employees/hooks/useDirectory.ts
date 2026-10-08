@@ -28,10 +28,11 @@ export function useEmployeeDetail(id: string) {
 }
 
 /** Ô chọn người: tìm phía server theo tên / mã / username. */
-export function useEmployeeOptions(q: string, enabled: boolean) {
+/** `departmentId`: chỉ người của phòng đó (vd. người nhận bàn giao, mặc định cùng phòng). */
+export function useEmployeeOptions(q: string, enabled: boolean, departmentId?: string) {
   return useQuery({
-    queryKey: ['employee-options', q],
-    queryFn: () => listEmployeeOptions(q),
+    queryKey: ['employee-options', q, departmentId ?? null],
+    queryFn: () => listEmployeeOptions(q, departmentId),
     placeholderData: keepPreviousData,
     enabled,
   });

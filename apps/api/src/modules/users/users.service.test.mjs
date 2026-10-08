@@ -138,22 +138,46 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
       { code: 'CANNOT_DELETE_SELF', status: 422 },
     );
   });
-  await t.test('delete sends the optional new manager to the RPC', async () => {
+  await t.test('delete sends the new manager and the handover receiver to the RPC', async () => {
     let body;
     globalThis.fetch = async (url, init) => {
+      if (String(url).includes('/rest/v1/tasks?')) {
+        return Response.json([{ id: 't-1' }], { headers: { 'Content-Range': '0-0/3' } });
+      }
       if (!String(url).includes('/rpc/')) return Response.json([admin]);
       body = JSON.parse(init.body);
       return new Response(null, { status: 204 });
     };
-    await service.deleteEmployee(env, userId, {
+    const result = await service.deleteEmployee(env, userId, {
       employeeId: 'employee-2',
       newManagerId: 'employee-3',
+      handoverEmployeeId: 'employee-4',
     });
     assert.deepEqual(body, {
       actor_uuid: userId,
       employee_uuid: 'employee-2',
       new_manager_uuid: 'employee-3',
+      handover_employee_uuid: 'employee-4',
     });
+    assert.deepEqual(result, { deleted: true, openTaskCount: 3, handedOverTaskCount: 3 });
+  });
+  await t.test('handover receiver outside a task board → clear 422 (BR-53)', async () => {
+    globalThis.fetch = async (url) =>
+      String(url).includes('/rpc/crm_delete_employee')
+        ? rpcError('HANDOVER_EMPLOYEE_NOT_IN_BOARD')
+        : Response.json([admin]);
+    await assert.rejects(
+      () =>
+        service.deleteEmployee(env, userId, {
+          employeeId: 'employee-2',
+          newManagerId: null,
+          handoverEmployeeId: 'employee-4',
+        }),
+      (error) =>
+        error.code === 'HANDOVER_EMPLOYEE_NOT_IN_BOARD' &&
+        error.status === 422 &&
+        error.message.includes('cùng phòng'),
+    );
   });
   await t.test('restore with a reused employee code explains what to do', async () => {
     globalThis.fetch = async (url) =>
@@ -173,10 +197,12 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
       urls.push(String(url));
       return Response.json(String(url).includes('/app_accounts?') ? [hr] : []);
     };
-    await service.getEmployeeOptions(env, userId, 'an');
+    await service.getEmployeeOptions(env, userId, { q: 'an', departmentId: 'dept-1' });
     const pickerUrl = urls.find((url) => !url.includes('/app_accounts?'));
     assert.match(pickerUrl, /\/rest\/v1\/active_employees\?/);
     assert.doesNotMatch(pickerUrl, /employee_directory|\/employees\?/);
+    // Người nhận bàn giao: mặc định chỉ người cùng phòng (BR-53).
+    assert.match(pickerUrl, /department_id=eq\.dept-1/);
   });
   await t.test('department picker reads only non-deleted departments', async () => {
     const urls = [];
@@ -189,7 +215,7 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
   });
   await t.test('regular employees cannot use the picker', async () => {
     globalThis.fetch = async () => Response.json([account]);
-    await assert.rejects(() => service.getEmployeeOptions(env, userId, undefined), {
+    await assert.rejects(() => service.getEmployeeOptions(env, userId, {}), {
       code: 'FORBIDDEN',
     });
   });

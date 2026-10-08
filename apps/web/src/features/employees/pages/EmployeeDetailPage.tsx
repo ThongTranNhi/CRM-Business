@@ -8,7 +8,7 @@ import { EmployeeProfileCard } from '../components/EmployeeProfileCard';
 import { ResetPasswordForm } from '../components/ResetPasswordForm';
 import { RestoreEmployeeButton } from '../components/RestoreEmployeeButton';
 import { useEmployeeDetail } from '../hooks/useDirectory';
-import type { DirectoryEmployee } from '../types';
+import type { EmployeeDetail } from '../types';
 
 export function EmployeeDetailPage() {
   const { id = '' } = useParams();
@@ -30,7 +30,7 @@ export function EmployeeDetailPage() {
 }
 
 interface EmployeeProfileProps {
-  employee: DirectoryEmployee;
+  employee: EmployeeDetail;
   departments: { id: string; name: string }[];
 }
 

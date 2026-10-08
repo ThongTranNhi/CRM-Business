@@ -33,6 +33,21 @@ export const DIRECTORY_ERRORS: DatabaseErrorMap = {
     new AppError('CANNOT_DELETE_SELF', 'Bạn không thể tự xoá tài khoản của mình', 422),
   CANNOT_DELETE_ADMIN: () =>
     new AppError('CANNOT_DELETE_ADMIN', 'Không thể xoá tài khoản Super Admin', 422),
+  // BR-53: bàn giao việc khi xoá nhân viên (migration 20261006090800).
+  INVALID_HANDOVER_EMPLOYEE: () =>
+    new AppError('INVALID_HANDOVER_EMPLOYEE', 'Người nhận bàn giao phải là người khác', 422),
+  HANDOVER_EMPLOYEE_NOT_FOUND: () =>
+    new AppError(
+      'HANDOVER_EMPLOYEE_NOT_FOUND',
+      'Người nhận bàn giao không còn làm việc, hãy chọn người khác',
+      422,
+    ),
+  HANDOVER_EMPLOYEE_NOT_IN_BOARD: () =>
+    new AppError(
+      'HANDOVER_EMPLOYEE_NOT_IN_BOARD',
+      'Người nhận không thuộc phòng ban (hoặc Dashboard) của một số việc đang mở. Hãy chọn người cùng phòng, hoặc bỏ qua bàn giao.',
+      422,
+    ),
   EMPLOYEE_CODE_EXISTS: () =>
     new AppError(
       'EMPLOYEE_CODE_EXISTS',

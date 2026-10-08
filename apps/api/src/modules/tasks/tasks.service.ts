@@ -30,6 +30,10 @@ import type {
 export const getBoardAccess = (env: Env, userId: string, boardId: string) =>
   boardRepository.findWorkAccess(env, userId, { boardId });
 
+/** Cho module users (BR-53): số việc đang mở người này phụ trách — hộp xoá nhân viên, bàn giao. */
+export const countOpenTasks = (env: Env, employeeId: string) =>
+  tasksRepository.countOpenTasks(env, employeeId);
+
 /** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
 const relationTo = (
   access: WorkAccess,

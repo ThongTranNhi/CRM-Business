@@ -6,6 +6,7 @@ import { rangeParams, toPage, type Page } from '../../lib/pagination';
 import { callRpc, supabaseList, supabaseRequest } from '../../lib/supabase';
 import type {
   AdminEmployeeUpdate,
+  DeleteEmployeeTarget,
   DirectoryEmployee,
   DirectoryQuery,
   EmployeeOption,
@@ -158,18 +159,23 @@ export async function directoryEmployee(env: Env, employeeId: string) {
   return { employee: toDirectoryEmployee(row), authUserId: row.auth_user_id };
 }
 
-export async function listEmployeeOptions(env: Env, q: string | undefined) {
+export async function listEmployeeOptions(
+  env: Env,
+  { q, departmentId }: { q?: string | undefined; departmentId?: string | undefined },
+) {
   const params = new URLSearchParams({
-    select: 'id,full_name,job_title,department_name,role',
+    select: 'id,full_name,job_title,department_id,department_name,role',
     order: 'full_name,id',
     limit: '20',
   });
   if (q) params.set('or', searchFilter(q));
+  if (departmentId) params.set('department_id', `eq.${departmentId}`);
   const rows = await supabaseRequest<
     {
       id: string;
       full_name: string;
       job_title: string | null;
+      department_id: string | null;
       department_name: string | null;
       role: Role | null;
     }[]
@@ -178,6 +184,7 @@ export async function listEmployeeOptions(env: Env, q: string | undefined) {
     id: row.id,
     fullName: row.full_name,
     jobTitle: row.job_title,
+    departmentId: row.department_id,
     departmentName: row.department_name,
     role: row.role,
   }));
@@ -207,17 +214,14 @@ export const editEmployee = (
     errors: DIRECTORY_ERRORS,
   });
 
-export const deleteEmployee = (
-  env: Env,
-  actorId: string,
-  target: { employeeId: string; newManagerId: string | null },
-) =>
+export const deleteEmployee = (env: Env, actorId: string, target: DeleteEmployeeTarget) =>
   callRpc(env, {
     name: 'crm_delete_employee',
     args: {
       actor_uuid: actorId,
       employee_uuid: target.employeeId,
       new_manager_uuid: target.newManagerId,
+      handover_employee_uuid: target.handoverEmployeeId,
     },
     errors: DIRECTORY_ERRORS,
   });

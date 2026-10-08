@@ -46,8 +46,8 @@ export async function departmentOptions(c: Context<AppEnv>) {
   return c.json({ data: await getDepartmentOptions(readEnv(c.env), c.get('user').id) });
 }
 export async function employeeOptions(c: Context<AppEnv>) {
-  const { q } = parseInput(employeeOptionsQuerySchema, c.req.query());
-  return c.json({ data: await getEmployeeOptions(readEnv(c.env), c.get('user').id, q) });
+  const query = parseInput(employeeOptionsQuerySchema, c.req.query());
+  return c.json({ data: await getEmployeeOptions(readEnv(c.env), c.get('user').id, query) });
 }
 export async function patchEmployee(c: Context<AppEnv>) {
   const input = parseInput(adminEmployeeSchema, await readJson(c));
@@ -55,8 +55,8 @@ export async function patchEmployee(c: Context<AppEnv>) {
   return c.json({ data: await updateEmployee(readEnv(c.env), c.get('user').id, change) });
 }
 export async function removeEmployee(c: Context<AppEnv>) {
-  const { newManagerId } = parseInput(deleteEmployeeSchema, (await readJson(c)) ?? {});
-  const target = { employeeId: employeeId(c), newManagerId };
+  const input = parseInput(deleteEmployeeSchema, (await readJson(c)) ?? {});
+  const target = { employeeId: employeeId(c), ...input };
   return c.json({ data: await deleteEmployee(readEnv(c.env), c.get('user').id, target) });
 }
 export async function restore(c: Context<AppEnv>) {

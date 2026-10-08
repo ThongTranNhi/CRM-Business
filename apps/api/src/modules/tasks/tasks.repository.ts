@@ -1,5 +1,5 @@
 import type { Env } from '../../config/env';
-import { callRpc, supabaseRequest } from '../../lib/supabase';
+import { callRpc, supabaseList, supabaseRequest } from '../../lib/supabase';
 import { WORK_ERRORS } from '../../lib/work-errors';
 import { movedTaskSchema } from './tasks.schema';
 import type { PersonRef } from '../departments/departments.types';
@@ -95,6 +95,19 @@ export async function findAccountNames(env: Env, accountIds: string[]) {
   return new Map(
     rows.map((row) => [row.account_id, { id: row.account_id, fullName: row.display_name ?? '' }]),
   );
+}
+
+/** Số việc chưa xong (chưa lưu trữ) một nhân viên đang phụ trách — BR-53 bàn giao khi xoá. */
+export async function countOpenTasks(env: Env, employeeId: string): Promise<number> {
+  const params = new URLSearchParams({
+    select: 'id',
+    assignee_id: `eq.${employeeId}`,
+    status: 'neq.done',
+    archived_at: 'is.null',
+    limit: '1',
+  });
+  const { total } = await supabaseList<{ id: string }>(env, `/rest/v1/tasks?${params}`);
+  return total;
 }
 
 // ---------- Ghi: mỗi thao tác một RPC (activity ghi cùng giao dịch) ----------

@@ -41,12 +41,19 @@ export function TaskDetailFields({ task, board }: TaskDetailFieldsProps) {
         {task.department.name} <span className="text-gray-500">(tự gán theo Dashboard)</span>
       </ReadOnlyField>
       {canReassign ? (
-        <Select
-          label="Người phụ trách"
-          value={task.assignee.id}
-          options={people.map((person) => ({ value: person.id, label: person.fullName }))}
-          onChange={(event) => reassign(event.target.value)}
-        />
+        <div className="space-y-1.5">
+          <Select
+            label="Người phụ trách"
+            value={task.assignee.id}
+            options={people.map((person) => ({ value: person.id, label: person.fullName }))}
+            onChange={(event) => reassign(event.target.value)}
+          />
+          {task.assignee.isArchived && (
+            <p className="text-sm text-warning-800">
+              <Badge tone="warning">Đã nghỉ</Badge> Hãy giao việc này cho người khác.
+            </p>
+          )}
+        </div>
       ) : (
         <ReadOnlyField label="Người phụ trách">
           {task.assignee.fullName}{' '}

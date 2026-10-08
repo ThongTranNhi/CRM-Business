@@ -17,13 +17,23 @@ interface EmployeePickerProps {
   onChange: (value: PickedEmployee | null) => void;
   /** Người không cho chọn (vd. đã là thành viên phòng). */
   excludeIds?: string[];
+  /** Có: mặc định chỉ liệt kê người của phòng này, bỏ tick để tìm mọi phòng. */
+  department?: { id: string; name: string } | null;
 }
 
 /** Chọn một nhân viên chưa bị xoá; tìm phía server, debounce 300ms. Chỉ Super Admin / HR dùng. */
-export function EmployeePicker({ label, value, onChange, excludeIds = [] }: EmployeePickerProps) {
+export function EmployeePicker({
+  label,
+  value,
+  onChange,
+  excludeIds = [],
+  department = null,
+}: EmployeePickerProps) {
   const labelId = useId();
   const [query, setQuery] = useState('');
-  const options = useEmployeeOptions(query, value === null);
+  const [isSameDepartment, setSameDepartment] = useState(department !== null);
+  const departmentId = isSameDepartment ? department?.id : undefined;
+  const options = useEmployeeOptions(query, value === null, departmentId);
 
   return (
     <div className="space-y-1.5" role="group" aria-labelledby={labelId}>
@@ -46,6 +56,17 @@ export function EmployeePicker({ label, value, onChange, excludeIds = [] }: Empl
             label={`Tìm ${label.toLowerCase()}`}
             placeholder="Tìm theo tên, mã nhân viên, username"
           />
+          {department && (
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={isSameDepartment}
+                onChange={(event) => setSameDepartment(event.target.checked)}
+                className="h-4 w-4 accent-primary-500"
+              />
+              Chỉ người phòng {department.name}
+            </label>
+          )}
           <OptionList
             isLoading={options.isPending}
             isError={options.isError}
