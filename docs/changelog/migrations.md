@@ -23,7 +23,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 13  | `20261006090800_employee_delete_handover.sql`         | 06/10/2026                 |
 | 14  | `20261007090000_task_restore.sql`                     | 07/10/2026                 |
 | 15  | `20261007100000_task_trash.sql`                       | 07/10/2026                 |
-| 16  | `20261008090000_handover_writable_boards.sql`         |                            |
+| 16  | `20261008090000_handover_writable_boards.sql`         | 08/10/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 `supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql` (tự ROLLBACK, thấy
@@ -40,7 +40,7 @@ select name, applied_at from app_private.applied_migrations order by name;
 - `20261008090000_handover_writable_boards.sql` (sửa review L6, BR-53): view `open_assigned_tasks` — việc
   đang mở trên Dashboard còn ghi được (bỏ phòng đã xoá, BR-06), dùng cho số đếm và bàn giao; người nhận
   không thuộc board → lỗi kèm danh sách việc / Dashboard bị chặn (`detail` JSON); `crm_delete_employee`
-  trả `{ openTaskCount, handedOverTaskCount }`. Kiểm tra: `supabase/tests/employee_handover.sql`. Chưa áp.
+  trả `{ openTaskCount, handedOverTaskCount }`. Kiểm tra: `supabase/tests/employee_handover.sql`.
 - `20261007100000_task_trash.sql`: thùng rác công việc — view `task_trash` (việc đã xoá kèm cột cũ, người phụ
   trách, người xoá; chỉ `service_role`) cho `GET /api/boards/:boardId/trash`; index
   `tasks_board_archived_idx`. Không đổi dữ liệu.
