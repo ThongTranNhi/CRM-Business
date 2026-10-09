@@ -26,10 +26,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 16  | `20261008090000_handover_writable_boards.sql`         | 08/10/2026                 |
 | 17  | `20261009090000_projects.sql`                         | 09/10/2026                 |
 | 18  | `20261010090000_projects_review_fixes.sql`            | 09/10/2026                 |
+| 19  | `20261011090000_my_tasks.sql`                         |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -39,6 +40,11 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261011090000_my_tasks.sql` (Đợt 3 S2, Việc của tôi): view `my_task_rows` (mỗi dòng = nhân viên × task mình
+  phụ trách / phối hợp; bỏ task lưu trữ, phòng đã xoá, board không còn xem được; cờ `is_overdue`, `is_due_today`,
+  `is_due_this_week` theo ngày Việt Nam, tuần Thứ Hai → Chủ nhật; `done_column_id`), RPC `crm_my_task_counts` (số
+  việc 5 tab trong 1 truy vấn). Chỉ `service_role`. Kiểm tra file trước (`20261010090000`) đã chạy. Kiểm tra:
+  `supabase/tests/my_tasks.sql`.
 - `20261010090000_projects_review_fixes.sql` (sửa theo review S1): `crm_update_project` — đổi chủ làm chủ mới tự
   vào `project_members` thì ghi audit `project.members` (cũ → mới); `app_private.crm_assert_task_project` đọc dự án
   `FOR SHARE` để không gắn task vào dự án đang bị lưu trữ ở giao dịch khác. Chỉ thay thân hàm. Kiểm tra:

@@ -41,6 +41,11 @@ board_columns(id, board_id, status)`: cột cùng board và status luôn khớp 
 - Migration `20261007100000_task_trash.sql`: view `task_trash` (task đã lưu trữ + `board_id`, `created_by`, tên
   cột cũ, người phụ trách, người xoá theo activity `archived` mới nhất — một truy vấn, chỉ `service_role`);
   index `tasks_board_archived_idx (board_id, archived_at desc) where archived_at is not null`.
+- Migration `20261011090000_my_tasks.sql` (Đợt 3 S2): view `my_task_rows` (employee_id, is_assignee, cột task,
+  department / dashboard / project, checklist_total / done, done_column_id, is_department_member, is_board_member,
+  is_department_manager, is_overdue / is_due_today / is_due_this_week) và RPC `crm_my_task_counts(employee_uuid,
+department_uuid, task_priority, project_uuid, search)` → jsonb `{ today, week, overdue, open, done }`. Dùng index
+  có sẵn `tasks_assignee_idx`, `task_collaborators_employee_idx`.
 - Migration `20261009090000_projects.sql` (Đợt 3 S1): `projects` (department_id, name, description,
   owner_employee_id, status `planning|active|on_hold|done`, start_date, due_date, archived_at, created_by;
   unique `(department_id, lower(name))` khi chưa lưu trữ; unique `(id, department_id)` làm đích khoá ngoại ghép),
