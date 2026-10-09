@@ -44,6 +44,9 @@ const ProjectListPage = lazy(() =>
 const ProjectDetailPage = lazy(() =>
   import('@/features/projects').then((m) => ({ default: m.ProjectDetailPage })),
 );
+const MyTasksPage = lazy(() =>
+  import('@/features/my-tasks').then((m) => ({ default: m.MyTasksPage })),
+);
 const BoardPage = lazy(() =>
   import('@/features/department-dashboards').then((m) => ({ default: m.BoardPage })),
 );
@@ -83,6 +86,7 @@ const appRoutes: RouteObject[] = [
   { path: 'departments/:id', element: page(<DepartmentDetailPage />) },
   { path: 'workspace', element: page(<WorkspacePage />) },
   { path: 'workspace/:dashboardId', element: page(<BoardPage />) },
+  { path: 'my-tasks', element: page(<MyTasksPage />) },
   { path: 'projects', element: page(<ProjectListPage />) },
   { path: 'projects/:id', element: page(<ProjectDetailPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>

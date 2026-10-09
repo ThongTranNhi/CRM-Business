@@ -6,6 +6,8 @@ import type {
   createTaskSchema,
   movedTaskSchema,
   moveTaskSchema,
+  MY_TASK_TABS,
+  myTasksQuerySchema,
   trashQuerySchema,
   updateChecklistItemSchema,
   updateTaskSchema,
@@ -15,6 +17,8 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type MoveTaskInput = z.infer<typeof moveTaskSchema>;
 export type TrashQuery = z.infer<typeof trashQuerySchema>;
+export type MyTasksQuery = z.infer<typeof myTasksQuerySchema>;
+export type MyTaskTab = (typeof MY_TASK_TABS)[number];
 export type AddChecklistItemInput = z.infer<typeof addChecklistItemSchema>;
 export type UpdateChecklistItemInput = z.infer<typeof updateChecklistItemSchema>;
 export type AddCommentInput = z.infer<typeof addCommentSchema>;
@@ -157,3 +161,26 @@ export interface TaskActivity {
   from: ActivityValue | null;
   to: ActivityValue | null;
 }
+
+/** Một dòng trang Việc của tôi (Đợt 3 S2): việc mình phụ trách chính hoặc phối hợp. */
+export interface MyTask {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+  completedAt: string | null;
+  /** 'assignee': phụ trách chính; 'collaborator': nhãn "Phối hợp". */
+  role: 'assignee' | 'collaborator';
+  department: { id: string; name: string };
+  dashboard: { id: string; name: string };
+  project: ProjectRef | null;
+  checklist: { done: number; total: number };
+  columnId: string;
+  /** Cột mặc định nhóm "done" — đích của checkbox hoàn thành nhanh; null nếu board thiếu cột. */
+  doneColumnId: string | null;
+  canEdit: boolean;
+}
+
+/** Số việc từng tab (cùng bộ lọc với danh sách). */
+export type MyTaskCounts = Record<MyTaskTab, number>;

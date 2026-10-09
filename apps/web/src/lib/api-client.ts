@@ -34,13 +34,16 @@ export interface PageResult<T> {
 }
 
 // Kiểu dữ liệu của từng endpoint bám theo docs/api/endpoints/*.
-interface ApiEnvelope<T> {
+interface ApiEnvelope<T, M extends PageMeta = PageMeta> {
   data: T;
-  meta?: PageMeta;
+  meta?: M;
   error?: { code: string; message: string; details?: unknown };
 }
 
-async function send<T>(path: string, init: RequestInit): Promise<ApiEnvelope<T>> {
+async function send<T, M extends PageMeta = PageMeta>(
+  path: string,
+  init: RequestInit,
+): Promise<ApiEnvelope<T, M>> {
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new ApiError('Bạn cần đăng nhập', 'UNAUTHENTICATED', 401);
   const response = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
@@ -51,7 +54,7 @@ async function send<T>(path: string, init: RequestInit): Promise<ApiEnvelope<T>>
       ...init.headers,
     },
   });
-  const body: ApiEnvelope<T> = await response.json().catch(() => ({}));
+  const body: ApiEnvelope<T, M> = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = body.error?.message ?? 'Không thể xử lý yêu cầu, vui lòng thử lại';
     throw new ApiError(
@@ -72,6 +75,15 @@ export async function apiPage<T>(path: string): Promise<PageResult<T>> {
   const body = await send<T[]>(path, {});
   const fallback = { page: 1, pageSize: body.data.length, total: body.data.length };
   return { data: body.data, meta: body.meta ?? fallback };
+}
+
+/** Danh sách có `meta` mở rộng (vd. `counts` của /api/tasks/mine); server luôn trả `meta`. */
+export async function apiPageWithMeta<T, M extends PageMeta>(
+  path: string,
+): Promise<{ data: T[]; meta: M }> {
+  const body = await send<T[], M>(path, {});
+  if (!body.meta) throw new ApiError('Thiếu thông tin phân trang', 'UNKNOWN_ERROR', 500);
+  return { data: body.data, meta: body.meta };
 }
 
 /** Bỏ tham số rỗng: `withQuery('/api/x', { q: '', page: 2 })` → `/api/x?page=2`. */

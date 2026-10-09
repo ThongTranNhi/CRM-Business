@@ -28,6 +28,18 @@ export const boardQuerySchema = z.object({
   doneLimit: z.coerce.number().int().min(20).max(200).default(20),
 });
 
+/** Tab của trang Việc của tôi (Đợt 3 S2). */
+export const MY_TASK_TABS = ['today', 'week', 'overdue', 'open', 'done'] as const;
+
+/** `GET /api/tasks/mine?tab=&departmentId=&priority=&projectId=&q=&page=&pageSize=`. */
+export const myTasksQuerySchema = paginationSchema.extend({
+  tab: z.enum(MY_TASK_TABS).default('open'),
+  departmentId: z.uuid().optional(),
+  priority: z.enum(PRIORITIES).optional(),
+  projectId: z.uuid().optional(),
+  q: searchSchema,
+});
+
 /** Thùng rác: `?page=&pageSize=&q=` (q tìm theo tên việc). */
 export const trashQuerySchema = paginationSchema.extend({ q: searchSchema });
 

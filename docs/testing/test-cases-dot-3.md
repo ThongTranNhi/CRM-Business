@@ -33,3 +33,21 @@ Tài khoản: CEO (Super Admin), test.truongphong (Trưởng phòng), test.nhanv
 | P-20 | Trưởng phòng    | Đổi chủ dự án sang người chưa là thành viên                       | Chủ mới vào tab Thành viên; Hoạt động có "thêm thành viên …"                      | ⏸                                                                                                     |
 | P-21 | HR → Nhân viên  | HR chuyển thành viên dự án sang phòng khác (không mời vào board)  | Người đó mở URL dự án → 403; dự án biến khỏi danh sách của họ                     | ⏸                                                                                                     |
 | P-22 | Trưởng phòng    | Mời người phòng khác vào board, thêm vào dự án; rồi bỏ khỏi board | Trong board: xem được dự án; bỏ khỏi board → 403                                  | ⏸                                                                                                     |
+
+## S2 — Việc của tôi (migration 20261011090000)
+
+| #    | Vai trò        | Bước                                                        | Kỳ vọng                                                                                  | Kết quả |
+| ---- | -------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------- |
+| M-01 | Nhân viên      | Mở /app/my-tasks khi không có việc                          | "Bạn không có việc nào" + [Vào Workspace]                                                | ⏸       |
+| M-02 | Nhân viên      | Có việc hạn hôm qua, hôm nay, cuối tuần, không hạn, đã xong | Số trên tab đúng; tab Quá hạn chỉ việc hạn hôm qua; Tuần này tính Thứ Hai → Chủ nhật     | ⏸       |
+| M-03 | Nhân viên      | Việc mình là người phối hợp                                 | Có trong danh sách, nhãn "Phối hợp"                                                      | ⏸       |
+| M-04 | Nhân viên      | Bấm một dòng                                                | Mở board `?task=<id>`, drawer đúng task                                                  | ⏸       |
+| M-05 | Nhân viên      | Tick checkbox một việc                                      | Toast "Đã hoàn thành: …" có [Hoàn tác]; board: việc ở Đã hoàn thành, có người hoàn thành | ⏸       |
+| M-06 | Nhân viên      | Tick rồi bấm [Hoàn tác] trong 5 giây                        | Việc về đúng cột cũ; lịch sử task có 2 lần chuyển                                        | ⏸       |
+| M-07 | Nhân viên      | Lọc phòng / ưu tiên / dự án + tìm "_" → F5                  | Bộ lọc giữ trên URL; số đếm tab theo bộ lọc; "_" không khớp mọi việc                     | ⏸       |
+| M-08 | Bất kỳ         | Có việc quá hạn                                             | Badge đỏ số việc quá hạn cạnh "Việc của tôi" trên Sidebar; hoàn thành → số giảm          | ⏸       |
+| M-09 | Bất kỳ         | Tab Đã xong có > 20 việc                                    | Phân trang 20 dòng                                                                       | ⏸       |
+| M-10 | HR → nhân viên | HR chuyển nhân viên sang phòng khác (không mời vào board)   | Việc ở board cũ biến khỏi Việc của tôi của người đó                                      | ⏸       |
+| M-11 | Trưởng phòng   | Mời nhân viên phòng khác vào board, giao việc               | Việc hiện ở Việc của tôi của người được mời, checkbox dùng được                          | ⏸       |
+| M-12 | Super Admin    | Xoá phòng ban có việc                                       | Việc của phòng đó không còn trong Việc của tôi                                           | ⏸       |
+| M-13 | Bất kỳ         | 390px                                                       | Tab cuộn ngang trong khung, bộ lọc xếp dọc, không tràn trang                             | ⏸       |

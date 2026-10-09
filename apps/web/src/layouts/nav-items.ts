@@ -23,7 +23,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/app', label: 'Tổng quan', icon: 'home', ready: true },
       { to: '/app/workspace', label: 'Workspace', icon: 'grid', ready: true },
-      { to: '/app/my-tasks', label: 'Việc của tôi', icon: 'checkSquare', ready: false },
+      { to: '/app/my-tasks', label: 'Việc của tôi', icon: 'checkSquare', ready: true },
       { to: '/app/projects', label: 'Dự án', icon: 'folder', ready: true },
       {
         to: '/app/workload',

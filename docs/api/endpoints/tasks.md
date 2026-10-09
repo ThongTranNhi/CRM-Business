@@ -9,6 +9,7 @@ Module `apps/api/src/modules/tasks`. Mọi endpoint yêu cầu đăng nhập. Gh
 | ------ | ---------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | GET    | `/api/boards/:boardId`             | Xem board (thành viên phòng / board, Super Admin, HR Admin)                 | Cột + việc đang mở + việc xong gần nhất                       |
 | POST   | `/api/boards/:boardId/tasks`       | Ghi board (thành viên, Trưởng phòng, Super Admin; HR chỉ khi là thành viên) | Tạo việc (BR-11, BR-12)                                       |
+| GET    | `/api/tasks/mine`                  | Mọi người (chỉ việc của chính mình)                                         | Việc của tôi + số đếm từng tab (Đợt 3 S2)                     |
 | GET    | `/api/tasks/:id`                   | Xem board                                                                   | Chi tiết + quyền của người xem                                |
 | PATCH  | `/api/tasks/:id`                   | Sửa task                                                                    | Đổi tên, mô tả, người phụ trách, ưu tiên, ngày                |
 | PATCH  | `/api/tasks/:id/move`              | Sửa task                                                                    | Kéo thả (BR-13 → BR-15)                                       |
@@ -103,6 +104,58 @@ completedBy }`.
 
 Body `{ "employeeIds": ["uuid"] }` (tối đa 20). Chỉ người **mới thêm** phải thuộc phòng / board; người phối hợp cũ
 đã chuyển phòng vẫn giữ hoặc gỡ được. Trả chi tiết task.
+
+## GET `/api/tasks/mine`
+
+Việc của tôi (Đợt 3 S2, frontend-spec 4.4): việc người gọi **phụ trách chính** hoặc **phối hợp**. Người xem lấy từ
+phiên đăng nhập, không nhận qua query. Đọc view `my_task_rows` + RPC `crm_my_task_counts` (migration
+`20261011090000_my_tasks.sql`) — 2 truy vấn song song, không N+1. Bỏ task đã lưu trữ, phòng ban đã xoá, và board
+người gọi không còn xem được (không thuộc phòng, không còn trong `board_members`).
+
+Query: `tab` (`today` | `week` | `overdue` | `open` | `done`, mặc định `open`), `departmentId`, `priority`,
+`projectId`, `q` (tên việc, `%` `_` được escape), `page`, `pageSize` (mặc định 20).
+
+| Tab       | Điều kiện (ngày Việt Nam, tuần Thứ Hai → Chủ nhật) | Sắp xếp                                      |
+| --------- | -------------------------------------------------- | -------------------------------------------- |
+| `today`   | chưa xong, hạn = hôm nay                           | Đang làm → Cần làm, trong nhóm hạn gần trước |
+| `week`    | chưa xong, hạn trong tuần này                      | như trên                                     |
+| `overdue` | chưa xong, hạn < hôm nay (BR-16)                   | như trên                                     |
+| `open`    | chưa xong                                          | như trên                                     |
+| `done`    | đã xong                                            | xong gần nhất trước                          |
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "title": "Viết báo cáo",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "2026-10-08",
+      "completedAt": null,
+      "role": "collaborator",
+      "department": { "id": "uuid", "name": "Website" },
+      "dashboard": { "id": "uuid", "name": "Website" },
+      "project": { "id": "uuid", "name": "Ra mắt web" },
+      "checklist": { "done": 1, "total": 3 },
+      "columnId": "uuid",
+      "doneColumnId": "uuid",
+      "canEdit": true
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "counts": { "today": 0, "week": 2, "overdue": 1, "open": 5, "done": 12 }
+  }
+}
+```
+
+`counts` áp cùng bộ lọc (trừ `tab`). `role: "collaborator"` → nhãn "Phối hợp". `canEdit` theo luật board
+(`lib/work-access.ts`). Checkbox hoàn thành nhanh gọi `PATCH /api/tasks/:id/move` với `toColumnId = doneColumnId`
+(cột mặc định nhóm done — ghi `completed_at`, `completed_by`, activity như kéo thả); [Hoàn tác] gọi lại với
+`toColumnId = columnId` cũ. Tài khoản không có hồ sơ nhân viên → danh sách rỗng, mọi số đếm 0.
 
 ## GET `/api/tasks/:id`
 

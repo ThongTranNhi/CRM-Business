@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { Icon } from '@/components/ui';
 import { useCan } from '@/features/auth';
+import { useOverdueCount } from '@/features/my-tasks';
 import { cn } from '@/lib/cn';
 import { NAV_GROUPS, type NavItem } from './nav-items';
 
@@ -83,8 +84,23 @@ function SidebarLink({ item, onNavigate }: SidebarLinkProps) {
         <>
           <Icon name={item.icon} size={18} className={isActive ? 'text-primary-500' : undefined} />
           <span className="truncate">{item.label}</span>
+          {item.to === '/app/my-tasks' && <OverdueBadge />}
         </>
       )}
     </NavLink>
+  );
+}
+
+/** Số việc quá hạn của tôi cạnh "Việc của tôi"; 0 → ẩn. */
+function OverdueBadge() {
+  const count = useOverdueCount();
+  if (count === 0) return null;
+  return (
+    <span
+      aria-label={`${count} việc quá hạn`}
+      className="ml-auto rounded-full bg-danger-100 px-2 py-0.5 text-xs font-semibold text-danger-800"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
   );
 }

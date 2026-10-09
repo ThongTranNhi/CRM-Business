@@ -20,6 +20,7 @@ import {
   removeChecklistItem,
   updateChecklistItem,
 } from './tasks.detail.controller';
+import { mine } from './tasks.mine.controller';
 
 // Mọi role đều qua được route; quyền theo dữ liệu (thành viên phòng / board) kiểm tra ở service.
 
@@ -34,6 +35,8 @@ boardRoutes.post('/:boardId/tasks', create);
  * bình luận, lịch sử cho drawer chi tiết.
  */
 export const taskRoutes = new Hono<AppEnv>();
+// Đặt trước '/:id' để 'mine' không bị hiểu là id.
+taskRoutes.get('/mine', mine);
 taskRoutes.get('/:id', detail);
 taskRoutes.patch('/:id', update);
 taskRoutes.delete('/:id', archive);
