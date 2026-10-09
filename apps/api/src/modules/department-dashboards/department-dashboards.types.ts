@@ -42,6 +42,8 @@ export interface DashboardCard extends Omit<DashboardSummary, 'departmentArchive
 export interface DashboardDetail extends Omit<DashboardSummary, 'counts'> {
   manager: PersonRef | null;
   members: BoardMember[];
+  /** Dự án chưa lưu trữ của phòng: ô "Dự án" khi tạo / sửa task, lọc ?project= trên board (BR-30). */
+  projects: { id: string; name: string }[];
   /** trashScope: thùng rác hiện gì cho người xem; null → ẩn nút Thùng rác. */
   viewer: BoardPermissions & { trashScope: TrashScope };
 }

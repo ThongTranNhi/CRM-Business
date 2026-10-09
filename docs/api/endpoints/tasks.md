@@ -53,7 +53,8 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
         "checklist": { "done": 2, "total": 5 },
         "commentCount": 3,
         "canMove": true,
-        "canArchive": false
+        "canArchive": false,
+        "project": { "id": "uuid", "name": "Ra mắt web" }
       }
     ],
     "doneTotal": 42
@@ -83,13 +84,14 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
 }
 ```
 
-Bắt buộc `title`, `assigneeId`; còn lại tuỳ chọn (`priority` mặc định `normal`). `department_id` lấy từ Dashboard,
+`projectId` (tuỳ chọn, Đợt 3): dự án chưa lưu trữ **cùng phòng** với Dashboard (BR-30) — sai →
+`422 PROJECT_NOT_IN_DEPARTMENT`, dự án không còn → `404 PROJECT_NOT_FOUND`. Bắt buộc `title`, `assigneeId`; còn lại tuỳ chọn (`priority` mặc định `normal`). `department_id` lấy từ Dashboard,
 client không gửi (BR-11). Task mới nằm đầu cột mặc định nhóm `todo`. Trả `201` một thẻ như trong GET board.
 
 ## PATCH `/api/tasks/:id`
 
 Gửi ít nhất một trong: `title`, `description` (null = xoá), `assigneeId`, `priority`, `startDate`, `dueDate`
-(null = xoá). Người phụ trách mới đang là người phối hợp → bị gỡ khỏi danh sách phối hợp (BR-12). Trả chi tiết task.
+(null = xoá), `projectId` (null = bỏ khỏi dự án; đổi dự án ghi activity `project_changed`). Người phụ trách mới đang là người phối hợp → bị gỡ khỏi danh sách phối hợp (BR-12). Trả chi tiết task.
 
 ## PATCH `/api/tasks/:id/move`
 

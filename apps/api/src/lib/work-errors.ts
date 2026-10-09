@@ -1,5 +1,6 @@
 import { AppError, forbidden } from './app-error';
 import { departmentNotFound } from './directory-errors';
+import { TASK_PROJECT_ERRORS } from './project-errors';
 import type { DatabaseErrorMap } from './supabase';
 
 // Mã lỗi do RPC Work Management raise và tên check của bảng (supabase/migrations/20261006090600_*,
@@ -23,6 +24,7 @@ const invalidDateRange = () =>
   new AppError('INVALID_DATE_RANGE', 'Hạn không được trước ngày bắt đầu', 400);
 
 export const WORK_ERRORS: DatabaseErrorMap = {
+  ...TASK_PROJECT_ERRORS,
   FORBIDDEN: forbidden,
   DEPARTMENT_NOT_FOUND: departmentNotFound,
   BOARD_NOT_FOUND: boardNotFound,

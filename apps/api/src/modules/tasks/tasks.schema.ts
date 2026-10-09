@@ -40,6 +40,8 @@ export const createTaskSchema = z
     startDate: date.nullable().default(null),
     dueDate: date.nullable().default(null),
     description: description.nullable().default(null),
+    /** BR-30: dự án cùng phòng với Dashboard (RPC kiểm tra). */
+    projectId: z.uuid().nullable().default(null),
   })
   .strict()
   .refine(dateRangeIsValid, DATE_RANGE_ERROR);
@@ -53,6 +55,8 @@ export const updateTaskSchema = z
     startDate: date.nullable().optional(),
     dueDate: date.nullable().optional(),
     description: description.nullable().optional(),
+    /** null = bỏ khỏi dự án. */
+    projectId: z.uuid().nullable().optional(),
   })
   .strict()
   .refine((input) => Object.keys(input).length > 0, { message: 'Không có thay đổi nào' })
@@ -124,5 +128,7 @@ export const activityValueSchema = z
     columnName: z.string().optional(),
     content: z.string().optional(),
     isDone: z.boolean().optional(),
+    projectId: z.uuid().optional(),
+    projectName: z.string().optional(),
   })
   .nullable();

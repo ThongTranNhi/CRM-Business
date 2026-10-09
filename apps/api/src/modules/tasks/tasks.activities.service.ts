@@ -1,4 +1,5 @@
 import { toPage, type Pagination } from '../../lib/pagination';
+import { findEmployeeNames } from '../../lib/people';
 import type { RequestScope } from '../../lib/request-scope';
 import { requireTaskAccess } from './tasks.access';
 import * as activitiesRepository from './tasks.activities.repository';
@@ -28,6 +29,7 @@ function toValue(value: RawValue | null, names: Map<string, string>): ActivityVa
   if (value.priority) result.priority = value.priority;
   if (value.dueDate !== undefined) result.dueDate = value.dueDate;
   if (value.columnName) result.columnName = value.columnName;
+  if (value.projectId) result.project = { id: value.projectId, name: value.projectName ?? '' };
   if (value.content !== undefined) {
     result.checklistItem =
       value.isDone === undefined
@@ -48,7 +50,7 @@ export async function listActivities(scope: RequestScope, taskId: string, pagina
   const employeeIds = [
     ...new Set(parsed.flatMap(({ from, to }) => [...employeeIdsOf(from), ...employeeIdsOf(to)])),
   ];
-  const names = await activitiesRepository.findEmployeeNames(scope.env, employeeIds);
+  const names = await findEmployeeNames(scope.env, employeeIds);
   const activities = parsed.map(({ row, from, to }): TaskActivity => ({
     id: row.id,
     action: row.action,

@@ -141,6 +141,20 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
     assert.equal(card.collaborators[0].fullName, 'Người xem');
     assert.ok(database.rpcCalls.some((path) => path.endsWith('crm_create_task')));
   });
+  await t.test(
+    'project of another department → 422 PROJECT_NOT_IN_DEPARTMENT (BR-30)',
+    async () => {
+      globalThis.fetch = fakeDatabase({
+        crm_work_access: access('super_admin'),
+        crm_create_task: rpcError('PROJECT_NOT_IN_DEPARTMENT'),
+      }).fetch;
+      const input = { ...createInput, projectId: ids.other };
+      await assert.rejects(() => service.createTask(scopeAs('super_admin'), ids.board, input), {
+        code: 'PROJECT_NOT_IN_DEPARTMENT',
+        status: 422,
+      });
+    },
+  );
   await t.test('moving to a column of another board → 400 INVALID_COLUMN', async () => {
     globalThis.fetch = fakeDatabase({
       crm_work_access: access('super_admin'),

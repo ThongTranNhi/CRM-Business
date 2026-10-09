@@ -8,6 +8,7 @@ import {
 } from '../../lib/work-access';
 import { dashboardAlreadyExists, dashboardNotFound } from '../../lib/work-errors';
 import { getEmployeeSummary } from '../auth/auth.service';
+import { listProjectOptions } from '../projects/projects.service';
 import { getBoardAccess } from '../tasks/tasks.service';
 import { getAvatarUrls } from '../users/users.service';
 import * as dashboardsRepository from './department-dashboards.repository';
@@ -105,11 +106,10 @@ export async function getDashboard(
   if (!access) throw dashboardNotFound();
   const viewer = boardPermissions(access);
   if (!viewer.canView) throw forbidden();
-  const members = await dashboardsRepository.listBoardMembers(
-    env,
-    summary.department.id,
-    invitedIds,
-  );
+  const [members, projects] = await Promise.all([
+    dashboardsRepository.listBoardMembers(env, summary.department.id, invitedIds),
+    listProjectOptions(env, summary.department.id),
+  ]);
   const avatarUrls = await getAvatarUrls(env, members);
   const manager = managerOf(members.filter((m) => m.departmentId === summary.department.id));
   return {
@@ -127,6 +127,7 @@ export async function getDashboard(
       avatarUrl: avatarUrls.get(member.id) ?? null,
       isManager: member.id === manager?.id,
     })),
+    projects,
     viewer: { ...viewer, trashScope: trashScope(access) },
   };
 }

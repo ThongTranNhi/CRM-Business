@@ -32,11 +32,12 @@ interface DetailRow {
   departments: { name: string };
   employees: { id: string; full_name: string; archived_at: string | null };
   task_collaborators: { employees: { id: string; full_name: string } }[];
+  projects: { id: string; name: string } | null;
 }
 const DETAIL_SELECT =
   'id,board_id,column_id,status,title,description,priority,start_date,due_date,started_at,' +
   'completed_at,completed_by,created_by,created_at,department_id,departments(name),' +
-  'employees(id,full_name,archived_at),task_collaborators(employees(id,full_name))';
+  'employees(id,full_name,archived_at),task_collaborators(employees(id,full_name)),projects(id,name)';
 
 /** Chi tiết task chưa lưu trữ, chưa gồm quyền và tên người tạo / người hoàn thành. */
 export type TaskRecord = Omit<TaskDetail, 'permissions' | 'completedBy' | 'createdBy'> & {
@@ -78,6 +79,7 @@ export async function findTask(env: Env, taskId: string): Promise<TaskRecord | n
       id: employees.id,
       fullName: employees.full_name,
     })),
+    project: row.projects ? { id: row.projects.id, name: row.projects.name } : null,
   };
 }
 
@@ -133,6 +135,7 @@ export const createTask = (
       task_start_date: task.startDate,
       task_due_date: task.dueDate,
       collaborator_uuids: task.collaboratorIds,
+      project_uuid: task.projectId,
     },
     errors: WORK_ERRORS,
   });

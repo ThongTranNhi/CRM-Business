@@ -51,6 +51,13 @@ export interface TaskCard {
   commentCount: number;
   /** app_accounts.id người tạo — tính quyền xoá (BR-19), không trả ra API. */
   createdById: string;
+  /** BR-30: dự án (cùng phòng) của task; null nếu không gắn. */
+  project: ProjectRef | null;
+}
+
+export interface ProjectRef {
+  id: string;
+  name: string;
 }
 
 /** Thẻ kèm quyền của người xem: kéo / đổi cột, xoá (lưu trữ). */
@@ -85,6 +92,7 @@ export interface TaskDetail {
   department: { id: string; name: string };
   assignee: Assignee;
   collaborators: PersonRef[];
+  project: ProjectRef | null;
   permissions: { canEdit: boolean; canReassign: boolean; canArchive: boolean; canComment: boolean };
 }
 
@@ -137,6 +145,8 @@ export interface ActivityValue {
   dueDate?: string | null;
   columnName?: string;
   checklistItem?: { content: string; isDone?: boolean };
+  /** 'project_changed': dự án trước / sau (tên chụp lúc đổi). */
+  project?: ProjectRef;
 }
 
 export interface TaskActivity {

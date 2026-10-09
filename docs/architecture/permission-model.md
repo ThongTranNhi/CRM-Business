@@ -22,6 +22,9 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 | Đổi người phụ trách                                 | ✅                                    | —             | 🏢                   | 🏢          | 👤 người tạo task                 |
 | Kéo thả task                                        | ✅                                    | —             | 🏢                   | 🏢          | 👤 task mình phụ trách / phối hợp |
 | Xoá (archive) task                                  | ✅                                    | —             | 🏢                   | —           | 👤 người tạo                      |
+| Xem dự án                                           | ✅                                    | ✅ (xem)      | 🏢                   | 🏢          | 🏢 / dự án mình tham gia          |
+| Tạo / lưu trữ / khôi phục dự án                     | ✅                                    | —             | 🏢                   | —           | —                                 |
+| Sửa dự án, đặt thành viên dự án                     | ✅                                    | —             | 🏢                   | —           | 👤 chủ dự án                      |
 | Quản lý phòng ban                                   | ✅                                    | ✅            | —                    | —           | —                                 |
 | Xoá / khôi phục phòng ban (BR-09)                   | ✅                                    | —             | —                    | —           | —                                 |
 | Xem hồ sơ nhân viên                                 | ✅                                    | ✅            | 🏢 (không nhạy cảm)  | 🏢 (cơ bản) | 👤                                |
@@ -51,4 +54,8 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
   trữ task mình tạo); với Dashboard phòng khác chỉ đọc.
 - Đổi người phụ trách (`assigneeId`): Super Admin, Trưởng phòng, Trưởng nhóm của phòng và **người tạo task**. Người
   phụ trách hiện tại sửa được các trường khác và người phối hợp nhưng không tự giao việc cho người khác.
+- Dự án (Đợt 3 S1): quyền tính bằng hàm thuần `apps/api/src/lib/project-access.ts` (có test). Trưởng phòng = role
+  `department_manager` **và** đang là trưởng phòng của phòng có dự án. Chủ dự án (kể cả nhân viên thường) sửa
+  thông tin và thành viên dự án mình, không lưu trữ được. Người phòng khác được mời vào board và là thành viên dự
+  án thì xem được dự án đó. Phòng ban đã xoá → dự án chỉ xem (`409 PROJECT_READ_ONLY`).
 - Thao tác ghi trên Dashboard chỉ đọc (phòng đã xoá) trả `409 DASHBOARD_READ_ONLY` — kiểm tra trước quyền ghi (403).
