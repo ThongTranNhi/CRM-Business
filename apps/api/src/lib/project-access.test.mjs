@@ -16,6 +16,7 @@ const project = (facts = {}) => ({
   departmentId: 'dept-a',
   ownerEmployeeId: 'e-owner',
   isMember: false,
+  isBoardMember: false,
   isReadOnly: false,
   ...facts,
 });
@@ -26,6 +27,7 @@ test('project permissions (Đợt 3 S1)', async (t) => {
       canView: true,
       canEdit: true,
       canManageMembers: true,
+      canChangeOwner: true,
       canArchive: true,
     });
     assert.equal(access.canCreateProject(viewer('super_admin'), 'dept-x'), true);
@@ -35,6 +37,7 @@ test('project permissions (Đợt 3 S1)', async (t) => {
       canView: true,
       canEdit: false,
       canManageMembers: false,
+      canChangeOwner: false,
       canArchive: false,
     });
     assert.equal(access.canCreateProject(viewer('hr_admin'), 'dept-a'), false);
@@ -50,14 +53,32 @@ test('project permissions (Đợt 3 S1)', async (t) => {
     const other = project({ departmentId: 'dept-b' });
     assert.equal(access.projectPermissions(manager, other).canView, false);
   });
-  await t.test('owner edits and manages members but cannot archive', () => {
+  await t.test('owner edits and manages members but cannot change owner or archive', () => {
     const owner = viewer('employee', { employeeId: 'e-owner', departmentId: 'dept-a' });
-    assert.deepEqual(access.projectPermissions(owner, project()), {
+    assert.deepEqual(access.projectPermissions(owner, project({ isMember: true })), {
       canView: true,
       canEdit: true,
       canManageMembers: true,
+      canChangeOwner: false,
       canArchive: false,
     });
+  });
+  await t.test('only Super Admin and the department manager change the owner', () => {
+    const manager = viewer('department_manager', {
+      departmentId: 'dept-a',
+      managedDepartmentId: 'dept-a',
+    });
+    assert.equal(access.projectPermissions(manager, project()).canChangeOwner, true);
+    assert.equal(access.projectPermissions(viewer('super_admin'), project()).canChangeOwner, true);
+  });
+  await t.test('owner / member who left the department and the board lose every right', () => {
+    const moved = viewer('employee', { employeeId: 'e-owner', departmentId: 'dept-b' });
+    const left = project({ isMember: true });
+    assert.equal(access.projectPermissions(moved, left).canView, false);
+    assert.equal(access.projectPermissions(moved, left).canEdit, false);
+    const invited = project({ isMember: true, isBoardMember: true });
+    assert.equal(access.projectPermissions(moved, invited).canView, true);
+    assert.equal(access.projectPermissions(moved, invited).canEdit, true);
   });
   await t.test('employees see their department projects and projects they join', () => {
     const member = viewer('employee', { departmentId: 'dept-a' });
@@ -65,7 +86,12 @@ test('project permissions (Đợt 3 S1)', async (t) => {
     assert.equal(access.projectPermissions(member, project()).canEdit, false);
     const outsider = viewer('employee', { departmentId: 'dept-b' });
     assert.equal(access.projectPermissions(outsider, project()).canView, false);
-    assert.equal(access.projectPermissions(outsider, project({ isMember: true })).canView, true);
+    const invited = project({ isMember: true, isBoardMember: true });
+    assert.equal(access.projectPermissions(outsider, invited).canView, true);
+    assert.equal(
+      access.projectPermissions(outsider, project({ isBoardMember: true })).canView,
+      false,
+    );
   });
   await t.test('archived department makes the project read-only for everyone', () => {
     const permissions = access.projectPermissions(

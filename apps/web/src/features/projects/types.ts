@@ -39,7 +39,13 @@ export interface ProjectMember extends PersonRef {
 
 export interface ProjectDetail extends ProjectSummary {
   members: ProjectMember[];
-  permissions: { canEdit: boolean; canManageMembers: boolean; canArchive: boolean };
+  permissions: {
+    canEdit: boolean;
+    canManageMembers: boolean;
+    /** Super Admin, Trưởng phòng của phòng. */
+    canChangeOwner: boolean;
+    canArchive: boolean;
+  };
 }
 
 export interface ProjectTask {

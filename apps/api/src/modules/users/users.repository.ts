@@ -127,8 +127,11 @@ const DIRECTORY_SOURCES = {
 } as const;
 
 // Giá trị đặt trong ngoặc kép để dấu chấm / khoảng trắng (vd. username "test.hr") không phá cú pháp `or`.
-const searchFilter = (q: string) =>
-  `(full_name.ilike."*${q}*",employee_code.ilike."*${q}*",username.ilike."*${q}*")`;
+// Trong ngoặc kép PostgREST coi `\` là ký tự escape → nhân đôi để `\_`, `\%` của searchSchema tới được LIKE.
+const searchFilter = (raw: string) => {
+  const q = raw.replace(/\\/g, '\\\\');
+  return `(full_name.ilike."*${q}*",employee_code.ilike."*${q}*",username.ilike."*${q}*")`;
+};
 
 export async function listDirectory(
   env: Env,

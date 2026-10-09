@@ -25,6 +25,7 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 | Xem dự án                                           | ✅                                    | ✅ (xem)      | 🏢                   | 🏢          | 🏢 / dự án mình tham gia          |
 | Tạo / lưu trữ / khôi phục dự án                     | ✅                                    | —             | 🏢                   | —           | —                                 |
 | Sửa dự án, đặt thành viên dự án                     | ✅                                    | —             | 🏢                   | —           | 👤 chủ dự án                      |
+| Đổi chủ dự án                                       | ✅                                    | —             | 🏢                   | —           | —                                 |
 | Quản lý phòng ban                                   | ✅                                    | ✅            | —                    | —           | —                                 |
 | Xoá / khôi phục phòng ban (BR-09)                   | ✅                                    | —             | —                    | —           | —                                 |
 | Xem hồ sơ nhân viên                                 | ✅                                    | ✅            | 🏢 (không nhạy cảm)  | 🏢 (cơ bản) | 👤                                |
@@ -56,6 +57,9 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
   phụ trách hiện tại sửa được các trường khác và người phối hợp nhưng không tự giao việc cho người khác.
 - Dự án (Đợt 3 S1): quyền tính bằng hàm thuần `apps/api/src/lib/project-access.ts` (có test). Trưởng phòng = role
   `department_manager` **và** đang là trưởng phòng của phòng có dự án. Chủ dự án (kể cả nhân viên thường) sửa
-  thông tin và thành viên dự án mình, không lưu trữ được. Người phòng khác được mời vào board và là thành viên dự
-  án thì xem được dự án đó. Phòng ban đã xoá → dự án chỉ xem (`409 PROJECT_READ_ONLY`).
+  thông tin và thành viên dự án mình, **không đổi chủ** (chỉ Super Admin, Trưởng phòng) và không lưu trữ được.
+  Thành viên / chủ dự án chỉ có quyền khi **vẫn** thuộc phòng của dự án hoặc còn là `board_members` của board phòng
+  đó: chuyển phòng hay bị bỏ khỏi board → `403` ở chi tiết, tab Công việc, tab Hoạt động; mất quyền sửa và quản lý
+  thành viên; dự án không còn trong danh sách. Tab Công việc chỉ trả task trên board của phòng dự án. Phòng ban đã
+  xoá → dự án chỉ xem (`409 PROJECT_READ_ONLY`).
 - Thao tác ghi trên Dashboard chỉ đọc (phòng đã xoá) trả `409 DASHBOARD_READ_ONLY` — kiểm tra trước quyền ghi (403).

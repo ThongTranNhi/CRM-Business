@@ -78,6 +78,7 @@ function ProjectFormBody({ project, onDone, onCancel }: ProjectFormBodyProps) {
         form={form}
         errors={errors}
         isEditing={Boolean(project)}
+        canChangeOwner={project ? project.permissions.canChangeOwner : true}
         eligible={eligible}
         onChange={(changes) => setForm((current) => ({ ...current, ...changes }))}
       />

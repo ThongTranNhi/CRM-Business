@@ -8,14 +8,23 @@ import type { ProjectActivity, ProjectActivityValue } from './projects.types';
 
 // Tab Công việc và Hoạt động của trang dự án: ai xem được dự án thì xem.
 
-/** Task chưa lưu trữ của dự án (giao diện mở board `?task=` bằng dashboardId của dự án). */
+/**
+ * Task chưa lưu trữ của dự án (giao diện mở board `?task=` bằng dashboardId của dự án). Chỉ task trên board của
+ * phòng dự án — ai xem được dự án thì xem được board đó (permission-model.md); phòng chưa có board → rỗng.
+ */
 export async function listProjectTasks(
   scope: RequestScope,
   projectId: string,
   pagination: Pagination,
 ) {
-  await loadProject(scope, projectId);
-  const { tasks, total } = await feedsRepository.listProjectTasks(scope.env, projectId, pagination);
+  const { project } = await loadProject(scope, projectId);
+  if (!project.boardId) return toPage([], 0, pagination);
+  const { tasks, total } = await feedsRepository.listProjectTasks(
+    scope.env,
+    projectId,
+    project.boardId,
+    pagination,
+  );
   return toPage(tasks, total, pagination);
 }
 

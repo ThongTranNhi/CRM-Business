@@ -5,6 +5,7 @@ import { loadTsModule } from '../../lib/load-ts-module.mjs';
 
 const { Response } = globalThis;
 const service = await loadTsModule(new URL('./projects.service.ts', import.meta.url));
+const feeds = await loadTsModule(new URL('./projects.feeds.service.ts', import.meta.url));
 
 const env = {
   SUPABASE_URL: 'https://example.supabase.co',
@@ -18,6 +19,7 @@ const ids = {
   deptA: '00000000-0000-4000-8000-000000000005',
   deptB: '00000000-0000-4000-8000-000000000006',
   project: '00000000-0000-4000-8000-000000000007',
+  boardA: '00000000-0000-4000-8000-000000000008',
 };
 const scopeAs = (role) => ({ env, actor: { id: ids.user, email: null, role, sessionId: 's-1' } });
 
@@ -37,6 +39,7 @@ const summary = (facts = {}) => ({
   department_name: 'Phòng A',
   department_archived_at: null,
   dashboard_id: null,
+  board_id: ids.boardA,
   name: 'Ra mắt web',
   description: null,
   status: 'active',
@@ -104,6 +107,7 @@ test('projects service (Đợt 3 S1)', async (t) => {
     assert.deepEqual(project.permissions, {
       canEdit: false,
       canManageMembers: false,
+      canChangeOwner: false,
       canArchive: false,
     });
   });
@@ -161,14 +165,28 @@ test('projects service (Đợt 3 S1)', async (t) => {
     const database = fakeDatabase({
       active_employees: me(ids.deptB),
       'project_members?select=project_id': [{ project_id: ids.project }],
+      'board_members?select=board_id': [{ board_id: ids.boardA }],
       project_summaries: () => listResponse([summary()]),
     });
     globalThis.fetch = database.fetch;
     const page = await service.listProjects(scopeAs('employee'), { page: 1, pageSize: 20 });
     assert.equal(page.meta.total, 1);
     const listUrl = database.calls.find((path) => path.includes('project_summaries'));
-    assert.ok(listUrl.includes(`or=(department_id.eq.${ids.deptB},id.in.(${ids.project}))`));
+    const joined = `and(id.in.(${ids.project}),board_id.in.(${ids.boardA}))`;
+    assert.ok(listUrl.includes(`or=(department_id.eq.${ids.deptB},${joined})`));
     assert.ok(listUrl.includes('archived_at=is.null'));
+  });
+  await t.test('member who left the board no longer lists the project', async () => {
+    const database = fakeDatabase({
+      active_employees: me(ids.deptB),
+      'project_members?select=project_id': [{ project_id: ids.project }],
+      'board_members?select=board_id': [],
+      project_summaries: () => listResponse([]),
+    });
+    globalThis.fetch = database.fetch;
+    await service.listProjects(scopeAs('employee'), { page: 1, pageSize: 20 });
+    const listUrl = database.calls.find((path) => path.includes('project_summaries'));
+    assert.ok(listUrl.includes(`or=(department_id.eq.${ids.deptB})`));
   });
   await t.test('HR Admin lists every project (no visibility filter)', async () => {
     const database = fakeDatabase({ project_summaries: () => listResponse([]) });
@@ -177,6 +195,87 @@ test('projects service (Đợt 3 S1)', async (t) => {
     const listUrl = database.calls.find((path) => path.includes('project_summaries'));
     assert.ok(!listUrl.includes('or=('));
     assert.ok(listUrl.includes('archived_at=not.is.null'));
+  });
+  /** Thành viên dự án (id = ids.me) nay ở phòng B; `onBoard`: còn được mời vào board phòng A. */
+  const movedMember = ({ onBoard = false, owner = false } = {}) =>
+    fakeDatabase({
+      active_employees: me(ids.deptB),
+      project_summaries: [summary(owner ? { owner_employee_id: ids.me } : {})],
+      'project_members?select=employee_id': [{ employee_id: ids.me }],
+      'board_members?select=board_id': onBoard ? [{ board_id: ids.boardA }] : [],
+      task_cards: () => listResponse([]),
+      project_activity_feed: () => listResponse([]),
+      crm_update_project: null,
+    });
+  await t.test('member who moved department and left the board → 403 everywhere', async () => {
+    globalThis.fetch = movedMember().fetch;
+    const page = { page: 1, pageSize: 20 };
+    await assert.rejects(() => service.getProject(scopeAs('employee'), ids.project), {
+      code: 'FORBIDDEN',
+    });
+    await assert.rejects(() => feeds.listProjectTasks(scopeAs('employee'), ids.project, page), {
+      code: 'FORBIDDEN',
+    });
+    await assert.rejects(
+      () => feeds.listProjectActivities(scopeAs('employee'), ids.project, page),
+      { code: 'FORBIDDEN' },
+    );
+  });
+  await t.test(
+    'member still invited to the board keeps viewing; tasks only from that board',
+    async () => {
+      const database = movedMember({ onBoard: true });
+      globalThis.fetch = database.fetch;
+      await feeds.listProjectTasks(scopeAs('employee'), ids.project, { page: 1, pageSize: 20 });
+      const tasksUrl = database.calls.find((path) => path.includes('task_cards'));
+      assert.ok(tasksUrl.includes(`board_id=eq.${ids.boardA}`));
+    },
+  );
+  await t.test('owner who moved department cannot edit (403, no RPC)', async () => {
+    const database = movedMember({ owner: true });
+    globalThis.fetch = database.fetch;
+    await assert.rejects(
+      () => service.updateProject(scopeAs('employee'), ids.project, { name: 'Mới' }),
+      { code: 'FORBIDDEN' },
+    );
+    await assert.rejects(
+      () => service.setProjectMembers(scopeAs('employee'), ids.project, [ids.me]),
+      { code: 'FORBIDDEN' },
+    );
+    assert.deepEqual(database.rpcs(), []);
+  });
+  await t.test(
+    'owner cannot hand the project to someone else; resending themself is fine',
+    async () => {
+      const database = fakeDatabase({
+        active_employees: [{ ...me(ids.deptA)[0], id: ids.owner }],
+        project_summaries: [summary()],
+        crm_update_project: null,
+      });
+      globalThis.fetch = database.fetch;
+      await assert.rejects(
+        () => service.updateProject(scopeAs('employee'), ids.project, { ownerEmployeeId: ids.me }),
+        { code: 'FORBIDDEN' },
+      );
+      assert.deepEqual(database.rpcs(), []);
+      await service.updateProject(scopeAs('employee'), ids.project, {
+        name: 'Mới',
+        ownerEmployeeId: ids.owner,
+      });
+      assert.ok(database.rpcs().some((path) => path.endsWith('crm_update_project')));
+    },
+  );
+  await t.test('manager of the department changes the owner', async () => {
+    const database = fakeDatabase({
+      active_employees: me(ids.deptA, { manages: true }),
+      project_summaries: [summary()],
+      crm_update_project: null,
+    });
+    globalThis.fetch = database.fetch;
+    await service.updateProject(scopeAs('department_manager'), ids.project, {
+      ownerEmployeeId: ids.me,
+    });
+    assert.ok(database.rpcs().some((path) => path.endsWith('crm_update_project')));
   });
   await t.test('duplicate name in the department → 409 PROJECT_NAME_EXISTS', async () => {
     globalThis.fetch = fakeDatabase({

@@ -35,6 +35,8 @@ export interface ProjectSummary {
   departmentArchived: boolean;
   /** Dashboard của phòng (bấm task → board `?task=`); null nếu phòng chưa có Dashboard. */
   dashboardId: string | null;
+  /** Board của Dashboard phòng (null nếu phòng chưa có Dashboard). */
+  boardId: string | null;
   owner: PersonRef | null;
   progress: ProjectProgress;
   memberCount: number;
@@ -48,7 +50,12 @@ export interface ProjectMember extends PersonRef {
 
 export interface ProjectDetail extends ProjectSummary {
   members: ProjectMember[];
-  permissions: { canEdit: boolean; canManageMembers: boolean; canArchive: boolean };
+  permissions: {
+    canEdit: boolean;
+    canManageMembers: boolean;
+    canChangeOwner: boolean;
+    canArchive: boolean;
+  };
 }
 
 /** Một task của dự án (tab Công việc). */

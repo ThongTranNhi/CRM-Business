@@ -15,12 +15,18 @@ interface TaskRow {
   assignee_archived: boolean;
 }
 
-/** Task chưa lưu trữ của dự án (view task_cards): việc đang mở trước, rồi theo hạn. */
-export async function listProjectTasks(env: Env, projectId: string, pagination: Pagination) {
+/** Task chưa lưu trữ của dự án trên một board (view task_cards): việc đang mở trước, rồi theo hạn. */
+export async function listProjectTasks(
+  env: Env,
+  projectId: string,
+  boardId: string,
+  pagination: Pagination,
+) {
   const params = new URLSearchParams({
     select:
       'id,title,status,priority,due_date,completed_at,assignee_id,assignee_name,assignee_archived',
     project_id: `eq.${projectId}`,
+    board_id: `eq.${boardId}`,
     order: 'status.desc,due_date.asc.nullslast,id',
     ...rangeParams(pagination),
   });

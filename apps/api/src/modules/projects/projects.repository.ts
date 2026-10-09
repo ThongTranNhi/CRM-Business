@@ -16,6 +16,7 @@ interface SummaryRow {
   department_name: string;
   department_archived_at: string | null;
   dashboard_id: string | null;
+  board_id: string | null;
   name: string;
   description: string | null;
   status: ProjectStatus;
@@ -31,7 +32,7 @@ interface SummaryRow {
   member_count: number;
 }
 const SUMMARY_SELECT =
-  'id,department_id,department_name,department_archived_at,dashboard_id,name,description,status,' +
+  'id,department_id,department_name,department_archived_at,dashboard_id,board_id,name,description,status,' +
   'start_date,due_date,archived_at,created_at,owner_employee_id,owner_name,task_total,task_done,' +
   'task_overdue,member_count';
 
@@ -51,6 +52,7 @@ const mapSummary = (row: SummaryRow): ProjectSummary => ({
   department: { id: row.department_id, name: row.department_name },
   departmentArchived: row.department_archived_at !== null,
   dashboardId: row.dashboard_id,
+  boardId: row.board_id,
   owner:
     row.owner_employee_id && row.owner_name
       ? { id: row.owner_employee_id, fullName: row.owner_name }
@@ -64,8 +66,15 @@ const mapSummary = (row: SummaryRow): ProjectSummary => ({
   memberCount: row.member_count,
 });
 
-/** null: xem mọi dự án; ngược lại chỉ dự án của phòng này hoặc dự án người xem tham gia. */
-export type ProjectScope = { departmentId: string | null; projectIds: string[] } | null;
+/**
+ * null: xem mọi dự án. Ngược lại: dự án của phòng người xem, hoặc dự án người xem là thành viên NHƯNG chỉ khi
+ * còn trong board của phòng dự án (`boardIds`) — chuyển phòng / bị bỏ khỏi board là không thấy nữa.
+ */
+export type ProjectScope = {
+  departmentId: string | null;
+  projectIds: string[];
+  boardIds: string[];
+} | null;
 
 export async function listSummaries(
   env: Env,
@@ -75,7 +84,9 @@ export async function listSummaries(
   const pagination = { page: query.page, pageSize: query.pageSize };
   const visible = scope && [
     ...(scope.departmentId ? [`department_id.eq.${scope.departmentId}`] : []),
-    ...(scope.projectIds.length > 0 ? [`id.in.(${scope.projectIds.join(',')})`] : []),
+    ...(scope.projectIds.length > 0 && scope.boardIds.length > 0
+      ? [`and(id.in.(${scope.projectIds.join(',')}),board_id.in.(${scope.boardIds.join(',')}))`]
+      : []),
   ];
   if (visible && visible.length === 0) return toPage([], 0, pagination);
   const params = new URLSearchParams({

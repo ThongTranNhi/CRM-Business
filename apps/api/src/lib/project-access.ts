@@ -15,8 +15,10 @@ export interface ProjectViewer {
 export interface ProjectFacts {
   departmentId: string;
   ownerEmployeeId: string | null;
-  /** Người xem là thành viên dự án (kể cả người phòng khác được mời vào board). */
+  /** Người xem có trong project_members. */
   isMember: boolean;
+  /** Người xem được mời vào board của Dashboard phòng dự án (board_members). */
+  isBoardMember: boolean;
   /** Phòng ban đã xoá → dự án chỉ xem được (như BR-06). */
   isReadOnly: boolean;
 }
@@ -26,6 +28,8 @@ export interface ProjectPermissions {
   /** Sửa thông tin dự án: Super Admin, Trưởng phòng của phòng, chủ dự án. */
   canEdit: boolean;
   canManageMembers: boolean;
+  /** Đổi chủ dự án: Super Admin, Trưởng phòng của phòng (chủ dự án không tự chuyển). */
+  canChangeOwner: boolean;
   /** Lưu trữ / khôi phục: Super Admin, Trưởng phòng của phòng. */
   canArchive: boolean;
 }
@@ -45,15 +49,25 @@ export function projectPermissions(
   viewer: ProjectViewer,
   project: ProjectFacts,
 ): ProjectPermissions {
+  // Thành viên / chủ dự án chỉ có quyền khi VẪN thuộc phòng dự án hoặc còn trong board của phòng đó:
+  // chuyển phòng hay bị bỏ khỏi board là mất quyền, dù còn tên trong project_members.
+  const isAttached = viewer.departmentId === project.departmentId || project.isBoardMember;
   const canView =
     canSeeAllProjects(viewer.role) ||
     viewer.departmentId === project.departmentId ||
-    project.isMember;
+    (project.isMember && isAttached);
   if (!canView || project.isReadOnly) {
-    return { canView, canEdit: false, canManageMembers: false, canArchive: false };
+    return {
+      canView,
+      canEdit: false,
+      canManageMembers: false,
+      canChangeOwner: false,
+      canArchive: false,
+    };
   }
   const canArchive = canCreateProject(viewer, project.departmentId);
-  const isOwner = viewer.employeeId !== null && viewer.employeeId === project.ownerEmployeeId;
+  const isOwner =
+    isAttached && viewer.employeeId !== null && viewer.employeeId === project.ownerEmployeeId;
   const canEdit = canArchive || isOwner;
-  return { canView, canEdit, canManageMembers: canEdit, canArchive };
+  return { canView, canEdit, canManageMembers: canEdit, canChangeOwner: canArchive, canArchive };
 }

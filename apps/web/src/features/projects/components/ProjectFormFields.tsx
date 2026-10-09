@@ -12,6 +12,8 @@ interface ProjectFormFieldsProps {
   errors: ProjectFormErrors;
   /** Sửa: không đổi phòng ban; thành viên sửa ở tab Thành viên. */
   isEditing: boolean;
+  /** Đổi chủ dự án: Super Admin, Trưởng phòng (chủ dự án không tự chuyển — permission-model.md). */
+  canChangeOwner: boolean;
   eligible: UseQueryResult<EligibleMember[]>;
   onChange: (changes: Partial<ProjectForm>) => void;
 }
@@ -20,6 +22,7 @@ export function ProjectFormFields({
   form,
   errors,
   isEditing,
+  canChangeOwner,
   eligible,
   onChange,
 }: ProjectFormFieldsProps) {
@@ -54,9 +57,9 @@ export function ProjectFormFields({
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <Select
-          label="Chủ dự án (tuỳ chọn)"
+          label={canChangeOwner ? 'Chủ dự án (tuỳ chọn)' : 'Chủ dự án (Trưởng phòng đổi)'}
           placeholder={form.departmentId ? 'Chưa chọn' : 'Chọn phòng ban trước'}
-          disabled={!form.departmentId || eligible.isPending}
+          disabled={!canChangeOwner || !form.departmentId || eligible.isPending}
           options={people.map((person) => ({ value: person.id, label: person.fullName }))}
           value={form.ownerEmployeeId}
           error={errors.ownerEmployeeId}

@@ -60,6 +60,10 @@ export async function listEligible(env: Env, departmentId: string): Promise<Pers
   return rows.map(mapPerson);
 }
 
+/** Board mà nhân viên được mời vào (board_members) — để biết thành viên dự án phòng khác còn quyền không. */
+export const listBoardIdsOf = (env: Env, employeeId: string) =>
+  selectIds(env, `/rest/v1/board_members?select=board_id&employee_id=eq.${employeeId}`, 'board_id');
+
 /** Thành viên hiện tại (kể cả người đã nghỉ — vẫn hiện, vẫn gỡ được). */
 export async function listPeople(env: Env, employeeIds: string[]): Promise<PersonRow[]> {
   if (employeeIds.length === 0) return [];

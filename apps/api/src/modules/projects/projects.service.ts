@@ -35,6 +35,14 @@ async function viewerOf({ env, actor }: RequestScope): Promise<ProjectViewer> {
   };
 }
 
+/** Người xem ở phòng khác: còn được mời vào board của phòng dự án không. */
+async function isOnProjectBoard(env: Env, viewer: ProjectViewer, project: ProjectSummary) {
+  if (!viewer.employeeId || !project.boardId) return false;
+  if (viewer.departmentId === project.department.id) return false;
+  const boardIds = await peopleRepository.listBoardIdsOf(env, viewer.employeeId);
+  return boardIds.includes(project.boardId);
+}
+
 /** Dự án + quyền của người xem; không xem được → 403, không tồn tại → 404. */
 export async function loadProject(scope: RequestScope, projectId: string) {
   const [project, viewer, memberIds] = await Promise.all([
@@ -47,6 +55,7 @@ export async function loadProject(scope: RequestScope, projectId: string) {
     departmentId: project.department.id,
     ownerEmployeeId: project.owner?.id ?? null,
     isMember: viewer.employeeId !== null && memberIds.includes(viewer.employeeId),
+    isBoardMember: await isOnProjectBoard(scope.env, viewer, project),
     isReadOnly: project.departmentArchived,
   });
   if (!permissions.canView) throw forbidden();
@@ -77,23 +86,27 @@ export async function listProjects(scope: RequestScope, query: ListProjectsQuery
     return projectsRepository.listSummaries(scope.env, query, null);
   }
   const viewer = await viewerOf(scope);
-  const projectIds = viewer.employeeId
-    ? await projectsRepository.listProjectIdsOf(scope.env, viewer.employeeId)
-    : [];
+  const [projectIds, boardIds] = viewer.employeeId
+    ? await Promise.all([
+        projectsRepository.listProjectIdsOf(scope.env, viewer.employeeId),
+        peopleRepository.listBoardIdsOf(scope.env, viewer.employeeId),
+      ])
+    : [[], []];
   return projectsRepository.listSummaries(scope.env, query, {
     departmentId: viewer.departmentId,
     projectIds,
+    boardIds,
   });
 }
 
 export async function getProject(scope: RequestScope, projectId: string): Promise<ProjectDetail> {
   const { project, permissions, memberIds } = await loadProject(scope, projectId);
   const people = await peopleRepository.listPeople(scope.env, memberIds);
-  const { canEdit, canManageMembers, canArchive } = permissions;
+  const { canEdit, canManageMembers, canChangeOwner, canArchive } = permissions;
   return {
     ...project,
     members: await withAvatars(scope.env, people),
-    permissions: { canEdit, canManageMembers, canArchive },
+    permissions: { canEdit, canManageMembers, canChangeOwner, canArchive },
   };
 }
 
@@ -111,6 +124,10 @@ export async function updateProject(
 ) {
   const { project, permissions } = await loadProject(scope, projectId);
   requireWrite(project, permissions.canEdit);
+  // Đổi chủ: chỉ Super Admin, Trưởng phòng. Form sửa gửi lại đúng chủ hiện tại thì không tính là đổi.
+  const changesOwner =
+    input.ownerEmployeeId !== undefined && input.ownerEmployeeId !== (project.owner?.id ?? null);
+  if (changesOwner && !permissions.canChangeOwner) throw forbidden();
   await projectsRepository.updateProject(scope.env, scope.actor.id, projectId, input);
   return getProject(scope, projectId);
 }
