@@ -41,6 +41,14 @@ board_columns(id, board_id, status)`: cột cùng board và status luôn khớp 
 - Migration `20261007100000_task_trash.sql`: view `task_trash` (task đã lưu trữ + `board_id`, `created_by`, tên
   cột cũ, người phụ trách, người xoá theo activity `archived` mới nhất — một truy vấn, chỉ `service_role`);
   index `tasks_board_archived_idx (board_id, archived_at desc) where archived_at is not null`.
+- Migration `20261009090000_projects.sql` (Đợt 3 S1): `projects` (department_id, name, description,
+  owner_employee_id, status `planning|active|on_hold|done`, start_date, due_date, archived_at, created_by;
+  unique `(department_id, lower(name))` khi chưa lưu trữ; unique `(id, department_id)` làm đích khoá ngoại ghép),
+  `project_members (project_id, employee_id)`. `tasks.project_id` có khoá ngoại ghép
+  `tasks_project_department_fk (project_id, department_id)` → task chỉ gắn dự án cùng phòng (BR-30). View
+  `project_summaries` (task_total / task_done / task_overdue theo giờ Việt Nam, member_count, dashboard_id,
+  board_id), `project_activity_feed` (audit_logs `resource_type = 'projects'`). Activity task thêm
+  `project_changed`. RLS bật, chỉ `service_role` đọc; ghi qua RPC.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
