@@ -26,7 +26,7 @@ export function Tabs<T extends string>({ label, items, value, onChange }: TabsPr
             aria-selected={selected}
             onClick={() => onChange(item.value)}
             className={cn(
-              '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+              '-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300',
               selected
                 ? 'border-primary-500 text-primary-800'

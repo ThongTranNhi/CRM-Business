@@ -59,8 +59,8 @@ export function useCompleteTask() {
         nextTaskId: null,
       }),
     onMutate: async (task) => {
-      await queryClient.cancelQueries({ queryKey: myTaskKeys.all });
-      queryClient.setQueriesData<MyTaskPage>({ queryKey: myTaskKeys.all }, (page) =>
+      await queryClient.cancelQueries({ queryKey: myTaskKeys.lists() });
+      queryClient.setQueriesData<MyTaskPage>({ queryKey: myTaskKeys.lists() }, (page) =>
         markRow(page, task.id, { status: 'done' }),
       );
     },
