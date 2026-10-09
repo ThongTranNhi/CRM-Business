@@ -54,6 +54,15 @@ describe('activity sentences (activity-log.md)', () => {
       'Nguyễn Văn An thêm người phối hợp Lê Bình; bỏ người phối hợp Trần Thị Lan',
     );
   });
+  it('describes moving a task into and out of a project', () => {
+    const web = { id: 'p-1', name: 'Ra mắt web' };
+    expect(activityText(activity('project_changed', null, { project: web }))).toBe(
+      'Nguyễn Văn An chuyển vào dự án “Ra mắt web”',
+    );
+    expect(activityText(activity('project_changed', { project: web }, null))).toBe(
+      'Nguyễn Văn An bỏ khỏi dự án “Ra mắt web”',
+    );
+  });
   it('describes checklist ticks and unknown actions safely', () => {
     const ticked = activity(
       'checklist_changed',

@@ -14,6 +14,8 @@ const FIELD_OF_ERROR: Partial<Record<string, keyof CreateTaskForm>> = {
   ASSIGNEE_REQUIRED: 'assigneeId',
   EMPLOYEE_NOT_IN_BOARD: 'assigneeId',
   INVALID_DATE_RANGE: 'dueDate',
+  PROJECT_NOT_FOUND: 'projectId',
+  PROJECT_NOT_IN_DEPARTMENT: 'projectId',
 };
 
 /**
@@ -34,13 +36,14 @@ export function useSubmitTask(options: {
       const fields = z.flattenError(parsed.error).fieldErrors;
       return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value?.[0]]));
     }
-    const { startDate, dueDate, description, ...rest } = parsed.data;
+    const { startDate, dueDate, description, projectId, ...rest } = parsed.data;
     try {
       await create.mutateAsync({
         ...rest,
         startDate: startDate || null,
         dueDate: dueDate || null,
         description: description || null,
+        projectId: projectId || null,
       });
       toast({ message: 'Đã tạo công việc' });
       options.onDone();

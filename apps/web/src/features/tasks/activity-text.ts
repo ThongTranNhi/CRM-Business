@@ -60,6 +60,10 @@ const DESCRIBE: Record<string, Describe> = {
   title_changed: (from, to) => `đổi tên: “${from?.title ?? ''}” → “${to?.title ?? ''}”`,
   attachment_added: () => 'đính kèm tệp',
   attachment_removed: () => 'gỡ tệp đính kèm',
+  project_changed: (from, to) =>
+    to?.project
+      ? `chuyển vào dự án “${to.project.name}”`
+      : `bỏ khỏi dự án “${from?.project?.name ?? ''}”`,
 };
 
 export function activityText({ action, actor, from, to }: TaskActivity): string {

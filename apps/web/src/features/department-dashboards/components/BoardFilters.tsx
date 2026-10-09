@@ -17,12 +17,14 @@ const DUE_LABELS: Record<DueFilter, string> = {
 
 interface BoardFiltersProps {
   filters: Filters;
+  /** Dự án của phòng; rỗng → ẩn ô lọc dự án. */
+  projects: { id: string; name: string }[];
   onChange: (changes: Partial<Filters>) => void;
   onClear: () => void;
 }
 
-/** Thanh lọc board (department-dashboard.md): tên / người phụ trách, Việc của tôi, hạn, ưu tiên. */
-export function BoardFilters({ filters, onChange, onClear }: BoardFiltersProps) {
+/** Thanh lọc board (department-dashboard.md): tên / người phụ trách, Việc của tôi, hạn, ưu tiên, dự án. */
+export function BoardFilters({ filters, projects, onChange, onClear }: BoardFiltersProps) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="w-full sm:w-72">
@@ -61,6 +63,18 @@ export function BoardFilters({ filters, onChange, onClear }: BoardFiltersProps) 
           }
         />
       </div>
+      {projects.length > 0 && (
+        <div className="w-48">
+          <Select
+            label="Lọc theo dự án"
+            hideLabel
+            placeholder="Mọi dự án"
+            options={projects.map((project) => ({ value: project.id, label: project.name }))}
+            value={filters.project ?? ''}
+            onChange={(event) => onChange({ project: event.target.value || null })}
+          />
+        </div>
+      )}
       {hasFilters(filters) && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <Icon name="filterX" size={16} />

@@ -62,12 +62,13 @@ const task = (overrides: Partial<BoardTask>): BoardTask => ({
   commentCount: 0,
   canMove: true,
   canArchive: false,
+  project: null,
   ...overrides,
 });
 
 describe('board filters', () => {
   const context = { employeeId: 'me', today: '2026-10-07' };
-  const none: BoardFilters = { q: '', mine: false, priority: null, due: null };
+  const none: BoardFilters = { q: '', mine: false, priority: null, due: null, project: null };
 
   it('reads valid filters from the URL and ignores bad values', () => {
     const params = new URLSearchParams('q=an&mine=1&priority=urgent&due=nope');
@@ -76,7 +77,16 @@ describe('board filters', () => {
       mine: true,
       priority: 'urgent',
       due: null,
+      project: null,
     });
+  });
+  it('filters by project (link "Mở trên board" from the project page)', () => {
+    const projectId = '00000000-0000-4000-8000-000000000001';
+    const filters = readBoardFilters(new URLSearchParams(`project=${projectId}`));
+    expect(filters.project).toBe(projectId);
+    const inProject = task({ project: { id: projectId, name: 'Ra mắt web' } });
+    expect(matchesFilters(inProject, filters, context)).toBe(true);
+    expect(matchesFilters(task({}), filters, context)).toBe(false);
   });
   it('searches title and assignee without accents', () => {
     expect(matchesFilters(task({}), { ...none, q: 'goi khach' }, context)).toBe(true);

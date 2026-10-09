@@ -38,6 +38,12 @@ const DepartmentDetailPage = lazy(() =>
 const WorkspacePage = lazy(() =>
   import('@/features/workspace').then((m) => ({ default: m.WorkspacePage })),
 );
+const ProjectListPage = lazy(() =>
+  import('@/features/projects').then((m) => ({ default: m.ProjectListPage })),
+);
+const ProjectDetailPage = lazy(() =>
+  import('@/features/projects').then((m) => ({ default: m.ProjectDetailPage })),
+);
 const BoardPage = lazy(() =>
   import('@/features/department-dashboards').then((m) => ({ default: m.BoardPage })),
 );
@@ -63,7 +69,6 @@ const unfinishedPages: { path: string; title: string; permission?: Permission }[
       title: item.label,
       permission: item.permission,
     })),
-  { path: 'projects/:id', title: 'Chi tiết dự án' },
   { path: 'payroll/:periodId', title: 'Chi tiết kỳ lương', permission: 'payroll.manage' },
   { path: 'notifications', title: 'Thông báo' },
 ];
@@ -78,6 +83,8 @@ const appRoutes: RouteObject[] = [
   { path: 'departments/:id', element: page(<DepartmentDetailPage />) },
   { path: 'workspace', element: page(<WorkspacePage />) },
   { path: 'workspace/:dashboardId', element: page(<BoardPage />) },
+  { path: 'projects', element: page(<ProjectListPage />) },
+  { path: 'projects/:id', element: page(<ProjectDetailPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>
     guarded(permission, { path, element: <PlaceholderPage title={title} /> }),
   ),

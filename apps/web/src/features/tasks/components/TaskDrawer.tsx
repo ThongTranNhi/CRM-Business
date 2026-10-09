@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { EmptyState, ErrorState, Modal, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api-client';
 import { useTask } from '../hooks/useTask';
-import type { BoardData, MemberOption, TaskDetail } from '../types';
+import type { BoardData, MemberOption, ProjectRef, TaskDetail } from '../types';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { TaskActivitySection } from './TaskActivitySection';
 import { TaskChecklistSection } from './TaskChecklistSection';
@@ -18,6 +18,8 @@ export interface TaskDrawerBoard {
   boardKey: QueryKey;
   relatedKeys: readonly QueryKey[];
   members: MemberOption[];
+  /** Dự án chưa lưu trữ của phòng (ô "Dự án", BR-30). */
+  projects: ProjectRef[];
 }
 
 interface TaskDrawerProps {

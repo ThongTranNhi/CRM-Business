@@ -87,6 +87,12 @@ export function TaskCard({
         )}
         {task.assignee.isArchived && <Badge tone="warning">Đã nghỉ</Badge>}
       </div>
+      {task.project && (
+        <p className="flex items-center gap-1 truncate text-xs text-gray-500" title="Dự án">
+          <Icon name="folder" size={12} />
+          <span className="truncate">{task.project.name}</span>
+        </p>
+      )}
       {percent !== null && <ProgressBar value={percent} label={`Checklist ${percent}%`} />}
       <div className="flex items-center gap-2 text-xs text-gray-500">
         <span className="flex min-w-0 flex-1 items-center gap-1.5">

@@ -90,7 +90,12 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         onOpenTrash={trashScope ? () => setTrashOpen(true) : null}
       />
       {!canWrite && <ReadOnlyBanner isDepartmentArchived={dashboard.departmentArchived} />}
-      <BoardFilters filters={filters} onChange={update} onClear={clear} />
+      <BoardFilters
+        filters={filters}
+        projects={dashboard.projects}
+        onChange={update}
+        onClear={clear}
+      />
       {renderBoard()}
       <CreateTaskModal
         open={form !== null}
@@ -98,6 +103,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
         boardId={dashboard.boardId}
         departmentName={dashboard.department.name}
         members={dashboard.members}
+        projects={dashboard.projects}
         relatedKeys={relatedKeys}
         initialTitle={form?.title}
       />
@@ -109,6 +115,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
           boardKey: props.boardKey,
           relatedKeys,
           members: dashboard.members,
+          projects: dashboard.projects,
         }}
       />
       {trashScope && (

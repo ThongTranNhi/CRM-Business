@@ -17,6 +17,7 @@ const task = (id: string, columnId: string, position: number): BoardTask => ({
   collaborators: [],
   checklist: { done: 0, total: 0 },
   commentCount: 0,
+  project: null,
   canMove: true,
   canArchive: false,
 });

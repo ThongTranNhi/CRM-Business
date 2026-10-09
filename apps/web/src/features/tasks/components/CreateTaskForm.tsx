@@ -5,13 +5,15 @@ import { Button, Input, ModalActions, Select, Textarea } from '@/components/ui';
 import { useSubmitTask } from '../hooks/useSubmitTask';
 import type { CreateTaskErrors, CreateTaskForm } from '../schemas/task.schema';
 import { PRIORITIES, PRIORITY_META } from '../task.utils';
-import type { MemberOption } from '../types';
+import type { MemberOption, ProjectRef } from '../types';
 import { MemberMultiSelect } from './MemberMultiSelect';
 
 export interface CreateTaskFormProps {
   boardId: string;
   departmentName: string;
   members: MemberOption[];
+  /** Dự án chưa lưu trữ của phòng (BR-30); rỗng → ẩn ô Dự án. */
+  projects: ProjectRef[];
   /** Query cần làm mới thêm sau khi tạo (vd. số liệu thẻ Workspace). */
   relatedKeys: readonly QueryKey[];
   initialTitle?: string;
@@ -26,6 +28,7 @@ const emptyForm = (title: string): CreateTaskForm => ({
   startDate: '',
   dueDate: '',
   description: '',
+  projectId: '',
 });
 
 /** Form "Thêm công việc": 1 request → 1 RPC. department_id tự gán theo Dashboard (BR-11). */
@@ -100,6 +103,16 @@ export function CreateTaskForm(props: CreateTaskFormProps) {
           onChange={(event) => update({ priority: z.enum(PRIORITIES).parse(event.target.value) })}
         />
       </div>
+      {props.projects.length > 0 && (
+        <Select
+          label="Dự án (tuỳ chọn)"
+          placeholder="Không gắn dự án"
+          options={props.projects.map((project) => ({ value: project.id, label: project.name }))}
+          value={form.projectId}
+          error={errors.projectId}
+          onChange={(event) => update({ projectId: event.target.value })}
+        />
+      )}
       <Textarea
         label="Mô tả (tuỳ chọn)"
         value={form.description}

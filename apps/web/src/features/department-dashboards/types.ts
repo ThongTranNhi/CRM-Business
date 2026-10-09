@@ -52,6 +52,8 @@ export interface DashboardDetail {
   boardId: string;
   manager: PersonRef | null;
   members: BoardMember[];
+  /** Dự án chưa lưu trữ của phòng: ô "Dự án" của task, lọc ?project= (BR-30). */
+  projects: { id: string; name: string }[];
   viewer: BoardViewer;
 }
 

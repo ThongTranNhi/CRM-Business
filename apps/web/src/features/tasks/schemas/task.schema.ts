@@ -15,6 +15,8 @@ export const createTaskFormSchema = z
     startDate: z.string(),
     dueDate: z.string(),
     description: z.string().trim().max(5000, 'Mô tả tối đa 5000 ký tự'),
+    /** '' = không gắn dự án. */
+    projectId: z.string(),
   })
   .refine((form) => !form.startDate || !form.dueDate || form.startDate <= form.dueDate, {
     message: 'Hạn không được trước ngày bắt đầu',

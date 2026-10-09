@@ -31,6 +31,7 @@ export function useQuickAddTask(dashboard: DashboardDetail, openForm: (title: st
         startDate: null,
         dueDate: null,
         description: null,
+        projectId: null,
       });
       toast({ message: 'Đã tạo công việc' });
       return true;

@@ -34,6 +34,13 @@ export interface BoardTask {
   canMove: boolean;
   /** Người xem xoá (lưu trữ) được: người tạo, Trưởng phòng, Super Admin (BR-19). */
   canArchive: boolean;
+  /** BR-30: dự án cùng phòng; null nếu không gắn. */
+  project: ProjectRef | null;
+}
+
+export interface ProjectRef {
+  id: string;
+  name: string;
 }
 
 export interface BoardData {
@@ -51,6 +58,7 @@ export interface CreateTaskInput {
   startDate: string | null;
   dueDate: string | null;
   description: string | null;
+  projectId: string | null;
 }
 
 /** previousTaskId: task ngay trên chỗ thả; nextTaskId: task ngay dưới (drag-and-drop.md). */
@@ -110,6 +118,7 @@ export interface TaskDetail {
   department: { id: string; name: string };
   assignee: Assignee;
   collaborators: PersonRef[];
+  project: ProjectRef | null;
   permissions: TaskPermissions;
 }
 
@@ -121,6 +130,7 @@ export interface UpdateTaskInput {
   startDate?: string | null;
   dueDate?: string | null;
   description?: string | null;
+  projectId?: string | null;
 }
 
 export interface ChecklistItem {
@@ -155,6 +165,7 @@ export interface ActivityValue {
   dueDate?: string | null;
   columnName?: string;
   checklistItem?: { content: string; isDone?: boolean };
+  project?: ProjectRef;
 }
 
 export interface TaskActivity {

@@ -12,12 +12,16 @@ import { normalizeText } from '@/lib/normalize-text';
 export const DUE_FILTERS = ['overdue', 'today', 'week'] as const;
 export type DueFilter = (typeof DUE_FILTERS)[number];
 
-/** Bộ lọc board, lưu trên URL (`?q=&mine=1&priority=&due=`) để F5 và chia sẻ link giữ nguyên. */
+/**
+ * Bộ lọc board, lưu trên URL (`?q=&mine=1&priority=&due=&project=`) để F5 và chia sẻ link giữ nguyên.
+ * `project`: id dự án (link [Mở trên board] từ trang dự án).
+ */
 export interface BoardFilters {
   q: string;
   mine: boolean;
   priority: TaskPriority | null;
   due: DueFilter | null;
+  project: string | null;
 }
 
 const filtersSchema = z.object({
@@ -25,6 +29,7 @@ const filtersSchema = z.object({
   mine: z.literal('1').nullable().catch(null),
   priority: z.enum(PRIORITIES).nullable().catch(null),
   due: z.enum(DUE_FILTERS).nullable().catch(null),
+  project: z.uuid().nullable().catch(null),
 });
 
 export function readBoardFilters(params: URLSearchParams): BoardFilters {
@@ -33,12 +38,17 @@ export function readBoardFilters(params: URLSearchParams): BoardFilters {
     mine: params.get('mine'),
     priority: params.get('priority'),
     due: params.get('due'),
+    project: params.get('project'),
   });
   return { ...parsed, mine: parsed.mine === '1' };
 }
 
 export const hasFilters = (filters: BoardFilters): boolean =>
-  filters.q !== '' || filters.mine || filters.priority !== null || filters.due !== null;
+  filters.q !== '' ||
+  filters.mine ||
+  filters.priority !== null ||
+  filters.due !== null ||
+  filters.project !== null;
 
 interface FilterContext {
   employeeId: string | null;
@@ -69,6 +79,7 @@ export function matchesFilters(task: BoardTask, filters: BoardFilters, context: 
     task.collaborators.some((person) => person.id === context.employeeId);
   if (filters.mine && !isMine) return false;
   if (filters.priority && task.priority !== filters.priority) return false;
+  if (filters.project && task.project?.id !== filters.project) return false;
   return !filters.due || matchesDue(task, filters.due, context.today);
 }
 

@@ -9,6 +9,7 @@ import { ReadOnlyField } from './ReadOnlyField';
 import { TaskDateFields } from './TaskDateFields';
 import { TaskDescriptionField } from './TaskDescriptionField';
 import type { TaskDrawerBoard } from './TaskDrawer';
+import { TaskProjectField } from './TaskProjectField';
 
 interface TaskDetailFieldsProps {
   task: TaskDetail;
@@ -74,6 +75,7 @@ export function TaskDetailFields({ task, board }: TaskDetailFieldsProps) {
         <ReadOnlyField label="Ưu tiên">{PRIORITY_META[task.priority].label}</ReadOnlyField>
       )}
       <TaskDateFields task={task} update={update} />
+      <TaskProjectField task={task} projects={board.projects} update={update} />
       <div className="sm:col-span-2">
         {canEdit ? (
           <MemberMultiSelect

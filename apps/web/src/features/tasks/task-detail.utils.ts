@@ -14,13 +14,14 @@ export function patchBoardTask(
   };
 }
 
-/** Phần thẻ board lấy từ chi tiết task (tên, ưu tiên, hạn, người phụ trách, người phối hợp). */
+/** Phần thẻ board lấy từ chi tiết task (tên, ưu tiên, hạn, người phụ trách, người phối hợp, dự án). */
 export const cardFieldsOf = (detail: TaskDetail): Partial<BoardTask> => ({
   title: detail.title,
   priority: detail.priority,
   dueDate: detail.dueDate,
   assignee: detail.assignee,
   collaborators: detail.collaborators,
+  project: detail.project,
 });
 
 /** Số mục checklist x/y trên thẻ (BR-17). */
