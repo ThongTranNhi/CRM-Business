@@ -25,10 +25,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 15  | `20261007100000_task_trash.sql`                       | 07/10/2026                 |
 | 16  | `20261008090000_handover_writable_boards.sql`         | 08/10/2026                 |
 | 17  | `20261009090000_projects.sql`                         | 09/10/2026                 |
+| 18  | `20261010090000_projects_review_fixes.sql`            |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -38,6 +39,10 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261010090000_projects_review_fixes.sql` (sửa theo review S1): `crm_update_project` — đổi chủ làm chủ mới tự
+  vào `project_members` thì ghi audit `project.members` (cũ → mới); `app_private.crm_assert_task_project` đọc dự án
+  `FOR SHARE` để không gắn task vào dự án đang bị lưu trữ ở giao dịch khác. Chỉ thay thân hàm. Kiểm tra:
+  `supabase/tests/projects_review_fixes.sql` (cuối file có cách thử tay FOR SHARE bằng hai phiên).
 - `20261009090000_projects.sql` (Đợt 3 S1, BR-30, BR-31): bảng `projects` (tên không trùng trong phòng khi chưa
   lưu trữ), `project_members` (Q6); khoá ngoại ghép `tasks(project_id, department_id)` → `projects(id,
 department_id)`; view `project_summaries` (tiến độ, quá hạn, số thành viên — 1 truy vấn),
