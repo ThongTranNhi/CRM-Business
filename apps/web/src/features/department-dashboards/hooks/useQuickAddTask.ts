@@ -3,7 +3,7 @@ import { useCurrentUser } from '@/features/auth';
 import { useCreateTask } from '@/features/tasks';
 import { errorMessage } from '@/lib/api-client';
 import type { DashboardDetail } from '../types';
-import { dashboardKeys } from './dashboard-keys';
+import { BOARD_RELATED_KEYS } from './board-related-keys';
 
 /**
  * Ô "+ Thêm công việc" trong cột: người phụ trách mặc định là mình nếu mình thuộc board; nếu không
@@ -12,7 +12,7 @@ import { dashboardKeys } from './dashboard-keys';
 export function useQuickAddTask(dashboard: DashboardDetail, openForm: (title: string) => void) {
   const toast = useToast();
   const { data: user } = useCurrentUser();
-  const create = useCreateTask(dashboard.boardId, [dashboardKeys.all]);
+  const create = useCreateTask(dashboard.boardId, BOARD_RELATED_KEYS);
   const myEmployeeId = user?.employeeId ?? null;
   const isMember = dashboard.members.some((member) => member.id === myEmployeeId);
 

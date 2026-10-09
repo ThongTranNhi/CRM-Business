@@ -1,7 +1,7 @@
 import type { Env } from '../../config/env';
 import { callRpc, supabaseList, supabaseRequest } from '../../lib/supabase';
 import { workAccessSchema, type WorkAccess } from '../../lib/work-access';
-import type { BoardColumn, TaskCard, TaskPriority, TaskStatus } from './tasks.types';
+import type { BoardColumn, TaskCard, TaskPriority, TaskSlot, TaskStatus } from './tasks.types';
 
 /** Dữ kiện quyền của người gọi với một board hoặc một task (RPC crm_work_access). */
 export async function findWorkAccess(
@@ -101,4 +101,36 @@ export async function listDoneCards(env: Env, boardId: string, limit: number) {
 export async function findCard(env: Env, taskId: string): Promise<TaskCard | null> {
   const rows = await supabaseRequest<CardRow[]>(env, cardsPath({ id: `eq.${taskId}`, limit: '1' }));
   return rows[0] ? mapCard(rows[0]) : null;
+}
+
+/** Task ngay trên / dưới một vị trí trong cột (id), null nếu ở đầu / cuối cột. */
+async function neighbourId(env: Env, columnId: string, position: number, side: 'above' | 'below') {
+  const params = new URLSearchParams({
+    select: 'id',
+    column_id: `eq.${columnId}`,
+    position: side === 'above' ? `lt.${position}` : `gt.${position}`,
+    order: side === 'above' ? 'position.desc,id' : 'position.asc,id',
+    limit: '1',
+  });
+  const rows = await supabaseRequest<{ id: string }[]>(env, `/rest/v1/task_cards?${params}`);
+  return rows[0]?.id ?? null;
+}
+
+/** Chỗ hiện tại của task (cột + task kề trên / dưới) — để [Hoàn tác] trả task về đúng vị trí cũ. */
+export async function findSlot(env: Env, taskId: string): Promise<TaskSlot | null> {
+  const params = new URLSearchParams({
+    select: 'column_id,position',
+    id: `eq.${taskId}`,
+    limit: '1',
+  });
+  const [row] = await supabaseRequest<{ column_id: string; position: number }[]>(
+    env,
+    `/rest/v1/task_cards?${params}`,
+  );
+  if (!row) return null;
+  const [previousTaskId, nextTaskId] = await Promise.all([
+    neighbourId(env, row.column_id, row.position, 'above'),
+    neighbourId(env, row.column_id, row.position, 'below'),
+  ]);
+  return { columnId: row.column_id, previousTaskId, nextTaskId };
 }

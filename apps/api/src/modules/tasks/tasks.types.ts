@@ -114,6 +114,13 @@ export interface TrashTask {
 /** Kết quả crm_move_task. */
 export type MovedTask = z.infer<typeof movedTaskSchema>;
 
+/** Chỗ của task trong board: cột + task kề trên / dưới (cùng dạng tham số của PATCH /move). */
+export interface TaskSlot {
+  columnId: string;
+  previousTaskId: string | null;
+  nextTaskId: string | null;
+}
+
 // ---------- Drawer chi tiết task: checklist, bình luận, lịch sử ----------
 
 export interface ChecklistItem {

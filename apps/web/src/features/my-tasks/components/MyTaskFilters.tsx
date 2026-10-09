@@ -1,8 +1,8 @@
 import { SearchInput, Select } from '@/components/ui';
 import { useDepartmentOptions } from '@/features/departments';
-import { useProjects } from '@/features/projects';
 import { PRIORITIES, PRIORITY_META } from '@/features/tasks';
 import type { MyTaskParams } from '../types';
+import { ProjectFilter } from './ProjectFilter';
 
 type FilterChanges = Partial<Record<'department' | 'priority' | 'project' | 'q', string>>;
 
@@ -12,12 +12,9 @@ interface MyTaskFiltersProps {
   onChange: (changes: FilterChanges) => void;
 }
 
-const ALL_PROJECTS = { status: null, q: '', page: 1 } as const;
-
 /** Bộ lọc trên URL: phòng ban (Dashboard), ưu tiên, dự án; ô tìm theo tên việc. */
 export function MyTaskFilters({ params, onChange }: MyTaskFiltersProps) {
   const departments = useDepartmentOptions();
-  const projects = useProjects(ALL_PROJECTS);
   return (
     <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <SearchInput
@@ -48,17 +45,7 @@ export function MyTaskFilters({ params, onChange }: MyTaskFiltersProps) {
         value={params.priority}
         onChange={(event) => onChange({ priority: event.target.value })}
       />
-      <Select
-        label="Lọc theo dự án"
-        hideLabel
-        placeholder="Mọi dự án"
-        options={(projects.data?.data ?? []).map((project) => ({
-          value: project.id,
-          label: project.name,
-        }))}
-        value={params.projectId}
-        onChange={(event) => onChange({ project: event.target.value })}
-      />
+      <ProjectFilter projectId={params.projectId} onChange={(project) => onChange({ project })} />
     </div>
   );
 }

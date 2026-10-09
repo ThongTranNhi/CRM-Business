@@ -98,7 +98,8 @@ Gửi ít nhất một trong: `title`, `description` (null = xoá), `assigneeId`
 
 Body `{ "toColumnId": "uuid", "previousTaskId": "uuid | null", "nextTaskId": "uuid | null" }` — xem
 `docs/features/work-management/drag-and-drop.md`. Trả `{ id, columnId, status, position, startedAt, completedAt,
-completedBy }`.
+completedBy, from }` — `from: { columnId, previousTaskId, nextTaskId } | null` là chỗ cũ của task (đọc trước khi
+chuyển): gửi lại đúng ba giá trị này để [Hoàn tác] trả task về đúng vị trí (dùng ở checkbox Việc của tôi).
 
 ## PUT `/api/tasks/:id/collaborators`
 
@@ -155,7 +156,8 @@ Query: `tab` (`today` | `week` | `overdue` | `open` | `done`, mặc định `ope
 `counts` áp cùng bộ lọc (trừ `tab`). `role: "collaborator"` → nhãn "Phối hợp". `canEdit` theo luật board
 (`lib/work-access.ts`). Checkbox hoàn thành nhanh gọi `PATCH /api/tasks/:id/move` với `toColumnId = doneColumnId`
 (cột mặc định nhóm done — ghi `completed_at`, `completed_by`, activity như kéo thả); [Hoàn tác] gọi lại với
-`toColumnId = columnId` cũ. Tài khoản không có hồ sơ nhân viên → danh sách rỗng, mọi số đếm 0.
+`from` của kết quả (đúng vị trí cũ). Tài khoản không có hồ sơ nhân viên → danh sách rỗng, mọi số đếm 0. Badge
+Sidebar gọi `?pageSize=1` và chỉ đọc `meta.counts.overdue`.
 
 ## GET `/api/tasks/:id`
 

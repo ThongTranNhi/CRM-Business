@@ -16,6 +16,7 @@ export type {
   BoardColumn,
   BoardData,
   BoardTask,
+  MovedTask,
   TaskMove,
   TaskPriority,
   TaskStatus,

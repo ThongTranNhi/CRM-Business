@@ -1,7 +1,7 @@
 import type { QueryKey } from '@tanstack/react-query';
 import { useMoveTask, type BoardData, type BoardTask } from '@/features/tasks';
 import { columnTasks, dropNeighbors, isSamePlace } from '../board.utils';
-import { dashboardKeys } from './dashboard-keys';
+import { BOARD_RELATED_KEYS } from './board-related-keys';
 
 interface UseBoardMovesOptions {
   board: BoardData;
@@ -12,7 +12,7 @@ interface UseBoardMovesOptions {
 
 /** Nối kéo thả và menu "Chuyển sang cột…" với PATCH /move (optimistic trong useMoveTask). */
 export function useBoardMoves({ board, visibleTasks, boardKey }: UseBoardMovesOptions) {
-  const move = useMoveTask({ boardKey, relatedKeys: [dashboardKeys.all] });
+  const move = useMoveTask({ boardKey, relatedKeys: BOARD_RELATED_KEYS });
 
   /**
    * `index` null: cuối cột (menu "Chuyển sang cột…") — không gửi task lân cận, server tự đặt sau thẻ

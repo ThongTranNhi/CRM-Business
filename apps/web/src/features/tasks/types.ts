@@ -69,6 +69,14 @@ export interface TaskMove {
   nextTaskId: string | null;
 }
 
+/** Kết quả PATCH /api/tasks/:id/move; `from`: chỗ cũ (cột + task kề) để [Hoàn tác] về đúng vị trí. */
+export interface MovedTask {
+  id: string;
+  columnId: string;
+  status: TaskStatus;
+  from: { columnId: string; previousTaskId: string | null; nextTaskId: string | null } | null;
+}
+
 /** Một việc trong thùng rác board (GET /api/boards/:boardId/trash). */
 export interface TrashTask {
   id: string;

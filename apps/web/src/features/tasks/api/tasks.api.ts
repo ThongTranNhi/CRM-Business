@@ -3,6 +3,7 @@ import type {
   BoardData,
   BoardTask,
   CreateTaskInput,
+  MovedTask,
   TaskMove,
   TrashParams,
   TrashTask,
@@ -25,7 +26,10 @@ export const createTask = (boardId: string, input: CreateTaskInput) =>
   });
 
 export const moveTask = ({ taskId, ...move }: TaskMove) =>
-  apiRequest<unknown>(`/api/tasks/${taskId}/move`, { method: 'PATCH', body: JSON.stringify(move) });
+  apiRequest<MovedTask>(`/api/tasks/${taskId}/move`, {
+    method: 'PATCH',
+    body: JSON.stringify(move),
+  });
 
 /** Xoá = lưu trữ (BR-19). */
 export const archiveTask = (taskId: string) =>

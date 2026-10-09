@@ -1,10 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui';
-import { moveTask, taskKeys } from '@/features/tasks';
+import { dashboardKeys } from '@/features/department-dashboards/cache-keys';
+import { projectKeys } from '@/features/projects/project-options';
+import { moveTask, taskKeys, type MovedTask } from '@/features/tasks';
 import type { MyTask } from '../types';
-import { myTaskKeys } from './useMyTasks';
+import { myTaskKeys } from './my-task-keys';
 
 type MyTaskPage = { data: MyTask[] };
+type CompletableTask = MyTask & { doneColumnId: string };
 
 /** Đánh dấu một dòng trong mọi trang Việc của tôi đang có trong cache. */
 const markRow = (page: MyTaskPage | undefined, taskId: string, changes: Partial<MyTask>) =>
@@ -13,28 +16,33 @@ const markRow = (page: MyTaskPage | undefined, taskId: string, changes: Partial<
     data: page.data.map((task) => (task.id === taskId ? { ...task, ...changes } : task)),
   };
 
+/** Việc của tôi, board, drawer, số liệu thẻ Workspace, tiến độ dự án đều đổi theo. */
+const AFFECTED_KEYS = [
+  myTaskKeys.all,
+  taskKeys.boards(),
+  taskKeys.details(),
+  dashboardKeys.all,
+  projectKeys.all,
+];
+
 /**
  * Checkbox hoàn thành nhanh: chuyển task sang cột mặc định nhóm "done" (cùng API kéo thả — server ghi
- * completed_at, completed_by, activity). Toast có [Hoàn tác] 5 giây: trả task về cột cũ.
+ * completed_at, completed_by, activity). Toast có [Hoàn tác] 5 giây: trả task về ĐÚNG chỗ cũ (`from` do
+ * server đọc trước khi chuyển: cột + task kề trên / dưới).
  */
 export function useCompleteTask() {
   const queryClient = useQueryClient();
   const toast = useToast();
-
   const refresh = () =>
-    Promise.all(
-      [myTaskKeys.all, taskKeys.boards(), taskKeys.details()].map((queryKey) =>
-        queryClient.invalidateQueries({ queryKey }),
-      ),
-    );
+    Promise.all(AFFECTED_KEYS.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
   const undo = useMutation({
-    mutationFn: (task: MyTask) =>
+    mutationFn: ({ task, moved }: { task: MyTask; moved: MovedTask }) =>
       moveTask({
         taskId: task.id,
-        toColumnId: task.columnId,
-        previousTaskId: null,
-        nextTaskId: null,
+        toColumnId: moved.from?.columnId ?? task.columnId,
+        previousTaskId: moved.from?.previousTaskId ?? null,
+        nextTaskId: moved.from?.nextTaskId ?? null,
       }),
     onSuccess: () => toast({ message: 'Đã hoàn tác' }),
     onError: () =>
@@ -43,7 +51,7 @@ export function useCompleteTask() {
   });
 
   return useMutation({
-    mutationFn: (task: MyTask & { doneColumnId: string }) =>
+    mutationFn: (task: CompletableTask) =>
       moveTask({
         taskId: task.id,
         toColumnId: task.doneColumnId,
@@ -57,10 +65,10 @@ export function useCompleteTask() {
       );
     },
     onError: () => toast({ tone: 'error', message: 'Không thể hoàn thành công việc' }),
-    onSuccess: (_result, task) =>
+    onSuccess: (moved, task) =>
       toast({
         message: `Đã hoàn thành: ${task.title}`,
-        action: { label: 'Hoàn tác', onClick: () => undo.mutate(task) },
+        action: { label: 'Hoàn tác', onClick: () => undo.mutate({ task, moved }) },
       }),
     onSettled: refresh,
   });

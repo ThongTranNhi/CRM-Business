@@ -5,7 +5,7 @@ import { useCurrentUser } from '@/features/auth';
 import { CreateTaskModal, TaskDrawer, TaskTrashModal, type BoardData } from '@/features/tasks';
 import { todayInVietnam } from '@/lib/format-date';
 import { hasFilters, matchesFilters } from '../board.utils';
-import { dashboardKeys } from '../hooks/dashboard-keys';
+import { BOARD_RELATED_KEYS } from '../hooks/board-related-keys';
 import { useBoardFilters } from '../hooks/useBoardFilters';
 import { useQuickAddTask } from '../hooks/useQuickAddTask';
 import { useTaskParam } from '../hooks/useTaskParam';
@@ -32,7 +32,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
   const [isTrashOpen, setTrashOpen] = useState(false);
   const { trashScope } = dashboard.viewer;
   const drawer = useTaskParam();
-  const relatedKeys = [dashboardKeys.all];
+  const relatedKeys = BOARD_RELATED_KEYS;
   const quickAdd = useQuickAddTask(dashboard, (title) => setForm({ title }));
   const canWrite = dashboard.viewer.canWrite;
   const avatars = new Map(dashboard.members.map((member) => [member.id, member.avatarUrl]));

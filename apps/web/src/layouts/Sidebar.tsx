@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { Icon } from '@/components/ui';
 import { useCan } from '@/features/auth';
-import { useOverdueCount } from '@/features/my-tasks';
+import { useOverdueCount } from '@/features/my-tasks/badge';
 import { cn } from '@/lib/cn';
 import { NAV_GROUPS, type NavItem } from './nav-items';
 

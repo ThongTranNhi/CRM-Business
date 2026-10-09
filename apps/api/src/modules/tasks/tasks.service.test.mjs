@@ -141,6 +141,29 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
     assert.equal(card.collaborators[0].fullName, 'Người xem');
     assert.ok(database.rpcCalls.some((path) => path.endsWith('crm_create_task')));
   });
+  await t.test('move returns the old slot so the UI can undo to the same place', async () => {
+    globalThis.fetch = fakeDatabase({
+      crm_work_access: access('super_admin'),
+      'select=column_id%2Cposition': [{ column_id: ids.column, position: 3 }],
+      'position=lt.3': [{ id: ids.other }],
+      'position=gt.3': [],
+      crm_move_task: {
+        id: ids.task,
+        columnId: ids.column,
+        status: 'done',
+        position: 1,
+        startedAt: null,
+        completedAt: '2026-10-09T01:00:00Z',
+        completedBy: ids.account,
+      },
+    }).fetch;
+    const moved = await service.moveTask(scopeAs('super_admin'), ids.task, moveInput);
+    assert.deepEqual(moved.from, {
+      columnId: ids.column,
+      previousTaskId: ids.other,
+      nextTaskId: null,
+    });
+  });
   await t.test(
     'project of another department → 422 PROJECT_NOT_IN_DEPARTMENT (BR-30)',
     async () => {

@@ -115,10 +115,13 @@ export async function updateTask(scope: RequestScope, taskId: string, input: Upd
 }
 
 /** BR-13 → BR-15: kéo thả lưu DB; position, completed_* do RPC tính. */
+/** Trả kèm `from` (chỗ cũ, đọc trước khi chuyển) để giao diện [Hoàn tác] về đúng vị trí. */
 export async function moveTask(scope: RequestScope, taskId: string, input: MoveTaskInput) {
   const access = await requireTaskAccess(scope, taskId);
   requireWrite(access, taskPermissions(access, access).canEdit);
-  return tasksRepository.moveTask(scope.env, scope.actor.id, { taskId, ...input });
+  const from = await boardRepository.findSlot(scope.env, taskId);
+  const moved = await tasksRepository.moveTask(scope.env, scope.actor.id, { taskId, ...input });
+  return { ...moved, from };
 }
 
 /** Người phụ trách hiện tại vẫn sửa được người phối hợp (canEdit). */

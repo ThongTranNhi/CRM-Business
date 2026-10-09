@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui';
 import { DeleteTaskDialog, type BoardData, type BoardTask } from '@/features/tasks';
 import { columnTasks } from '../board.utils';
-import { dashboardKeys } from '../hooks/dashboard-keys';
+import { BOARD_RELATED_KEYS } from '../hooks/board-related-keys';
 import { useBoardDrag } from '../hooks/useBoardDrag';
 import { useBoardMoves } from '../hooks/useBoardMoves';
 import { BoardColumn, type ColumnContext } from './BoardColumn';
@@ -91,7 +91,7 @@ export function BoardColumns(props: BoardColumnsProps) {
       <DeleteTaskDialog
         task={deleting}
         boardKey={props.boardKey}
-        relatedKeys={[dashboardKeys.all]}
+        relatedKeys={BOARD_RELATED_KEYS}
         onClose={() => setDeleting(null)}
       />
     </>
