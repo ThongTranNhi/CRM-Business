@@ -25,7 +25,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 15  | `20261007100000_task_trash.sql`                       | 07/10/2026                 |
 | 16  | `20261008090000_handover_writable_boards.sql`         | 08/10/2026                 |
 | 17  | `20261009090000_projects.sql`                         | 09/10/2026                 |
-| 18  | `20261010090000_projects_review_fixes.sql`            |                            |
+| 18  | `20261010090000_projects_review_fixes.sql`            | 09/10/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 `supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql` (tự ROLLBACK, thấy
