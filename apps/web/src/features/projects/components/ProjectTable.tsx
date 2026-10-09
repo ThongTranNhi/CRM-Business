@@ -9,6 +9,7 @@ const COLUMNS: TableColumn<ProjectSummary>[] = [
   {
     key: 'name',
     header: 'Dự án',
+    className: 'min-w-48',
     render: (project) => (
       <Link
         to={`/app/projects/${project.id}`}
@@ -27,13 +28,24 @@ const COLUMNS: TableColumn<ProjectSummary>[] = [
       </Link>
     ),
   },
-  { key: 'owner', header: 'Chủ dự án', render: (project) => project.owner?.fullName ?? '—' },
+  {
+    key: 'owner',
+    header: 'Chủ dự án',
+    className: 'whitespace-nowrap',
+    render: (project) => project.owner?.fullName ?? '—',
+  },
   {
     key: 'status',
     header: 'Trạng thái',
+    className: 'whitespace-nowrap',
     render: (project) => <ProjectStatusBadge project={project} />,
   },
-  { key: 'due', header: 'Hạn', render: (project) => formatIsoDate(project.dueDate) },
+  {
+    key: 'due',
+    header: 'Hạn',
+    className: 'whitespace-nowrap',
+    render: (project) => formatIsoDate(project.dueDate),
+  },
   {
     key: 'progress',
     header: 'Tiến độ',
