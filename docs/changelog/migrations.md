@@ -27,7 +27,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 17  | `20261009090000_projects.sql`                         | 09/10/2026                 |
 | 18  | `20261010090000_projects_review_fixes.sql`            | 09/10/2026                 |
 | 19  | `20261011090000_my_tasks.sql`                         | 09/10/2026                 |
-| 20  | `20261012090000_project_owner_handover.sql`           |                            |
+| 20  | `20261012090000_project_owner_handover.sql`           | 11/10/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 `supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql` (tự ROLLBACK, thấy
@@ -40,6 +40,13 @@ select name, applied_at from app_private.applied_migrations order by name;
 ```
 
 ## Nhật ký
+
+- 11/10/2026: đã áp `20261012090000_project_owner_handover.sql` trên project dev
+  `CRM-Local-company` (`umsabjhsemgsbrqmqjgv`, môi trường dev do chủ dự án xác nhận).
+  Bảng tracking ghi `2026-10-10 17:46:06.756748+00`, tương ứng 11/10/2026 giờ Việt Nam.
+  Đã chạy nguyên `supabase/tests/project_owner_handover.sql` và thêm một SELECT chỉ đọc sau
+  `ROLLBACK` để SQL Editor hiển thị kết quả: `project_owner_handover: đạt`.
+  Xác minh view `owned_writable_projects` tồn tại và không còn tài khoản thử có tiền tố `test-poh-`.
 
 - `20261012090000_project_owner_handover.sql` (Đợt 3 S1, BR-53): xoá nhân viên đang làm chủ dự án → người nhận
   bàn giao nhận quyền chủ dự án (view `owned_writable_projects` — dự án chưa lưu trữ, phòng chưa xoá); chủ mới
