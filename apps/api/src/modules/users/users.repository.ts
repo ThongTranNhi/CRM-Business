@@ -217,9 +217,16 @@ export const editEmployee = (
     errors: DIRECTORY_ERRORS,
   });
 
-/** Trả số việc đang mở (Dashboard còn ghi được) và số việc đã bàn giao (migration 20261008090000). */
+/**
+ * Trả số việc đang mở / dự án đang làm chủ (còn ghi được) và số đã bàn giao (migration 20261009090200).
+ */
 export const deleteEmployee = (env: Env, actorId: string, target: DeleteEmployeeTarget) =>
-  callRpc<{ openTaskCount: number; handedOverTaskCount: number }>(env, {
+  callRpc<{
+    openTaskCount: number;
+    handedOverTaskCount: number;
+    ownedProjectCount: number;
+    handedOverProjectCount: number;
+  }>(env, {
     name: 'crm_delete_employee',
     args: {
       actor_uuid: actorId,

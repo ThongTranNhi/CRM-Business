@@ -25,16 +25,22 @@ export interface DirectoryEmployee extends OwnProfile {
   managedDepartment: { id: string; name: string } | null;
 }
 
-/** GET /api/users/employees/:id: kèm số việc đang mở người này phụ trách (bàn giao khi xoá — BR-53). */
+/**
+ * GET /api/users/employees/:id: kèm số việc đang mở người này phụ trách và số dự án đang làm chủ (bàn giao
+ * khi xoá — BR-53).
+ */
 export interface EmployeeDetail extends DirectoryEmployee {
   openTaskCount: number;
+  ownedProjectCount: number;
 }
 
-/** Kết quả xoá: số việc đang mở lúc xoá và số việc đã bàn giao. */
+/** Kết quả xoá: số việc đang mở / dự án đang làm chủ lúc xoá và số đã bàn giao. */
 export interface DeleteEmployeeResult {
   deleted: true;
   openTaskCount: number;
   handedOverTaskCount: number;
+  ownedProjectCount: number;
+  handedOverProjectCount: number;
 }
 
 export interface DeleteEmployeeInput {

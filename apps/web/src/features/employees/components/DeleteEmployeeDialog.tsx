@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog, useToast } from '@/components/ui';
 import { errorMessage, hasErrorCode } from '@/lib/api-client';
 import { useDeleteEmployee, useRestoreEmployee } from '../hooks/useEmployeeMutations';
+import { handedOverText, handoverScopeText } from '../employees.utils';
 import type { EmployeeDetail } from '../types';
 import { EmployeePicker, type PickedEmployee } from './EmployeePicker';
 
@@ -12,12 +13,16 @@ interface DeleteEmployeeDialogProps {
 }
 
 /** Lỗi gắn với ô người nhận bàn giao: hiện ngay dưới ô (kèm toast). */
-const HANDOVER_ERRORS = ['HANDOVER_EMPLOYEE_NOT_IN_BOARD', 'HANDOVER_EMPLOYEE_NOT_FOUND'];
+const HANDOVER_ERRORS = [
+  'HANDOVER_EMPLOYEE_NOT_IN_BOARD',
+  'HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE',
+  'HANDOVER_EMPLOYEE_NOT_FOUND',
+];
 
 /**
  * BR-53: xoá mềm — khoá tài khoản, thu hồi phiên, ẩn khỏi danh sách và ô chọn người. Còn việc đang mở
- * thì chọn người nhận bàn giao (tuỳ chọn, mặc định người cùng phòng); bỏ qua → việc giữ nguyên, thẻ
- * hiện "Đã nghỉ".
+ * hoặc đang làm chủ dự án thì chọn người nhận bàn giao (tuỳ chọn, mặc định người cùng phòng); bỏ qua →
+ * việc / dự án giữ nguyên, hiện "Đã nghỉ".
  */
 export function DeleteEmployeeDialog({ employee, onClose }: DeleteEmployeeDialogProps) {
   const navigate = useNavigate();
@@ -36,10 +41,7 @@ export function DeleteEmployeeDialog({ employee, onClose }: DeleteEmployeeDialog
         handoverEmployeeId: receiver?.id ?? null,
       });
       navigate('/app/employees', { replace: true });
-      const handedOver =
-        result.handedOverTaskCount > 0 && receiver
-          ? `, bàn giao ${result.handedOverTaskCount} việc cho ${receiver.fullName}`
-          : '';
+      const handedOver = receiver ? handedOverText(result, receiver.fullName) : '';
       toast({
         message: `Đã xoá nhân viên ${employee.fullName}${handedOver}`,
         action: { label: 'Hoàn tác', onClick: () => void restore(employee.id) },
@@ -81,7 +83,7 @@ export function DeleteEmployeeDialog({ employee, onClose }: DeleteEmployeeDialog
           />
         </>
       )}
-      {employee.openTaskCount > 0 && (
+      {(employee.openTaskCount > 0 || employee.ownedProjectCount > 0) && (
         <HandoverSection
           employee={employee}
           receiver={receiver}
@@ -111,8 +113,8 @@ function HandoverSection({ employee, receiver, error, onChange }: HandoverSectio
   return (
     <>
       <p className="rounded-lg bg-warning-50 px-3 py-2 text-warning-800">
-        Nhân viên này đang phụ trách {employee.openTaskCount} việc chưa xong. Chọn người nhận để bàn
-        giao tất cả, hoặc bỏ qua — việc giữ nguyên và thẻ hiện nhãn "Đã nghỉ".
+        Nhân viên này đang {handoverScopeText(employee)}. Chọn người nhận để bàn giao tất cả, hoặc
+        bỏ qua — việc và dự án giữ nguyên, hiện nhãn "Đã nghỉ".
       </p>
       <EmployeePicker
         label="Người nhận bàn giao (tuỳ chọn)"

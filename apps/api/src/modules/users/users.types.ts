@@ -31,9 +31,10 @@ export interface DirectoryEmployee extends Profile {
   managedDepartment: { id: string; name: string } | null;
 }
 
-/** Hồ sơ chi tiết: kèm số việc đang mở người này phụ trách (hộp xoá nhân viên — BR-53). */
+/** Hồ sơ chi tiết: kèm số việc đang mở và số dự án người này đang làm chủ (hộp xoá nhân viên — BR-53). */
 export interface EmployeeDetail extends DirectoryEmployee {
   openTaskCount: number;
+  ownedProjectCount: number;
 }
 
 export interface DeleteEmployeeTarget {

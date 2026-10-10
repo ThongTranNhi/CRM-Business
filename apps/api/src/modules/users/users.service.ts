@@ -25,6 +25,7 @@ import type {
   ProfileUpdate,
 } from './users.types';
 import { setLocalPassword } from '../auth/auth.service';
+import { countOwnedProjects } from '../projects/projects.service';
 import { countOpenTasks } from '../tasks/tasks.service';
 
 const AVATAR_BUCKET = 'profile-avatars';
@@ -48,18 +49,19 @@ async function loadEmployee(env: Env, employeeId: string): Promise<DirectoryEmpl
   return { ...employee, avatarUrl: avatarUrls.get(employee.id) ?? null };
 }
 
-/** GET chi tiết: kèm số việc đang mở để hộp thoại xoá nêu số việc cần bàn giao (BR-53). */
+/** GET chi tiết: kèm số việc đang mở, số dự án làm chủ để hộp thoại xoá nêu cần bàn giao gì (BR-53). */
 export async function getEmployeeDetail(
   env: Env,
   actorId: string,
   employeeId: string,
 ): Promise<EmployeeDetail> {
   await requireAdmin(env, actorId);
-  const [employee, openTaskCount] = await Promise.all([
+  const [employee, openTaskCount, ownedProjectCount] = await Promise.all([
     loadEmployee(env, employeeId),
     countOpenTasks(env, employeeId),
+    countOwnedProjects(env, employeeId),
   ]);
-  return { ...employee, openTaskCount };
+  return { ...employee, openTaskCount, ownedProjectCount };
 }
 export async function getDepartmentOptions(env: Env, actorId: string) {
   await requireAdmin(env, actorId);
@@ -87,11 +89,11 @@ export async function updateEmployee(
 }
 /**
  * BR-53: xoá mềm. RPC chặn tự xoá, xoá Super Admin; khoá tài khoản, thu hồi phiên; có người nhận thì
- * bàn giao MỌI việc đang mở trong cùng giao dịch (sai một việc → không bàn giao việc nào).
+ * bàn giao MỌI việc đang mở và quyền chủ MỌI dự án trong cùng giao dịch (sai một chỗ → không bàn giao gì).
  */
 export async function deleteEmployee(env: Env, actorId: string, target: DeleteEmployeeTarget) {
   await requireAdmin(env, actorId);
-  // RPC trả số việc đang mở (Dashboard còn ghi được) và số việc đã bàn giao thật.
+  // RPC trả số việc đang mở / dự án đang làm chủ (còn ghi được) và số đã bàn giao thật.
   const result = await deleteEmployeeRecord(env, actorId, target);
   return { deleted: true, ...result };
 }

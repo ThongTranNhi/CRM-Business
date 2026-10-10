@@ -9,8 +9,9 @@ GET `/api/users/employees/department-options`: phòng ban chưa xoá (view `acti
 GET `/api/users/employees/:id`: hồ sơ chi tiết (kể cả người đã xoá), signed avatar URL, `archivedAt`,
 `managedDepartment: { id, name } | null` (phòng mà người này đang làm trưởng phòng), `openTaskCount` (số việc
 chưa xong, chưa lưu trữ người này đang phụ trách trên Dashboard **còn ghi được** — không tính phòng đã xoá,
-BR-06; view `open_assigned_tasks` — hộp xoá nhân viên hiện "đang phụ trách N việc chưa xong"). PATCH, khôi
-phục, đặt lại mật khẩu không đếm việc.
+BR-06; view `open_assigned_tasks` — hộp xoá nhân viên hiện "đang phụ trách N việc chưa xong"),
+`ownedProjectCount` (số dự án chưa lưu trữ, phòng chưa xoá người này đang làm chủ — view `owned_writable_projects`).
+PATCH, khôi phục, đặt lại mật khẩu không đếm việc.
 PATCH `/api/users/employees/:id`: fullName, jobTitle, departmentId, status (active/disabled).
 Đổi phòng của một trưởng phòng → phòng cũ thành "Chưa có trưởng phòng"; phòng mới phải chưa bị xoá.
 POST `/api/users/employees/:id/reset-password`: `{password}` 12–128 ký tự; tài khoản
@@ -22,12 +23,17 @@ phòng → phòng thành "Chưa có trưởng phòng" hoặc nhận `newManagerI
 đang mở trên Dashboard còn ghi được chuyển (việc ở Dashboard chỉ đọc giữ nguyên) cho người đó trong cùng giao dịch (activity `assignee_changed`; người nhận đang phối hợp thì gỡ
 khỏi phối hợp); người nhận phải thuộc phòng / được mời vào board của **từng** việc, sai một việc → không bàn giao
 việc nào và không xoá (`422 HANDOVER_EMPLOYEE_NOT_IN_BOARD`, câu báo nêu tối đa 3 việc kèm Dashboard,
-`details.blockedTasks: [{ taskId, title, dashboardName }]`). Bỏ qua → việc giữ nguyên, thẻ hiện "Đã nghỉ".
-Trả `{ deleted: true, openTaskCount, handedOverTaskCount }` — cả hai số do RPC đếm trong giao dịch
-(migration 20261008090000). Lỗi khác: `422 CANNOT_DELETE_SELF`,
+`details.blockedTasks: [{ taskId, title, dashboardName }]`). Cùng người nhận cũng nhận quyền **chủ dự án** của
+mọi dự án còn ghi được người bị xoá đang làm chủ (activity dự án `updated` kèm `ownerId`; người nhận đang là
+thành viên thì rời danh sách thành viên); người nhận phải hợp lệ với phòng của **từng** dự án (Q6), sai một dự án
+→ không bàn giao gì và không xoá (`422 HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE`, câu báo nêu tối đa 3 dự án kèm
+phòng, `details.blockedProjects: [{ projectId, name, departmentName }]`). Bỏ qua → việc và dự án giữ nguyên,
+hiện "Đã nghỉ".
+Trả `{ deleted: true, openTaskCount, handedOverTaskCount, ownedProjectCount, handedOverProjectCount }` — các
+số do RPC đếm trong giao dịch (migration 20261012090000). Lỗi khác: `422 CANNOT_DELETE_SELF`,
 `422 CANNOT_DELETE_ADMIN`, `422 INVALID_HANDOVER_EMPLOYEE` (người nhận là chính người bị xoá),
 `422 HANDOVER_EMPLOYEE_NOT_FOUND` (người nhận đã nghỉ). Audit `employee.delete` (gồm `handoverEmployeeId`,
-`handedOverTaskCount`).
+`handedOverTaskCount`, `ownedProjectCount`, `handedOverProjectCount`).
 POST `/api/users/employees/:id/restore` — trả tài khoản về trạng thái trước khi xoá (đã khoá thì vẫn khoá;
 xoá trước migration 20261006090400 thì `active`), không gán lại chức trưởng phòng;
 phòng cũ đã xoá thì để trống. Mã nhân viên đã bị người khác dùng → `409 EMPLOYEE_CODE_EXISTS`

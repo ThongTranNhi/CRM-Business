@@ -194,6 +194,42 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
       );
     },
   );
+  await t.test(
+    'handover receiver not eligible for an owned project → 422 naming the blocked projects',
+    async () => {
+      const blocked = [
+        { projectId: 'p-1', name: 'A', departmentName: 'Kinh doanh' },
+        { projectId: 'p-2', name: 'B', departmentName: 'Kinh doanh' },
+        { projectId: 'p-3', name: 'C', departmentName: 'Kinh doanh' },
+        { projectId: 'p-4', name: 'D', departmentName: 'Kinh doanh' },
+      ];
+      globalThis.fetch = async (url) =>
+        String(url).includes('/rpc/crm_delete_employee')
+          ? Response.json(
+              {
+                code: 'P0001',
+                message: 'HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE',
+                details: JSON.stringify(blocked),
+              },
+              { status: 400 },
+            )
+          : Response.json([admin]);
+      await assert.rejects(
+        () =>
+          service.deleteEmployee(env, userId, {
+            employeeId: 'employee-2',
+            newManagerId: null,
+            handoverEmployeeId: 'employee-4',
+          }),
+        (error) =>
+          error.code === 'HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE' &&
+          error.status === 422 &&
+          error.message.includes('4 dự án') &&
+          error.message.includes('và 1 dự án khác') &&
+          error.details.blockedProjects.length === 4,
+      );
+    },
+  );
   await t.test('updating a profile does not count open tasks', async () => {
     globalThis.fetch = async (url) => {
       assert.ok(!String(url).includes('open_assigned_tasks'), 'Không đếm việc khi chỉ sửa hồ sơ');
