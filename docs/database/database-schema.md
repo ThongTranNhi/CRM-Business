@@ -54,6 +54,10 @@ department_uuid, task_priority, project_uuid, search)` → jsonb `{ today, week,
   `project_summaries` (task_total / task_done / task_overdue theo giờ Việt Nam, member_count, dashboard_id,
   board_id), `project_activity_feed` (audit_logs `resource_type = 'projects'`). Activity task thêm
   `project_changed`. RLS bật, chỉ `service_role` đọc; ghi qua RPC.
+- Migration `20261012090000_project_owner_handover.sql` (BR-53): view `owned_writable_projects` (dự án chưa lưu
+  trữ, phòng chưa xoá, có chủ — số đếm và bàn giao, chỉ `service_role`); `crm_delete_employee` chuyển quyền chủ
+  dự án cho người nhận bàn giao (người nhận không đủ điều kiện Q6 → `HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE`,
+  `detail` JSON liệt kê dự án). Kiểm tra: `supabase/tests/project_owner_handover.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 

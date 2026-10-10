@@ -175,6 +175,10 @@ export async function listEligibleForProject(scope: RequestScope, projectId: str
   return withAvatars(scope.env, people);
 }
 
+/** Cho module users: số dự án còn ghi được nhân viên đang làm chủ (hộp xoá nhân viên — BR-53). */
+export const countOwnedProjects = (env: Env, employeeId: string) =>
+  projectsRepository.countOwnedProjects(env, employeeId);
+
 /** Cho module department-dashboards: ô "Dự án" của task (dự án chưa lưu trữ cùng phòng, BR-30). */
 export const listProjectOptions = (env: Env, departmentId: string) =>
   projectsRepository.listProjectOptions(env, departmentId);

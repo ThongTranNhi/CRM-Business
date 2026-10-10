@@ -133,6 +133,23 @@ export async function listProjectIdsOf(env: Env, employeeId: string): Promise<st
   return rows.map((row) => row.project_id);
 }
 
+/**
+ * Số dự án còn ghi được một nhân viên đang làm chủ — BR-53 bàn giao khi xoá. View owned_writable_projects
+ * (20261012090000) bỏ dự án đã lưu trữ và dự án của phòng đã xoá.
+ */
+export async function countOwnedProjects(env: Env, employeeId: string): Promise<number> {
+  const params = new URLSearchParams({
+    select: 'id',
+    owner_employee_id: `eq.${employeeId}`,
+    limit: '1',
+  });
+  const { total } = await supabaseList<{ id: string }>(
+    env,
+    `/rest/v1/owned_writable_projects?${params}`,
+  );
+  return total;
+}
+
 /** Ô "Dự án" khi tạo / sửa task: dự án chưa lưu trữ của phòng (BR-30). */
 export function listProjectOptions(env: Env, departmentId: string) {
   const params = new URLSearchParams({
