@@ -4,6 +4,7 @@ import { useAddComment, useComments } from '../hooks/useTaskFeeds';
 import { uniqueById } from '../task-detail.utils';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
+import type { MemberOption } from '../types';
 import { DrawerSection, SectionError } from './DrawerSection';
 
 interface TaskCommentsSectionProps {
@@ -11,9 +12,11 @@ interface TaskCommentsSectionProps {
   canComment: boolean;
   avatarOf: (employeeId: string | null) => string | null;
   relatedKeys: readonly QueryKey[];
+  /** Thành viên board: gợi ý @tên (người được nhắc nhận thông báo). */
+  members: MemberOption[];
 }
 
-/** Bình luận: mới nhất dưới cùng, "Xem bình luận cũ hơn" ở trên, trả lời 1 cấp. @mention: Đợt 3. */
+/** Bình luận: mới nhất dưới cùng, "Xem bình luận cũ hơn" ở trên, trả lời 1 cấp, @nhắc tên. */
 export function TaskCommentsSection(props: TaskCommentsSectionProps) {
   const comments = useComments(props.taskId);
   const add = useAddComment(props.taskId, props.relatedKeys);
@@ -21,7 +24,8 @@ export function TaskCommentsSection(props: TaskCommentsSectionProps) {
   const list = uniqueById(comments.data?.pages ?? []).reverse();
   const total = comments.data?.pages[0]?.meta.total ?? 0;
   const pendingParent = add.isPending ? add.variables.parentId : undefined;
-  const reply = (parentId: string) => (body: string) => add.mutateAsync({ body, parentId });
+  const send = (parentId: string | null) => (body: string, mentionIds: string[]) =>
+    add.mutateAsync({ body, parentId, mentionIds });
 
   function renderList() {
     if (comments.isPending) return <Skeleton className="h-20 w-full" />;
@@ -45,7 +49,8 @@ export function TaskCommentsSection(props: TaskCommentsSectionProps) {
               key={comment.id}
               comment={comment}
               avatarOf={props.avatarOf}
-              onReply={props.canComment ? reply(comment.id) : null}
+              onReply={props.canComment ? send(comment.id) : null}
+              members={props.members}
               isReplying={pendingParent === comment.id}
             />
           ))}
@@ -61,8 +66,9 @@ export function TaskCommentsSection(props: TaskCommentsSectionProps) {
         <CommentComposer
           label="Viết bình luận"
           placeholder="Viết bình luận…"
+          members={props.members}
           isPending={pendingParent === null}
-          onSubmit={(body) => add.mutateAsync({ body, parentId: null })}
+          onSubmit={send(null)}
         />
       )}
     </DrawerSection>

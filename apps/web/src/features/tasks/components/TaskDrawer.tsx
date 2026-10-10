@@ -111,6 +111,7 @@ function TaskDetailView({ task, board, onRequestDelete }: TaskDetailViewProps) {
         canComment={task.permissions.canComment}
         avatarOf={avatarOf}
         relatedKeys={board.relatedKeys}
+        members={board.members}
       />
       <TaskActivitySection taskId={task.id} />
     </div>

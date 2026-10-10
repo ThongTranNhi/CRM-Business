@@ -246,7 +246,9 @@ Giao diện đảo lại để mới nhất nằm dưới, "Xem bình luận cũ
 }
 ```
 
-POST `{ "body": "1 → 5000 ký tự", "parentId": "uuid | null" }` → `201 { "id" }`. Quyền: ghi được board
+POST `{ "body": "1 → 5000 ký tự", "parentId": "uuid | null", "mentionIds": ["employee-uuid"] }` → `201 { "id" }`.
+`mentionIds` (tuỳ chọn, tối đa 20): nhân viên được @nhắc — người thuộc board của task nhận thông báo
+`comment_mention`, người khác bị bỏ qua (Đợt 3 S3, `notifications.md`). Quyền: ghi được board
 (`permissions.canComment`). Lỗi: `400 COMMENT_REPLY_TOO_DEEP` (trả lời vào một trả lời), `404 COMMENT_NOT_FOUND`.
 Bình luận không ghi activity (activity-log.md). @mention: Đợt 3.
 

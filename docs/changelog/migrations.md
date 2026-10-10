@@ -28,10 +28,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 18  | `20261010090000_projects_review_fixes.sql`            | 09/10/2026                 |
 | 19  | `20261011090000_my_tasks.sql`                         | 09/10/2026                 |
 | 20  | `20261012090000_project_owner_handover.sql`           | 11/10/2026                 |
+| 21  | `20261013090000_notifications.sql`                    |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -41,6 +42,12 @@ select name, applied_at from app_private.applied_migrations order by name;
 
 ## Nhật ký
 
+- `20261013090000_notifications.sql` (Đợt 3 S3): bảng `notifications`, view `notification_feed`; trigger trên
+  `task_activities` ghi thông báo giao việc / thêm người phối hợp cùng giao dịch; `crm_add_comment` nhận
+  `mention_uuids` (DROP chữ ký cũ); RPC `crm_generate_due_notifications` (Cron Trigger 08:00 giờ Việt Nam, không
+  tạo trùng) và `crm_mark_notifications_read`. **Áp migration trước khi deploy API**: API mới gửi
+  `mention_uuids` và đọc `notification_feed`; API cũ vẫn chạy sau khi áp (tham số mới có mặc định). Kiểm tra:
+  `supabase/tests/notifications.sql`.
 - 11/10/2026: đã áp `20261012090000_project_owner_handover.sql` trên project dev
   `CRM-Local-company` (`umsabjhsemgsbrqmqjgv`, môi trường dev do chủ dự án xác nhận).
   Bảng tracking ghi `2026-10-10 17:46:06.756748+00`, tương ứng 11/10/2026 giờ Việt Nam.

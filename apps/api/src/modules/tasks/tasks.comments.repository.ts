@@ -67,6 +67,7 @@ export const addComment = (env: Env, actorId: string, taskId: string, input: Add
       task_uuid: taskId,
       comment_body: input.body,
       parent_uuid: input.parentId,
+      mention_uuids: input.mentionIds,
     },
     errors: WORK_ERRORS,
   });

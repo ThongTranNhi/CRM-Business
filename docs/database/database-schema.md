@@ -58,6 +58,14 @@ department_uuid, task_priority, project_uuid, search)` → jsonb `{ today, week,
   trữ, phòng chưa xoá, có chủ — số đếm và bàn giao, chỉ `service_role`); `crm_delete_employee` chuyển quyền chủ
   dự án cho người nhận bàn giao (người nhận không đủ điều kiện Q6 → `HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE`,
   `detail` JSON liệt kê dự án). Kiểm tra: `supabase/tests/project_owner_handover.sql`.
+- Migration `20261013090000_notifications.sql` (Đợt 3 S3): `notifications` (recipient_account_id,
+  actor_account_id — null = hệ thống, type `task_assigned|task_collaborator_added|comment_mention|task_due_soon|
+task_overdue`, task_id, comment_id, dedupe_key, read_at); index theo người nhận, partial index chưa đọc, unique
+  `(recipient_account_id, type, task_id, dedupe_key)` khi có dedupe_key (cron không tạo trùng). Trigger
+  `task_activities_notify` (AFTER INSERT trên `task_activities`: 'assigned', 'assignee_changed',
+  'collaborators_changed') ghi thông báo cùng giao dịch. `crm_add_comment` thêm `mention_uuids` (bỏ chữ ký 4 tham
+  số). RPC `crm_generate_due_notifications`, `crm_mark_notifications_read`. View `notification_feed`. RLS bật, chỉ
+  `service_role` đọc. Kiểm tra: `supabase/tests/notifications.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 

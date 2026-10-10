@@ -114,7 +114,10 @@ export const updateChecklistItemSchema = z
     message: 'Không có thay đổi nào',
   });
 
-/** Khớp check task_comments_body_check (1 → 5000 ký tự). parentId: trả lời 1 cấp. */
+/**
+ * Khớp check task_comments_body_check (1 → 5000 ký tự). parentId: trả lời 1 cấp. mentionIds: nhân viên được
+ * @nhắc (RPC chỉ báo người thuộc board — Đợt 3 S3).
+ */
 export const addCommentSchema = z
   .object({
     body: z
@@ -123,6 +126,7 @@ export const addCommentSchema = z
       .min(1, 'Vui lòng nhập bình luận')
       .max(5000, 'Bình luận tối đa 5000 ký tự'),
     parentId: z.uuid().nullable().default(null),
+    mentionIds: z.array(z.uuid()).max(20).default([]),
   })
   .strict();
 

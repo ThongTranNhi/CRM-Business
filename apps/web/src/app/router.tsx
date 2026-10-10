@@ -47,6 +47,9 @@ const ProjectDetailPage = lazy(() =>
 const MyTasksPage = lazy(() =>
   import('@/features/my-tasks').then((m) => ({ default: m.MyTasksPage })),
 );
+const NotificationsPage = lazy(() =>
+  import('@/features/notifications').then((m) => ({ default: m.NotificationsPage })),
+);
 const BoardPage = lazy(() =>
   import('@/features/department-dashboards').then((m) => ({ default: m.BoardPage })),
 );
@@ -73,7 +76,6 @@ const unfinishedPages: { path: string; title: string; permission?: Permission }[
       permission: item.permission,
     })),
   { path: 'payroll/:periodId', title: 'Chi tiết kỳ lương', permission: 'payroll.manage' },
-  { path: 'notifications', title: 'Thông báo' },
 ];
 
 const appRoutes: RouteObject[] = [
@@ -87,6 +89,7 @@ const appRoutes: RouteObject[] = [
   { path: 'workspace', element: page(<WorkspacePage />) },
   { path: 'workspace/:dashboardId', element: page(<BoardPage />) },
   { path: 'my-tasks', element: page(<MyTasksPage />) },
+  { path: 'notifications', element: page(<NotificationsPage />) },
   { path: 'projects', element: page(<ProjectListPage />) },
   { path: 'projects/:id', element: page(<ProjectDetailPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>

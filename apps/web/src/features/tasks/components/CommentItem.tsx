@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Avatar, Icon } from '@/components/ui';
 import { formatDateTime, formatRelativeTime } from '@/lib/format-date';
-import type { TaskComment, TaskReply } from '../types';
+import type { MemberOption, TaskComment, TaskReply } from '../types';
 import { CommentComposer } from './CommentComposer';
 
 type AvatarOf = (employeeId: string | null) => string | null;
@@ -10,12 +10,14 @@ interface CommentItemProps {
   comment: TaskComment;
   avatarOf: AvatarOf;
   /** null: người xem không bình luận được → không có [Trả lời]. */
-  onReply: ((body: string) => Promise<unknown>) | null;
+  onReply: ((body: string, mentionIds: string[]) => Promise<unknown>) | null;
   isReplying: boolean;
+  /** Thành viên board: gợi ý @tên trong ô trả lời. */
+  members: MemberOption[];
 }
 
 /** Bình luận gốc + các trả lời (1 cấp, thụt vào), [Trả lời] mở ô viết ngay dưới. */
-export function CommentItem({ comment, avatarOf, onReply, isReplying }: CommentItemProps) {
+export function CommentItem({ comment, avatarOf, onReply, isReplying, members }: CommentItemProps) {
   const [isOpen, setOpen] = useState(false);
   return (
     <li className="space-y-3">
@@ -32,11 +34,12 @@ export function CommentItem({ comment, avatarOf, onReply, isReplying }: CommentI
               <CommentComposer
                 label={`Trả lời ${comment.author.fullName}`}
                 placeholder="Viết trả lời…"
+                members={members}
                 isPending={isReplying}
                 autoFocus
                 onCancel={() => setOpen(false)}
-                onSubmit={async (body) => {
-                  await onReply(body);
+                onSubmit={async (body, mentionIds) => {
+                  await onReply(body, mentionIds);
                   setOpen(false);
                 }}
               />

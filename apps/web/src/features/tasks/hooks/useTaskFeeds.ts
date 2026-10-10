@@ -38,8 +38,8 @@ export function useAddComment(taskId: string, relatedKeys: readonly QueryKey[]) 
     ...relatedKeys,
   ]);
   return useMutation({
-    mutationFn: ({ body, parentId }: { body: string; parentId: string | null }) =>
-      addComment(taskId, body, parentId),
+    mutationFn: (comment: { body: string; parentId: string | null; mentionIds: string[] }) =>
+      addComment(taskId, comment),
     onSuccess: refresh,
     onError: (error) => toast({ tone: 'error', message: errorMessage(error) }),
   });

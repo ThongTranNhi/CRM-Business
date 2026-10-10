@@ -7,7 +7,7 @@ import type { CommentRow } from './tasks.comments.repository';
 import type { AddCommentInput, TaskComment, TaskReply } from './tasks.types';
 
 // Bình luận (task-management.md): ai xem được task thì đọc; ghi được board thì bình luận (canComment,
-// BR-41). Trả lời 1 cấp. @mention: Đợt 3.
+// BR-41). Trả lời 1 cấp. @mention: người được nhắc nhận thông báo (RPC, Đợt 3 S3).
 
 export async function listComments(
   scope: RequestScope,

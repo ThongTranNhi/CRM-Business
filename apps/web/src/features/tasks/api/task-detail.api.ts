@@ -44,8 +44,11 @@ export const getComments = (taskId: string, page: number) =>
     withQuery(`/api/tasks/${taskId}/comments`, { page, pageSize: FEED_PAGE_SIZE }),
   );
 
-export const addComment = (taskId: string, body: string, parentId: string | null) =>
-  apiRequest<{ id: string }>(`/api/tasks/${taskId}/comments`, json('POST', { body, parentId }));
+/** mentionIds: nhân viên được @nhắc → nhận thông báo (Đợt 3 S3). */
+export const addComment = (
+  taskId: string,
+  comment: { body: string; parentId: string | null; mentionIds: string[] },
+) => apiRequest<{ id: string }>(`/api/tasks/${taskId}/comments`, json('POST', comment));
 
 export const getActivities = (taskId: string, page: number) =>
   apiPage<TaskActivity>(
