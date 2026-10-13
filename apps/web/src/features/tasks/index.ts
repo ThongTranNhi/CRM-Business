@@ -1,4 +1,5 @@
 export { CreateTaskModal } from './components/CreateTaskModal';
+export { CreateTaskForm } from './components/CreateTaskForm';
 export { DeleteTaskDialog } from './components/DeleteTaskDialog';
 export { MemberMultiSelect } from './components/MemberMultiSelect';
 export { MoveToColumnMenu } from './components/MoveToColumnMenu';
