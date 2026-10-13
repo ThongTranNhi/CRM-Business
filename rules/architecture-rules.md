@@ -51,7 +51,7 @@ modules/<module>/  .routes .controller .service .repository .schema .types
 
 | Nhóm     | Module                                                                                                                                              |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Hệ thống | auth, users, settings, audit-log, notifications                                                                                                     |
+| Hệ thống | auth, users, settings, audit-log, notifications, search                                                                                             |
 | Work     | workspace, department-dashboards, tasks, projects, my-tasks, workload, overview, reports                                                            |
 | HRM      | employees, departments, org-chart, attendance, leave, payroll, kpi, performance, recruitment, onboarding, offboarding, assets, documents, approvals |
 

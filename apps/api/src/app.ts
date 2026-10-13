@@ -10,6 +10,7 @@ import { departmentDashboardRoutes } from './modules/department-dashboards/depar
 import { departmentRoutes } from './modules/departments/departments.routes';
 import { notificationRoutes } from './modules/notifications/notifications.routes';
 import { projectRoutes } from './modules/projects/projects.routes';
+import { searchRoutes } from './modules/search/search.routes';
 import { boardRoutes, taskRoutes } from './modules/tasks/tasks.routes';
 import { userRoutes } from './modules/users/users.routes';
 import { publicAuthRoutes, privateAuthRoutes } from './modules/auth/auth.routes';
@@ -39,6 +40,7 @@ app.route('/api/boards', boardRoutes);
 app.route('/api/tasks', taskRoutes);
 app.route('/api/projects', projectRoutes);
 app.route('/api/notifications', notificationRoutes);
+app.route('/api/search', searchRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

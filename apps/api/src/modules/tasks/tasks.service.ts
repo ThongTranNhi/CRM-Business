@@ -11,6 +11,7 @@ import { taskNotFound } from '../../lib/work-errors';
 import { requireBoardAccess, requireTaskAccess, requireWrite } from './tasks.access';
 import * as boardRepository from './tasks.board.repository';
 import * as tasksRepository from './tasks.repository';
+import * as searchRepository from './tasks.search.repository';
 import * as trashRepository from './tasks.trash.repository';
 import type {
   BoardData,
@@ -33,6 +34,10 @@ export const getBoardAccess = (env: Env, userId: string, boardId: string) =>
 /** Cho module users (BR-53): số việc đang mở người này phụ trách — hộp xoá nhân viên, bàn giao. */
 export const countOpenTasks = (env: Env, employeeId: string) =>
   tasksRepository.countOpenTasks(env, employeeId);
+
+/** Cho module search: tìm task theo tên trên các board người xem được thấy (search tự lấy danh sách board). */
+export const searchTaskTitles = (env: Env, boardIds: string[], q: string, limit: number) =>
+  searchRepository.searchTaskTitles(env, boardIds, q, limit);
 
 /** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
 const relationTo = (

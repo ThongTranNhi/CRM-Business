@@ -144,3 +144,14 @@ export async function createDashboard(scope: RequestScope, input: CreateDashboar
   if (!result.created) throw dashboardAlreadyExists(result.dashboardId);
   return getDashboard(scope, result.dashboardId);
 }
+
+/** Cho module search: board người xem được thấy (cùng quy tắc với Workspace — BR-41, BR-06). */
+export async function listVisibleBoards({ env, actor }: RequestScope) {
+  const includeAll = actor.role === 'super_admin' || actor.role === 'hr_admin';
+  const summaries = await dashboardsRepository.listVisible(env, actor.id, includeAll);
+  return summaries.map((summary) => ({
+    dashboardId: summary.id,
+    dashboardName: summary.name,
+    boardId: summary.boardId,
+  }));
+}
