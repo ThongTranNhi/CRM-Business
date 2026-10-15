@@ -66,6 +66,11 @@ task_overdue`, task_id, comment_id, dedupe_key, read_at); index theo người nh
   'collaborators_changed') ghi thông báo cùng giao dịch. `crm_add_comment` thêm `mention_uuids` (bỏ chữ ký 4 tham
   số). RPC `crm_generate_due_notifications`, `crm_mark_notifications_read`. View `notification_feed`. RLS bật, chỉ
   `service_role` đọc. Kiểm tra: `supabase/tests/notifications.sql`.
+- Migration `20261016090000_workload.sql` (Đợt 4 S1): view `employee_workload` (employee_id, full_name,
+  department_id / name, dashboard_id của phòng nhân viên; todo_count, in_progress_count, open_count, overdue_count,
+  done_30d_count). Chỉ tính task nhân viên là **người phụ trách chính**, mọi Dashboard, bỏ task lưu trữ và phòng đã
+  xoá; quá hạn và 30 ngày theo ngày Việt Nam. Nhân viên đã xoá không có dòng. Chỉ `service_role` đọc. Kiểm tra:
+  `supabase/tests/workload.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 

@@ -28,11 +28,12 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 18  | `20261010090000_projects_review_fixes.sql`            | 09/10/2026                 |
 | 19  | `20261011090000_my_tasks.sql`                         | 09/10/2026                 |
 | 20  | `20261012090000_project_owner_handover.sql`           | 11/10/2026                 |
-| 21  | `20261013090000_notifications.sql`                    |                            |
+| 21  | `20261013090000_notifications.sql`                    | 14/10/2026                 |
+| 22  | `20261016090000_workload.sql`                         |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -41,6 +42,13 @@ select name, applied_at from app_private.applied_migrations order by name;
 ```
 
 ## Nhật ký
+
+- `20261016090000_workload.sql` (Đợt 4 S1, Khối lượng việc): view `employee_workload` — mỗi nhân viên chưa xoá một
+  dòng, đếm việc người đó là **người phụ trách chính** trên mọi Dashboard (không cộng việc phối hợp; bỏ task lưu
+  trữ và task của phòng đã xoá): `todo_count`, `in_progress_count`, `open_count`, `overdue_count`, `done_30d_count`
+  (ngày Việt Nam), kèm `dashboard_id` của phòng nhân viên. Chỉ thêm view, không đổi bảng; dùng index có sẵn
+  `tasks_assignee_idx`. Kiểm tra file trước (`20261013090000`) đã chạy. Áp trước khi deploy API (`/api/workload`
+  đọc view này). Kiểm tra: `supabase/tests/workload.sql`.
 
 - `20261013090000_notifications.sql` (Đợt 3 S3): bảng `notifications`, view `notification_feed`; trigger trên
   `task_activities` ghi thông báo giao việc / thêm người phối hợp cùng giao dịch; `crm_add_comment` nhận
