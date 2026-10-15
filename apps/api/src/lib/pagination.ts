@@ -8,12 +8,16 @@ export const paginationSchema = z.object({
 
 export type Pagination = z.infer<typeof paginationSchema>;
 
-/** `?q=`: bỏ các ký tự mang nghĩa đặc biệt trong bộ lọc PostgREST để không ghép được bộ lọc khác. */
+/**
+ * `?q=` cho `ilike`: bỏ ký tự mang nghĩa đặc biệt trong cú pháp bộ lọc PostgREST (không ghép được bộ lọc khác),
+ * rồi escape `%` và `_` (ký tự đại diện của LIKE) bằng `\` để tìm đúng chữ người dùng gõ. Đặt giá trị trong
+ * ngoặc kép của PostgREST thì phải nhân đôi `\` (xem users.repository.ts).
+ */
 export const searchSchema = z
   .string()
   .trim()
   .max(100)
-  .transform((value) => value.replace(/[*%,()"\\]/g, '') || undefined)
+  .transform((value) => value.replace(/[*,()"\\]/g, '').replace(/[%_]/g, '\\$&') || undefined)
   .optional();
 
 export interface Page<T> {

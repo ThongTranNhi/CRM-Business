@@ -5,8 +5,10 @@
 - Kéo task giữa các cột → đổi cột; `status` theo nhóm trạng thái của cột đích.
 - Kéo trong cùng cột → đổi thứ tự (`position`).
 - Khi kéo: thẻ mờ đi, ô giữ chỗ nét đứt màu primary hiện ở vị trí sẽ thả, cột đích có viền nét đứt.
-- Bàn phím: chọn card, phím mũi tên để di chuyển (accessibility).
-- Màn hình cảm ứng: đổi trạng thái bằng thanh 3 nút trong drawer chi tiết.
+- Bàn phím và cảm ứng: mỗi thẻ có menu **"Chuyển sang cột…"** (select gốc, đưa thẻ về cuối cột chọn). Máy có
+  chuột: menu hiện khi rê chuột / focus bằng Tab; màn hình cảm ứng: luôn hiện. Drawer chi tiết (Đợt 2, L5) có thêm ô
+  chọn cột.
+- Chỉ thẻ người xem được sửa mới kéo được (`canMove` từ API); đang kéo thì tạm dừng tự tải lại board.
 
 ## Lưu thứ tự
 
@@ -24,7 +26,10 @@ Khi khoảng cách quá nhỏ (< 0.001) → backend đánh lại số cả cột
 - Activity `moved` ghi `{ columnId, columnName, status }` ở cả `from_value` và `to_value`.
 
 - Backend tính `position` từ hai task lân cận (không tin `position` client gửi).
-- Kiểm tra quyền (permission-model), áp BR-13/BR-14, ghi `task_activities` — **trong một Postgres function** để nguyên tử.
+- Quyền (permission-model) kiểm tra ở **service API** (`lib/work-access.ts` + `crm_work_access`) ngay trước khi gọi RPC;
+  RPC `crm_move_task` áp BR-13/BR-14, tính `position`, ghi `task_activities` **trong một giao dịch**. Giữa lúc API
+  kiểm tra quyền và lúc RPC ghi có một khoảng hở rất ngắn (quyền vừa bị đổi) — đã chấp nhận.
+- "Chuyển sang cột…" (cuối cột) gửi không `previousTaskId` / `nextTaskId`: server đặt sau thẻ cuối thật của cột.
 - Trả task đã cập nhật.
 
 ## Frontend
@@ -32,7 +37,8 @@ Khi khoảng cách quá nhỏ (< 0.001) → backend đánh lại số cả cột
 1. Thả → cập nhật cache React Query ngay (optimistic).
 2. Gọi API.
 3. Lỗi → khôi phục vị trí cũ + toast "Không thể di chuyển công việc".
-4. Thành công → toast ngắn ("Đã chuyển sang Việc đang làm" / "Đã hoàn thành: <tên>"), realtime báo cho người khác.
+4. Thành công → toast ngắn ("Đã chuyển sang việc đang làm" / "Đã hoàn thành: <tên>"), tải lại board. Người khác
+   thấy thay đổi khi board tự tải lại (30 giây / khi quay lại tab); Realtime: Đợt 3.
 
 ## Tiêu chí nghiệm thu
 

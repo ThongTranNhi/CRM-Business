@@ -1,8 +1,15 @@
 import { forbidden } from '../../lib/app-error';
 import { assertRole, type RequestScope } from '../../lib/request-scope';
-import { boardPermissions, canCreateDashboard, type BoardViewer } from '../../lib/work-access';
+import {
+  boardPermissions,
+  canCreateDashboard,
+  trashScope,
+  type BoardViewer,
+} from '../../lib/work-access';
 import { dashboardAlreadyExists, dashboardNotFound } from '../../lib/work-errors';
 import { getEmployeeSummary } from '../auth/auth.service';
+import { listProjectOptions } from '../projects/projects.service';
+import { getBoardAccess } from '../tasks/tasks.service';
 import { getAvatarUrls } from '../users/users.service';
 import * as dashboardsRepository from './department-dashboards.repository';
 import type {
@@ -93,17 +100,16 @@ export async function getDashboard(
   const summary = await dashboardsRepository.findSummary(env, id);
   if (!summary) throw dashboardNotFound();
   const [access, invitedIds] = await Promise.all([
-    dashboardsRepository.findWorkAccess(env, actor.id, summary.boardId),
+    getBoardAccess(env, actor.id, summary.boardId),
     dashboardsRepository.listInvitedEmployeeIds(env, summary.boardId),
   ]);
   if (!access) throw dashboardNotFound();
   const viewer = boardPermissions(access);
   if (!viewer.canView) throw forbidden();
-  const members = await dashboardsRepository.listBoardMembers(
-    env,
-    summary.department.id,
-    invitedIds,
-  );
+  const [members, projects] = await Promise.all([
+    dashboardsRepository.listBoardMembers(env, summary.department.id, invitedIds),
+    listProjectOptions(env, summary.department.id),
+  ]);
   const avatarUrls = await getAvatarUrls(env, members);
   const manager = managerOf(members.filter((m) => m.departmentId === summary.department.id));
   return {
@@ -121,7 +127,8 @@ export async function getDashboard(
       avatarUrl: avatarUrls.get(member.id) ?? null,
       isManager: member.id === manager?.id,
     })),
-    viewer,
+    projects,
+    viewer: { ...viewer, trashScope: trashScope(access) },
   };
 }
 
@@ -136,4 +143,15 @@ export async function createDashboard(scope: RequestScope, input: CreateDashboar
   const result = await dashboardsRepository.createDashboard(env, actor.id, input);
   if (!result.created) throw dashboardAlreadyExists(result.dashboardId);
   return getDashboard(scope, result.dashboardId);
+}
+
+/** Cho module search: board người xem được thấy (cùng quy tắc với Workspace — BR-41, BR-06). */
+export async function listVisibleBoards({ env, actor }: RequestScope) {
+  const includeAll = actor.role === 'super_admin' || actor.role === 'hr_admin';
+  const summaries = await dashboardsRepository.listVisible(env, actor.id, includeAll);
+  return summaries.map((summary) => ({
+    dashboardId: summary.id,
+    dashboardName: summary.name,
+    boardId: summary.boardId,
+  }));
 }

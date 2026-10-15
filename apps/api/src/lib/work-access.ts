@@ -16,6 +16,8 @@ export const workAccessSchema = z.object({
   isDepartmentManager: z.boolean(),
   isBoardMember: z.boolean(),
   taskId: z.uuid().nullable(),
+  /** Task đã lưu trữ (20261007090000); bản RPC cũ không trả trường này → false. */
+  isArchived: z.boolean().default(false),
   isAssignee: z.boolean(),
   isCollaborator: z.boolean(),
   isCreator: z.boolean(),
@@ -42,6 +44,8 @@ export interface BoardPermissions {
 
 export interface TaskPermissions {
   canEdit: boolean;
+  /** Đổi người phụ trách: Super Admin, Trưởng phòng, Trưởng nhóm của phòng, người tạo task. */
+  canReassign: boolean;
   canArchive: boolean;
 }
 
@@ -69,11 +73,24 @@ export function taskPermissions(viewer: BoardViewer, relation: TaskRelation): Ta
   const isInvolved = relation.isAssignee || relation.isCollaborator;
   return {
     canEdit: board.canEditAllTasks || (board.canWrite && isInvolved),
+    canReassign: board.canEditAllTasks || (board.canWrite && relation.isCreator),
     // BR-19: người tạo, Trưởng phòng, Super Admin.
     canArchive:
       board.canWrite &&
       (viewer.role === 'super_admin' || isManagerOf(viewer) || relation.isCreator),
   };
+}
+
+/**
+ * Thùng rác của board — ai thấy việc gì, khớp quyền khôi phục (= quyền xoá, BR-19): Super Admin, Trưởng
+ * phòng thấy mọi việc đã xoá (`all`); người khác ghi được board chỉ thấy việc mình tạo (`own`); không ghi
+ * được (HR Admin ngoài phòng, phòng đã xoá) → null.
+ */
+export type TrashScope = 'all' | 'own' | null;
+
+export function trashScope(viewer: BoardViewer): TrashScope {
+  if (!boardPermissions(viewer).canWrite) return null;
+  return viewer.role === 'super_admin' || isManagerOf(viewer) ? 'all' : 'own';
 }
 
 /** BR-05: Super Admin mọi phòng; Trưởng phòng chỉ phòng mình quản lý. */

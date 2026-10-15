@@ -138,21 +138,111 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
       { code: 'CANNOT_DELETE_SELF', status: 422 },
     );
   });
-  await t.test('delete sends the optional new manager to the RPC', async () => {
+  await t.test('delete returns the counts reported by the RPC, not a guess', async () => {
     let body;
     globalThis.fetch = async (url, init) => {
+      assert.ok(!String(url).includes('/rest/v1/tasks?'), 'Không tự đếm việc trước khi xoá');
       if (!String(url).includes('/rpc/')) return Response.json([admin]);
       body = JSON.parse(init.body);
-      return new Response(null, { status: 204 });
+      // Một trong ba việc nằm ở Dashboard chỉ đọc → RPC chỉ bàn giao 2.
+      return Response.json({ openTaskCount: 3, handedOverTaskCount: 2 });
     };
-    await service.deleteEmployee(env, userId, {
+    const result = await service.deleteEmployee(env, userId, {
       employeeId: 'employee-2',
       newManagerId: 'employee-3',
+      handoverEmployeeId: 'employee-4',
     });
     assert.deepEqual(body, {
       actor_uuid: userId,
       employee_uuid: 'employee-2',
       new_manager_uuid: 'employee-3',
+      handover_employee_uuid: 'employee-4',
+    });
+    assert.deepEqual(result, { deleted: true, openTaskCount: 3, handedOverTaskCount: 2 });
+  });
+  await t.test(
+    'handover receiver outside a task board → 422 naming the blocked tasks',
+    async () => {
+      const blocked = [
+        { taskId: 't-1', title: 'Gọi khách', dashboardName: 'Kinh doanh' },
+        { taskId: 't-2', title: 'Báo giá', dashboardName: 'Kinh doanh' },
+      ];
+      globalThis.fetch = async (url) =>
+        String(url).includes('/rpc/crm_delete_employee')
+          ? Response.json(
+              {
+                code: 'P0001',
+                message: 'HANDOVER_EMPLOYEE_NOT_IN_BOARD',
+                details: JSON.stringify(blocked),
+              },
+              { status: 400 },
+            )
+          : Response.json([admin]);
+      await assert.rejects(
+        () =>
+          service.deleteEmployee(env, userId, {
+            employeeId: 'employee-2',
+            newManagerId: null,
+            handoverEmployeeId: 'employee-4',
+          }),
+        (error) =>
+          error.code === 'HANDOVER_EMPLOYEE_NOT_IN_BOARD' &&
+          error.status === 422 &&
+          error.message.includes('2 việc') &&
+          error.message.includes('“Gọi khách” (Kinh doanh)') &&
+          error.details.blockedTasks.length === 2,
+      );
+    },
+  );
+  await t.test(
+    'handover receiver not eligible for an owned project → 422 naming the blocked projects',
+    async () => {
+      const blocked = [
+        { projectId: 'p-1', name: 'A', departmentName: 'Kinh doanh' },
+        { projectId: 'p-2', name: 'B', departmentName: 'Kinh doanh' },
+        { projectId: 'p-3', name: 'C', departmentName: 'Kinh doanh' },
+        { projectId: 'p-4', name: 'D', departmentName: 'Kinh doanh' },
+      ];
+      globalThis.fetch = async (url) =>
+        String(url).includes('/rpc/crm_delete_employee')
+          ? Response.json(
+              {
+                code: 'P0001',
+                message: 'HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE',
+                details: JSON.stringify(blocked),
+              },
+              { status: 400 },
+            )
+          : Response.json([admin]);
+      await assert.rejects(
+        () =>
+          service.deleteEmployee(env, userId, {
+            employeeId: 'employee-2',
+            newManagerId: null,
+            handoverEmployeeId: 'employee-4',
+          }),
+        (error) =>
+          error.code === 'HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE' &&
+          error.status === 422 &&
+          error.message.includes('4 dự án') &&
+          error.message.includes('và 1 dự án khác') &&
+          error.details.blockedProjects.length === 4,
+      );
+    },
+  );
+  await t.test('updating a profile does not count open tasks', async () => {
+    globalThis.fetch = async (url) => {
+      assert.ok(!String(url).includes('open_assigned_tasks'), 'Không đếm việc khi chỉ sửa hồ sơ');
+      if (String(url).includes('/rpc/')) return new Response(null, { status: 204 });
+      if (String(url).includes('/app_accounts?')) return Response.json([admin]);
+      return Response.json([{ ...profile, role: 'employee', archived_at: null }]);
+    };
+    await service.updateEmployee(env, userId, {
+      employeeId: 'employee-2',
+      fullName: 'Test',
+      jobTitle: null,
+      departmentId: null,
+      status: 'active',
     });
   });
   await t.test('restore with a reused employee code explains what to do', async () => {
@@ -173,10 +263,12 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
       urls.push(String(url));
       return Response.json(String(url).includes('/app_accounts?') ? [hr] : []);
     };
-    await service.getEmployeeOptions(env, userId, 'an');
+    await service.getEmployeeOptions(env, userId, { q: 'an', departmentId: 'dept-1' });
     const pickerUrl = urls.find((url) => !url.includes('/app_accounts?'));
     assert.match(pickerUrl, /\/rest\/v1\/active_employees\?/);
     assert.doesNotMatch(pickerUrl, /employee_directory|\/employees\?/);
+    // Người nhận bàn giao: mặc định chỉ người cùng phòng (BR-53).
+    assert.match(pickerUrl, /department_id=eq\.dept-1/);
   });
   await t.test('department picker reads only non-deleted departments', async () => {
     const urls = [];
@@ -189,7 +281,7 @@ test('employee soft delete and pickers (BR-53)', async (t) => {
   });
   await t.test('regular employees cannot use the picker', async () => {
     globalThis.fetch = async () => Response.json([account]);
-    await assert.rejects(() => service.getEmployeeOptions(env, userId, undefined), {
+    await assert.rejects(() => service.getEmployeeOptions(env, userId, {}), {
       code: 'FORBIDDEN',
     });
   });

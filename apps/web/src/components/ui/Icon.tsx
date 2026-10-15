@@ -31,6 +31,7 @@ const ICON_PATHS = {
   menu: 'M4 6h16M4 12h16M4 18h16',
   logOut: 'M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9',
   chevronDown: 'M6 9l6 6 6-6',
+  chevronUp: 'M18 15l-6-6-6 6',
   x: 'M18 6 6 18M6 6l12 12',
   plus: 'M12 5v14M5 12h14',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
@@ -47,6 +48,12 @@ const ICON_PATHS = {
   edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
   transfer: 'M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13',
   pieChart: 'M21 12A9 9 0 1 1 12 3v9zM12 3a9 9 0 0 1 9 9h-9z',
+  message: 'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12',
+  list: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
+  filterX: 'M4 4h16l-6 8v6l-4 2v-8zM17 17l4 4M21 17l-4 4',
+  link: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
+  reply: 'M9 14 4 9l5-5M4 9h10a6 6 0 0 1 6 6v5',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

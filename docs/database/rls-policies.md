@@ -35,3 +35,15 @@ Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều t
   activity và ràng buộc nghiệp vụ được xử lý cùng giao dịch.
 - View đọc mới (`security_invoker = true`) chỉ `service_role` SELECT. RPC mới chỉ `service_role` EXECUTE;
   hàm trợ giúp trong `app_private` không ai gọi trực tiếp được.
+
+## Đợt 3 S3 — Thông báo
+
+- Bật RLS trên `notifications`, không policy cho `anon` / `authenticated` (chuông tự tải lại qua API, không dùng
+  Realtime nên trình duyệt không đọc bảng trực tiếp).
+- `service_role` chỉ SELECT bảng và view `notification_feed`; ghi qua RPC `security definer`. Hàm trợ giúp
+  `crm_active_account_of`, `crm_notify`, `crm_notify_from_activity` không ai gọi trực tiếp được.
+
+## Đợt 4 S1 — Khối lượng việc
+
+- View `employee_workload` (`security_invoker = true`): chỉ `service_role` SELECT, thu hồi khỏi `public`, `anon`,
+  `authenticated`. Không có bảng mới. Phạm vi phòng ban (Trưởng phòng / Trưởng nhóm chỉ phòng mình) kiểm tra ở API.

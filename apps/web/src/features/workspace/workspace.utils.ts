@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { DashboardCard } from '@/features/department-dashboards';
 import { ApiError } from '@/lib/api-client';
+import { normalizeText } from '@/lib/normalize-text';
 import type { DepartmentOption } from './types';
 
 // Dải màu trên thẻ Dashboard: suy cố định từ id phòng ban, chỉ dùng token Tailwind (không mã hex).
@@ -18,22 +19,14 @@ export function dashboardAccent(departmentId: string): string {
   return ACCENT_CLASSES[hash % ACCENT_CLASSES.length] ?? ACCENT_CLASSES[0];
 }
 
-/** Bỏ dấu tiếng Việt để tìm "kinh doanh" ra "Kinh Doanh", "ke toan" ra "Kế toán". */
-const normalize = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/đ/gi, 'd')
-    .toLowerCase()
-    .trim();
-
 /** Lọc phía client theo tên Dashboard hoặc tên phòng ban (`?q=` trên URL). */
 export function filterDashboards(cards: DashboardCard[], query: string): DashboardCard[] {
-  const keyword = normalize(query);
+  const keyword = normalizeText(query);
   if (!keyword) return cards;
   return cards.filter(
     (card) =>
-      normalize(card.name).includes(keyword) || normalize(card.department.name).includes(keyword),
+      normalizeText(card.name).includes(keyword) ||
+      normalizeText(card.department.name).includes(keyword),
   );
 }
 

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, Icon } from '@/components/ui';
 import { ROLE_LABELS, signOut, useCurrentUser } from '@/features/auth';
+import { useDismiss } from '@/lib/use-dismiss';
 
 const ITEM_CLASS =
   'flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50';
@@ -12,23 +13,8 @@ export function UserMenu() {
   const containerRef = useRef<HTMLDivElement>(null);
   const displayName = user?.fullName ?? user?.username ?? 'Tài khoản';
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(containerRef, open, close);
 
   return (
     <div ref={containerRef} className="relative">

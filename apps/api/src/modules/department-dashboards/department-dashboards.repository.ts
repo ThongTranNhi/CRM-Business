@@ -1,6 +1,5 @@
 import type { Env } from '../../config/env';
 import { callRpc, supabaseRequest } from '../../lib/supabase';
-import { workAccessSchema } from '../../lib/work-access';
 import { WORK_ERRORS } from '../../lib/work-errors';
 import { createdDashboardSchema } from './department-dashboards.schema';
 import type {
@@ -155,14 +154,6 @@ export const listInvitedBoardIds = (env: Env, employeeId: string) =>
     `/rest/v1/board_members?select=board_id&employee_id=eq.${employeeId}`,
     'board_id',
   );
-
-export async function findWorkAccess(env: Env, userId: string, boardId: string) {
-  const result = await callRpc<unknown>(env, {
-    name: 'crm_work_access',
-    args: { user_uuid: userId, board_uuid: boardId, task_uuid: null },
-  });
-  return workAccessSchema.nullable().parse(result);
-}
 
 export async function createDashboard(env: Env, actorId: string, input: CreateDashboardInput) {
   const result = await callRpc<unknown>(env, {

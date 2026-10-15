@@ -74,6 +74,7 @@ test('work permissions (permission-model.md)', async (t) => {
     const member = viewer('employee', { isDepartmentMember: true });
     assert.deepEqual(access.taskPermissions(member, relation()), {
       canEdit: false,
+      canReassign: false,
       canArchive: false,
     });
     assert.equal(access.taskPermissions(member, relation({ isCollaborator: true })).canEdit, true);
@@ -94,4 +95,28 @@ test('work permissions (permission-model.md)', async (t) => {
     assert.equal(access.canCreateDashboard('department_manager', 'dept-2', 'dept-1'), false);
     assert.equal(access.canCreateDashboard('hr_admin', 'dept-1', null), false);
   });
+  await t.test('reassigning: managers, team leaders and the creator only', () => {
+    const member = viewer('employee', { isDepartmentMember: true });
+    assert.equal(access.taskPermissions(member, relation({ isAssignee: true })).canReassign, false);
+    assert.equal(access.taskPermissions(member, relation({ isCreator: true })).canReassign, true);
+    const leader = viewer('team_leader', { isDepartmentMember: true });
+    assert.equal(access.taskPermissions(leader, relation()).canReassign, true);
+    const hr = viewer('hr_admin');
+    assert.equal(access.taskPermissions(hr, relation({ isCreator: true })).canReassign, false);
+  });
+  await t.test(
+    'trash: all for Super Admin and the manager, own for members, none otherwise',
+    () => {
+      assert.equal(access.trashScope(viewer('super_admin')), 'all');
+      const manager = viewer('department_manager', {
+        isDepartmentMember: true,
+        isDepartmentManager: true,
+      });
+      assert.equal(access.trashScope(manager), 'all');
+      assert.equal(access.trashScope(viewer('team_leader', { isDepartmentMember: true })), 'own');
+      assert.equal(access.trashScope(viewer('employee', { isDepartmentMember: true })), 'own');
+      assert.equal(access.trashScope(viewer('hr_admin')), null);
+      assert.equal(access.trashScope(viewer('super_admin', { isReadOnly: true })), null);
+    },
+  );
 });

@@ -11,6 +11,8 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'chi
   options: SelectOption[];
   /** Dòng đầu với value rỗng, vd. "Chọn sau". */
   placeholder?: string;
+  /** Ẩn nhãn khỏi màn hình (vẫn đọc được bằng trình đọc màn hình), vd. ô lọc trên thanh công cụ. */
+  hideLabel?: boolean;
   error?: string;
 }
 
@@ -18,6 +20,7 @@ export function Select({
   label,
   options,
   placeholder,
+  hideLabel = false,
   error,
   className,
   id,
@@ -28,8 +31,11 @@ export function Select({
   const errorId = `${selectId}-error`;
 
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={selectId} className="block text-sm font-medium text-gray-700">
+    <div className={cn(!hideLabel && 'space-y-1.5')}>
+      <label
+        htmlFor={selectId}
+        className={cn('block text-sm font-medium text-gray-700', hideLabel && 'sr-only')}
+      >
         {label}
       </label>
       <select

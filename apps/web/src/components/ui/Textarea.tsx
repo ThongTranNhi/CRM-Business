@@ -1,9 +1,11 @@
-import { useId, type TextareaHTMLAttributes } from 'react';
+import { useId, type Ref, type TextareaHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  /** React 19: ref là prop thường (ô bình luận cần đặt lại con trỏ sau khi chèn @tên). */
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
 /** Ô nhập nhiều dòng, cùng kiểu với Input (nhãn, lỗi dưới ô, focus ring). */

@@ -36,7 +36,43 @@ board_columns(id, board_id, status)`: cột cùng board và status luôn khớp 
   Phân quyền theo dữ liệu nằm ở API; RPC kiểm tra tài khoản còn hoạt động, phòng chưa xoá (BR-06) và
   người được giao / người phối hợp **mới thêm** thuộc phòng / board (người phối hợp cũ đã chuyển phòng vẫn
   giữ hoặc gỡ được).
-- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql` (tự ROLLBACK).
+- Migration `20261007090000_task_restore.sql`: `crm_restore_task` (hoàn tác xoá, task về cuối cột cũ); activity
+  `restored`; `crm_work_access` trả thêm `isArchived`; `task_cards` thêm `created_by`.
+- Migration `20261007100000_task_trash.sql`: view `task_trash` (task đã lưu trữ + `board_id`, `created_by`, tên
+  cột cũ, người phụ trách, người xoá theo activity `archived` mới nhất — một truy vấn, chỉ `service_role`);
+  index `tasks_board_archived_idx (board_id, archived_at desc) where archived_at is not null`.
+- Migration `20261011090000_my_tasks.sql` (Đợt 3 S2): view `my_task_rows` (employee_id, is_assignee, cột task,
+  department / dashboard / project, checklist_total / done, done_column_id, is_department_member, is_board_member,
+  is_department_manager, is_overdue / is_due_today / is_due_this_week) và RPC `crm_my_task_counts(employee_uuid,
+department_uuid, task_priority, project_uuid, search)` → jsonb `{ today, week, overdue, open, done }`. Dùng index
+  có sẵn `tasks_assignee_idx`, `task_collaborators_employee_idx`.
+- Migration `20261009090000_projects.sql` (Đợt 3 S1): `projects` (department_id, name, description,
+  owner_employee_id, status `planning|active|on_hold|done`, start_date, due_date, archived_at, created_by;
+  unique `(department_id, lower(name))` khi chưa lưu trữ; unique `(id, department_id)` làm đích khoá ngoại ghép),
+  `project_members (project_id, employee_id)`. `tasks.project_id` có khoá ngoại ghép
+  `tasks_project_department_fk (project_id, department_id)` → task chỉ gắn dự án cùng phòng (BR-30). View
+  `project_summaries` (task_total / task_done / task_overdue theo giờ Việt Nam, member_count, dashboard_id,
+  board_id), `project_activity_feed` (audit_logs `resource_type = 'projects'`). Activity task thêm
+  `project_changed`. RLS bật, chỉ `service_role` đọc; ghi qua RPC.
+- Migration `20261012090000_project_owner_handover.sql` (BR-53): view `owned_writable_projects` (dự án chưa lưu
+  trữ, phòng chưa xoá, có chủ — số đếm và bàn giao, chỉ `service_role`); `crm_delete_employee` chuyển quyền chủ
+  dự án cho người nhận bàn giao (người nhận không đủ điều kiện Q6 → `HANDOVER_EMPLOYEE_NOT_PROJECT_ELIGIBLE`,
+  `detail` JSON liệt kê dự án). Kiểm tra: `supabase/tests/project_owner_handover.sql`.
+- Migration `20261013090000_notifications.sql` (Đợt 3 S3): `notifications` (recipient_account_id,
+  actor_account_id — null = hệ thống, type `task_assigned|task_collaborator_added|comment_mention|task_due_soon|
+task_overdue`, task_id, comment_id, dedupe_key, read_at); index theo người nhận, partial index chưa đọc, unique
+  `(recipient_account_id, type, task_id, dedupe_key)` khi có dedupe_key (cron không tạo trùng). Trigger
+  `task_activities_notify` (AFTER INSERT trên `task_activities`: 'assigned', 'assignee_changed',
+  'collaborators_changed') ghi thông báo cùng giao dịch. `crm_add_comment` thêm `mention_uuids` (bỏ chữ ký 4 tham
+  số). RPC `crm_generate_due_notifications`, `crm_mark_notifications_read`. View `notification_feed`. RLS bật, chỉ
+  `service_role` đọc. Kiểm tra: `supabase/tests/notifications.sql`.
+- Migration `20261016090000_workload.sql` (Đợt 4 S1): view `employee_workload` (employee_id, full_name,
+  department_id / name, dashboard_id của phòng nhân viên; todo_count, in_progress_count, open_count, overdue_count,
+  done_30d_count). Chỉ tính task nhân viên là **người phụ trách chính**, mọi Dashboard, bỏ task lưu trữ và phòng đã
+  xoá; quá hạn và 30 ngày theo ngày Việt Nam. Nhân viên đã xoá không có dòng. Chỉ `service_role` đọc. Kiểm tra:
+  `supabase/tests/workload.sql`.
+- Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
+  `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
 ## Phòng ban, xoá mềm, view đọc (Đợt 1 — 2026-10-06)
 

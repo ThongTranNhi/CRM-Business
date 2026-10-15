@@ -6,3 +6,7 @@ compatibility_date = "2026-09-01"
 # khi chạy local thì đặt trong apps/api/.dev.vars (xem .dev.vars.example).
 [vars]
 ALLOWED_ORIGINS = "http://localhost:5173"
+
+# 01:00 UTC = 08:00 giờ Việt Nam: thông báo việc sắp đến hạn / quá hạn (modules/notifications).
+[triggers]
+crons = ["0 1 * * *"]

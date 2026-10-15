@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { BoardPermissions } from '../../lib/work-access';
+import type { BoardPermissions, TrashScope } from '../../lib/work-access';
 import type { PersonRef } from '../departments/departments.types';
 import type { AvatarOwner } from '../users/users.types';
 import type { createDashboardSchema } from './department-dashboards.schema';
@@ -42,7 +42,10 @@ export interface DashboardCard extends Omit<DashboardSummary, 'departmentArchive
 export interface DashboardDetail extends Omit<DashboardSummary, 'counts'> {
   manager: PersonRef | null;
   members: BoardMember[];
-  viewer: BoardPermissions;
+  /** Dự án chưa lưu trữ của phòng: ô "Dự án" khi tạo / sửa task, lọc ?project= trên board (BR-30). */
+  projects: { id: string; name: string }[];
+  /** trashScope: thùng rác hiện gì cho người xem; null → ẩn nút Thùng rác. */
+  viewer: BoardPermissions & { trashScope: TrashScope };
 }
 
 /** Nhân viên đang làm, kèm phòng và trưởng phòng của phòng đó. */

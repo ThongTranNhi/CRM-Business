@@ -14,7 +14,8 @@
 ## Tìm kiếm & lọc
 
 Tên task · người phụ trách · trạng thái · priority · deadline (Quá hạn / Hôm nay / Tuần này) · project · tag · "Việc của tôi".
-Bộ lọc lưu trên URL query để chia sẻ link.
+Bộ lọc lưu trên URL query để chia sẻ link: `?q=&mine=1&priority=&due=&project=`; `?assignee=<employeeId>&status=` chỉ
+đến từ link (Khối lượng việc) và hiện thành nhãn có nút ✕ — `assignee` chỉ khớp người phụ trách chính.
 
 ## Quyền
 
@@ -22,7 +23,7 @@ Xem: thành viên phòng + `board_members` + Super Admin. Sửa cấu hình boar
 
 ## Dữ liệu
 
-- Tải board: **1 request** `GET /api/boards/:boardId/tasks` trả task đang mở kèm tóm tắt (assignee, số comment, số file, checklist x/y, tags) — không N+1.
+- Tải board: **1 request** `GET /api/boards/:boardId` trả cột + task đang mở + 20 task xong gần nhất kèm tóm tắt (assignee, người phối hợp, số comment, checklist x/y) — không N+1. Số file, tags: Đợt 3. Chi tiết: `docs/api/endpoints/tasks.md`.
 - Realtime: subscribe thay đổi `tasks` theo `board_id` → làm mới cache.
 
 ## Tiêu chí nghiệm thu

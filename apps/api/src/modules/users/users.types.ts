@@ -31,10 +31,23 @@ export interface DirectoryEmployee extends Profile {
   managedDepartment: { id: string; name: string } | null;
 }
 
+/** Hồ sơ chi tiết: kèm số việc đang mở và số dự án người này đang làm chủ (hộp xoá nhân viên — BR-53). */
+export interface EmployeeDetail extends DirectoryEmployee {
+  openTaskCount: number;
+  ownedProjectCount: number;
+}
+
+export interface DeleteEmployeeTarget {
+  employeeId: string;
+  newManagerId: string | null;
+  handoverEmployeeId: string | null;
+}
+
 export interface EmployeeOption {
   id: string;
   fullName: string;
   jobTitle: string | null;
+  departmentId: string | null;
   departmentName: string | null;
   /** Role tài khoản; null nếu chưa có tài khoản. Form chọn trưởng phòng cảnh báo khi chưa phải Trưởng phòng. */
   role: Role | null;

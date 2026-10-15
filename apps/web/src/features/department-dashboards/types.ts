@@ -39,6 +39,8 @@ export interface BoardViewer {
   canView: boolean;
   canWrite: boolean;
   canEditAllTasks: boolean;
+  /** Thùng rác: `all` mọi việc đã xoá, `own` việc mình tạo; null → ẩn nút. */
+  trashScope: 'all' | 'own' | null;
 }
 
 export interface DashboardDetail {
@@ -50,6 +52,8 @@ export interface DashboardDetail {
   boardId: string;
   manager: PersonRef | null;
   members: BoardMember[];
+  /** Dự án chưa lưu trữ của phòng: ô "Dự án" của task, lọc ?project= (BR-30). */
+  projects: { id: string; name: string }[];
   viewer: BoardViewer;
 }
 

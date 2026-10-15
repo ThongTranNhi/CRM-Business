@@ -1,0 +1,32 @@
+import { useUrlParams } from '@/lib/use-url-params';
+import { readBoardFilters, type BoardFilters } from '../board.utils';
+
+const CLEARED = {
+  q: null,
+  mine: null,
+  priority: null,
+  due: null,
+  project: null,
+  assignee: null,
+  status: null,
+} as const satisfies Record<keyof BoardFilters, null>;
+
+/** Bộ lọc board đọc / ghi trên URL (`?q=&mine=1&priority=&due=&project=&assignee=&status=`); giữ `?task=`. */
+export function useBoardFilters() {
+  const [params, updateParams] = useUrlParams();
+  const filters = readBoardFilters(params);
+
+  const update = (changes: Partial<BoardFilters>) =>
+    updateParams({
+      ...('q' in changes && { q: changes.q ?? null }),
+      ...('mine' in changes && { mine: changes.mine ? '1' : null }),
+      ...('priority' in changes && { priority: changes.priority ?? null }),
+      ...('due' in changes && { due: changes.due ?? null }),
+      ...('project' in changes && { project: changes.project ?? null }),
+      ...('assignee' in changes && { assignee: changes.assignee ?? null }),
+      ...('status' in changes && { status: changes.status ?? null }),
+    });
+  const clear = () => updateParams(CLEARED);
+
+  return { filters, update, clear };
+}
