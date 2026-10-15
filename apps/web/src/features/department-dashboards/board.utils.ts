@@ -2,9 +2,11 @@ import { z } from 'zod';
 import {
   isOverdue,
   PRIORITIES,
+  TASK_STATUSES,
   type BoardTask,
   type TaskMove,
   type TaskPriority,
+  type TaskStatus,
 } from '@/features/tasks';
 import { addDays, startOfWeek } from '@/lib/format-date';
 import { normalizeText } from '@/lib/normalize-text';
@@ -13,8 +15,9 @@ export const DUE_FILTERS = ['overdue', 'today', 'week'] as const;
 export type DueFilter = (typeof DUE_FILTERS)[number];
 
 /**
- * Bộ lọc board, lưu trên URL (`?q=&mine=1&priority=&due=&project=`) để F5 và chia sẻ link giữ nguyên.
- * `project`: id dự án (link [Mở trên board] từ trang dự án).
+ * Bộ lọc board, lưu trên URL (`?q=&mine=1&priority=&due=&project=&assignee=&status=`) để F5 và chia sẻ link giữ
+ * nguyên. `project`: id dự án (link [Mở trên board] từ trang dự án). `assignee` (id nhân viên, chỉ người phụ trách
+ * chính) và `status`: link một con số ở trang Khối lượng việc.
  */
 export interface BoardFilters {
   q: string;
@@ -22,6 +25,8 @@ export interface BoardFilters {
   priority: TaskPriority | null;
   due: DueFilter | null;
   project: string | null;
+  assignee: string | null;
+  status: TaskStatus | null;
 }
 
 const filtersSchema = z.object({
@@ -30,6 +35,8 @@ const filtersSchema = z.object({
   priority: z.enum(PRIORITIES).nullable().catch(null),
   due: z.enum(DUE_FILTERS).nullable().catch(null),
   project: z.uuid().nullable().catch(null),
+  assignee: z.uuid().nullable().catch(null),
+  status: z.enum(TASK_STATUSES).nullable().catch(null),
 });
 
 export function readBoardFilters(params: URLSearchParams): BoardFilters {
@@ -39,6 +46,8 @@ export function readBoardFilters(params: URLSearchParams): BoardFilters {
     priority: params.get('priority'),
     due: params.get('due'),
     project: params.get('project'),
+    assignee: params.get('assignee'),
+    status: params.get('status'),
   });
   return { ...parsed, mine: parsed.mine === '1' };
 }
@@ -48,7 +57,9 @@ export const hasFilters = (filters: BoardFilters): boolean =>
   filters.mine ||
   filters.priority !== null ||
   filters.due !== null ||
-  filters.project !== null;
+  filters.project !== null ||
+  filters.assignee !== null ||
+  filters.status !== null;
 
 interface FilterContext {
   employeeId: string | null;
@@ -64,7 +75,7 @@ function matchesDue(task: BoardTask, due: DueFilter, today: string): boolean {
   return task.dueDate >= weekStart && task.dueDate <= addDays(weekStart, 6);
 }
 
-/** Tìm theo tên task / người phụ trách (không dấu), "Việc của tôi", ưu tiên, hạn. */
+/** Tìm theo tên task / người phụ trách (không dấu) cùng các bộ lọc khác của `BoardFilters`. */
 export function matchesFilters(task: BoardTask, filters: BoardFilters, context: FilterContext) {
   const keyword = normalizeText(filters.q);
   if (
@@ -80,6 +91,8 @@ export function matchesFilters(task: BoardTask, filters: BoardFilters, context: 
   if (filters.mine && !isMine) return false;
   if (filters.priority && task.priority !== filters.priority) return false;
   if (filters.project && task.project?.id !== filters.project) return false;
+  if (filters.assignee && task.assignee.id !== filters.assignee) return false;
+  if (filters.status && task.status !== filters.status) return false;
   return !filters.due || matchesDue(task, filters.due, context.today);
 }
 

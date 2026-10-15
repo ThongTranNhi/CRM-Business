@@ -16,7 +16,7 @@ export { ProgressBar } from './ProgressBar';
 export { SearchInput } from './SearchInput';
 export { Select, type SelectOption } from './Select';
 export { Skeleton } from './Skeleton';
-export { Table, type TableColumn } from './Table';
+export { Table, type TableColumn, type TableSort } from './Table';
 export { Tabs, type TabItem } from './Tabs';
 export { Textarea } from './Textarea';
 export { Timeline, type TimelineItem } from './Timeline';

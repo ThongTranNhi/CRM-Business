@@ -12,7 +12,14 @@ export { taskKeys } from './hooks/task-keys';
 export { useBoard } from './hooks/useBoard';
 export { useCreateTask } from './hooks/useCreateTask';
 export { useMoveTask } from './hooks/useMoveTask';
-export { dueBadge, isOverdue, PRIORITIES, PRIORITY_META } from './task.utils';
+export {
+  dueBadge,
+  isOverdue,
+  PRIORITIES,
+  PRIORITY_META,
+  TASK_STATUS_LABEL,
+  TASK_STATUSES,
+} from './task.utils';
 export type {
   BoardColumn,
   BoardData,

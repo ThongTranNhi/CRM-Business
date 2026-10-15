@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Button, Icon, SearchInput, Select } from '@/components/ui';
+import type { PersonRef } from '@/features/departments';
 import { PRIORITIES, PRIORITY_META } from '@/features/tasks';
 import { cn } from '@/lib/cn';
 import {
@@ -8,6 +9,7 @@ import {
   type BoardFilters as Filters,
   type DueFilter,
 } from '../board.utils';
+import { LinkedFilterChips } from './LinkedFilterChips';
 
 const DUE_LABELS: Record<DueFilter, string> = {
   overdue: 'Quá hạn',
@@ -19,12 +21,14 @@ interface BoardFiltersProps {
   filters: Filters;
   /** Dự án của phòng; rỗng → ẩn ô lọc dự án. */
   projects: { id: string; name: string }[];
+  /** Thành viên board: tên trên nhãn lọc `?assignee=`. */
+  members: PersonRef[];
   onChange: (changes: Partial<Filters>) => void;
   onClear: () => void;
 }
 
 /** Thanh lọc board (department-dashboard.md): tên / người phụ trách, Việc của tôi, hạn, ưu tiên, dự án. */
-export function BoardFilters({ filters, projects, onChange, onClear }: BoardFiltersProps) {
+export function BoardFilters({ filters, projects, members, onChange, onClear }: BoardFiltersProps) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="w-full sm:w-72">
@@ -75,6 +79,7 @@ export function BoardFilters({ filters, projects, onChange, onClear }: BoardFilt
           />
         </div>
       )}
+      <LinkedFilterChips filters={filters} members={members} onChange={onChange} />
       {hasFilters(filters) && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <Icon name="filterX" size={16} />

@@ -93,6 +93,7 @@ export function BoardContent({ dashboard, board, ...props }: BoardContentProps) 
       <BoardFilters
         filters={filters}
         projects={dashboard.projects}
+        members={dashboard.members}
         onChange={update}
         onClear={clear}
       />

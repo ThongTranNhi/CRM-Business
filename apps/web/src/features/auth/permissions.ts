@@ -7,6 +7,8 @@ import type { CurrentUser } from './types';
  */
 const PERMISSIONS = {
   'workload.view': ['super_admin', 'department_manager', 'team_leader'],
+  // Đợt 4 S1: chọn phòng ban bất kỳ; Trưởng phòng / Trưởng nhóm chỉ xem phòng mình (API tự giới hạn).
+  'workload.view-all': ['super_admin'],
   'executive-overview.view': ['super_admin', 'department_manager'],
   // Mở rộng cho HR / Trưởng phòng khi API Nhân viên mở rộng (hiện API chỉ cho Super Admin).
   'employees.view': ['super_admin'],

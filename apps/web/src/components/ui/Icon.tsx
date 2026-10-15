@@ -31,6 +31,7 @@ const ICON_PATHS = {
   menu: 'M4 6h16M4 12h16M4 18h16',
   logOut: 'M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9',
   chevronDown: 'M6 9l6 6 6-6',
+  chevronUp: 'M18 15l-6-6-6 6',
   x: 'M18 6 6 18M6 6l12 12',
   plus: 'M12 5v14M5 12h14',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',

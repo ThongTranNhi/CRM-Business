@@ -4,6 +4,15 @@ import type { BoardData, BoardTask, TaskMove, TaskPriority, TaskStatus } from '.
 
 export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
 
+export const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const satisfies TaskStatus[];
+
+/** Nhóm trạng thái (không phải tên cột — cột do người dùng đặt): nhóm ở Việc của tôi, bộ lọc board. */
+export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
+  todo: 'Cần làm',
+  in_progress: 'Đang làm',
+  done: 'Đã xong',
+};
+
 /** BR-18 + docs/ui-ux/colors.md mục 4: Low / Normal / High / Urgent = gray / info / warning / danger. */
 export const PRIORITY_META: Record<TaskPriority, { label: string; tone: BadgeTone }> = {
   low: { label: 'Thấp', tone: 'neutral' },

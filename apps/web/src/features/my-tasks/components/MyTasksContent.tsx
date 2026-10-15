@@ -8,9 +8,10 @@ import {
   Pagination,
   Skeleton,
 } from '@/components/ui';
+import { TASK_STATUS_LABEL } from '@/features/tasks';
 import { todayInVietnam } from '@/lib/format-date';
 import { useCompleteTask } from '../hooks/useCompleteTask';
-import { groupByStatus, STATUS_GROUP_LABEL, TAB_LABEL } from '../my-tasks.utils';
+import { groupByStatus, TAB_LABEL } from '../my-tasks.utils';
 import type { MyTask, MyTaskTab, MyTasksMeta } from '../types';
 import { MyTaskRow } from './MyTaskRow';
 
@@ -60,9 +61,9 @@ export function MyTasksContent({ query, tab, isFiltering, ...props }: MyTasksCon
     <>
       <Card className="overflow-hidden">
         {groupByStatus(data.data).map((group) => (
-          <section key={group.status} aria-label={STATUS_GROUP_LABEL[group.status]}>
+          <section key={group.status} aria-label={TASK_STATUS_LABEL[group.status]}>
             <h2 className="border-b border-gray-100 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {STATUS_GROUP_LABEL[group.status]}
+              {TASK_STATUS_LABEL[group.status]}
             </h2>
             <ul className="divide-y divide-gray-100">
               {group.tasks.map((task) => (

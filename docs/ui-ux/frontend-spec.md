@@ -61,7 +61,7 @@ Quy ước: route phẳng `/app/<module>`, tên module theo `rules/architecture-
 | `/app/my-tasks`               | Việc của tôi                              | my-tasks                | Mọi người                                   | Đã có (Đợt 3 S2): `/api/tasks/mine`; badge số việc quá hạn trên Sidebar                 |
 | `/app/projects`               | Danh sách dự án                           | projects                | Mọi người (theo phòng)                      | Đã có (Đợt 3 S1): `/api/projects`                                                       |
 | `/app/projects/:id`           | Chi tiết dự án                            | projects                | Thành viên dự án / phòng                    | Đã có (Đợt 3 S1): `/api/projects/:id`, `/tasks`, `/activities`, `/members`              |
-| `/app/workload`               | Khối lượng việc                           | workload                | Super Admin, Trưởng phòng, Trưởng nhóm      | Cần làm                                                                                 |
+| `/app/workload`               | Khối lượng việc                           | workload                | Super Admin, Trưởng phòng, Trưởng nhóm      | Đã có (Đợt 4 S1): `/api/workload`; board nhận `?assignee=&status=`                      |
 | `/app/overview`               | Tổng quan điều hành                       | overview                | Super Admin, Trưởng phòng (phần phòng mình) | Cần làm                                                                                 |
 | `/app/employees`              | Nhân viên                                 | employees               | Super Admin, HR Admin, Trưởng phòng         | Đã có (API hiện chỉ Super Admin; Đợt 1 thêm lọc trạng thái, tìm kiếm, xoá/khôi phục)    |
 | `/app/employees/:id`          | Hồ sơ nhân viên (tab)                     | employees               | Như trên + chính người đó                   | Một phần                                                                                |
@@ -166,6 +166,7 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 - Bảng: nhân viên · phòng ban · Cần làm · Đang làm · Quá hạn · Xong (30 ngày) · thanh `BarList` tổng việc đang mở. Sắp xếp theo cột; lọc phòng ban (Trưởng phòng mặc định phòng mình).
 - Bấm tên → `/app/employees/:id?tab=tasks`. Bấm một con số → Dashboard phòng đó lọc `?assignee=<id>&status=<...>`.
 - Tô màu warning cho người có > 10 việc đang mở, danger cho người có việc quá hạn.
+- Đã có (Đợt 4 S1): đếm việc **phụ trách chính** trên mọi Dashboard (`docs/api/endpoints/workload.md`). Trưởng phòng / Trưởng nhóm không có ô chọn phòng (API chỉ trả phòng mình). Tên → hồ sơ nhân viên khi có quyền xem (`?tab=tasks` thêm khi làm tab Công việc).
 
 ### 4.7 Tổng quan điều hành `/app/overview`
 

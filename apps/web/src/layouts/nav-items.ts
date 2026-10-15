@@ -30,7 +30,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Khối lượng việc',
         icon: 'barChart',
         permission: 'workload.view',
-        ready: false,
+        ready: true,
       },
       {
         to: '/app/overview',

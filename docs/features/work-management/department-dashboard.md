@@ -14,7 +14,8 @@
 ## Tìm kiếm & lọc
 
 Tên task · người phụ trách · trạng thái · priority · deadline (Quá hạn / Hôm nay / Tuần này) · project · tag · "Việc của tôi".
-Bộ lọc lưu trên URL query để chia sẻ link.
+Bộ lọc lưu trên URL query để chia sẻ link: `?q=&mine=1&priority=&due=&project=`; `?assignee=<employeeId>&status=` chỉ
+đến từ link (Khối lượng việc) và hiện thành nhãn có nút ✕ — `assignee` chỉ khớp người phụ trách chính.
 
 ## Quyền
 

@@ -40,12 +40,6 @@ export const hasFilters = (params: MyTaskParams) =>
   params.projectId !== '' ||
   params.q !== '';
 
-export const STATUS_GROUP_LABEL: Record<TaskStatus, string> = {
-  in_progress: 'Đang làm',
-  todo: 'Cần làm',
-  done: 'Đã xong',
-};
-
 /** Nhóm theo trạng thái, giữ thứ tự server trả (Đang làm → Cần làm; trong nhóm theo hạn). */
 export function groupByStatus(tasks: MyTask[]): { status: TaskStatus; tasks: MyTask[] }[] {
   const order: TaskStatus[] = ['in_progress', 'todo', 'done'];

@@ -68,17 +68,40 @@ const task = (overrides: Partial<BoardTask>): BoardTask => ({
 
 describe('board filters', () => {
   const context = { employeeId: 'me', today: '2026-10-07' };
-  const none: BoardFilters = { q: '', mine: false, priority: null, due: null, project: null };
+  const none: BoardFilters = {
+    q: '',
+    mine: false,
+    priority: null,
+    due: null,
+    project: null,
+    assignee: null,
+    status: null,
+  };
 
   it('reads valid filters from the URL and ignores bad values', () => {
-    const params = new URLSearchParams('q=an&mine=1&priority=urgent&due=nope');
+    const params = new URLSearchParams('q=an&mine=1&priority=urgent&due=nope&assignee=e1&status=x');
     expect(readBoardFilters(params)).toEqual({
       q: 'an',
       mine: true,
       priority: 'urgent',
       due: null,
       project: null,
+      assignee: null,
+      status: null,
     });
+  });
+  it('filters by main assignee and status (links from the Workload page)', () => {
+    const employeeId = '00000000-0000-4000-8000-0000000000e1';
+    const filters = readBoardFilters(
+      new URLSearchParams(`assignee=${employeeId}&status=in_progress`),
+    );
+    expect(filters).toMatchObject({ assignee: employeeId, status: 'in_progress' });
+    const assignee = { id: employeeId, fullName: 'Nguyễn An', isArchived: false };
+    expect(matchesFilters(task({ assignee, status: 'in_progress' }), filters, context)).toBe(true);
+    expect(matchesFilters(task({ assignee, status: 'todo' }), filters, context)).toBe(false);
+    // Chỉ phối hợp → không khớp: Khối lượng việc chỉ đếm người phụ trách chính.
+    const collaborating = task({ status: 'in_progress', collaborators: [assignee] });
+    expect(matchesFilters(collaborating, filters, context)).toBe(false);
   });
   it('filters by project (link "Mở trên board" from the project page)', () => {
     const projectId = '00000000-0000-4000-8000-000000000001';
