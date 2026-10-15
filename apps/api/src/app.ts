@@ -13,6 +13,7 @@ import { projectRoutes } from './modules/projects/projects.routes';
 import { searchRoutes } from './modules/search/search.routes';
 import { boardRoutes, taskRoutes } from './modules/tasks/tasks.routes';
 import { userRoutes } from './modules/users/users.routes';
+import { workloadRoutes } from './modules/workload/workload.routes';
 import { publicAuthRoutes, privateAuthRoutes } from './modules/auth/auth.routes';
 
 export const app = new Hono<AppEnv>();
@@ -41,6 +42,7 @@ app.route('/api/tasks', taskRoutes);
 app.route('/api/projects', projectRoutes);
 app.route('/api/notifications', notificationRoutes);
 app.route('/api/search', searchRoutes);
+app.route('/api/workload', workloadRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);
