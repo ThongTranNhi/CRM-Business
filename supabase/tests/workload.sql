@@ -10,10 +10,10 @@ declare
   helper_user uuid := gen_random_uuid();
   department_a uuid := gen_random_uuid();
   department_b uuid := gen_random_uuid();
-  owner_employee uuid; helper_employee uuid; admin_account uuid;
+  owner_employee uuid; helper_employee uuid; admin_employee uuid; admin_account uuid;
   dashboard_a uuid; board_a uuid; board_b uuid; doing_column uuid; done_column uuid;
   today date := (now() at time zone 'Asia/Ho_Chi_Minh')::date;
-  doing_task uuid; done_task uuid; old_done_task uuid; gone_task uuid;
+  doing_task uuid; done_task uuid; done_29_task uuid; done_30_task uuid; gone_task uuid;
   load public.employee_workload;
 begin
   insert into public.departments (id, name) values
@@ -24,6 +24,7 @@ begin
     (helper_user, 'test-load-2-' || helper_user || '@example.test', '{}', '{"full_name":"[TEST] 2"}');
   update public.app_accounts set role = 'super_admin' where auth_user_id = admin_user
   returning id into admin_account;
+  select id into admin_employee from public.employees where account_id = admin_account;
   update public.employees e set department_id = department_a from public.app_accounts a
   where a.id = e.account_id and a.auth_user_id = owner_user returning e.id into owner_employee;
   update public.employees e set department_id = department_a from public.app_accounts a
@@ -40,8 +41,8 @@ begin
   select id into done_column from public.board_columns
   where board_id = board_a and status = 'done' and is_default;
 
-  -- Phòng A: 1 quá hạn (cần làm), 1 cần làm chưa tới hạn, 1 đang làm, 1 xong hôm nay, 1 xong 40 ngày trước,
-  -- 1 đã lưu trữ; 1 việc chỉ phối hợp (không tính).
+  -- Phòng A: 1 quá hạn (cần làm), 1 cần làm chưa tới hạn, 1 đang làm, 1 xong hôm nay, 1 xong 29 ngày trước
+  -- (còn trong 30 ngày), 1 xong 30 ngày trước (ra ngoài), 1 đã lưu trữ; 1 việc chỉ phối hợp (không tính).
   perform public.crm_create_task(admin_user, board_a, '[TEST] trễ', null, owner_employee,
     null, null, today - 1, '{}', null);
   perform public.crm_create_task(admin_user, board_a, '[TEST] mai', null, owner_employee,
@@ -52,10 +53,17 @@ begin
   done_task := public.crm_create_task(admin_user, board_a, '[TEST] xong', null, owner_employee,
     null, null, today - 5, '{}', null);
   perform public.crm_move_task(admin_user, done_task, done_column, null, null);
-  old_done_task := public.crm_create_task(admin_user, board_a, '[TEST] xong lâu', null, owner_employee,
+  done_29_task := public.crm_create_task(admin_user, board_a, '[TEST] xong 29 ngày', null, owner_employee,
     null, null, null, '{}', null);
-  perform public.crm_move_task(admin_user, old_done_task, done_column, null, null);
-  update public.tasks set completed_at = now() - interval '40 days' where id = old_done_task;
+  perform public.crm_move_task(admin_user, done_29_task, done_column, null, null);
+  done_30_task := public.crm_create_task(admin_user, board_a, '[TEST] xong 30 ngày', null, owner_employee,
+    null, null, null, '{}', null);
+  perform public.crm_move_task(admin_user, done_30_task, done_column, null, null);
+  -- Mốc biên theo ngày Việt Nam: 23:59 của ngày thứ 29 về trước vẫn tính, 00:01 của ngày thứ 30 thì không.
+  update public.tasks set completed_at = ((today - 29) + time '23:59') at time zone 'Asia/Ho_Chi_Minh'
+  where id = done_29_task;
+  update public.tasks set completed_at = ((today - 30) + time '00:01') at time zone 'Asia/Ho_Chi_Minh'
+  where id = done_30_task;
   gone_task := public.crm_create_task(admin_user, board_a, '[TEST] đã xoá', null, owner_employee,
     null, null, today - 1, '{}', null);
   perform public.crm_archive_task(admin_user, gone_task);
@@ -70,7 +78,7 @@ begin
 
   select * into load from public.employee_workload where employee_id = owner_employee;
   if load.todo_count <> 3 or load.in_progress_count <> 1 or load.open_count <> 4
-    or load.overdue_count <> 1 or load.done_30d_count <> 1 then
+    or load.overdue_count <> 1 or load.done_30d_count <> 2 then
     raise exception 'Số đếm sai: todo %, in_progress %, open %, overdue %, done_30d %',
       load.todo_count, load.in_progress_count, load.open_count, load.overdue_count, load.done_30d_count;
   end if;
@@ -79,6 +87,17 @@ begin
   end if;
   if (select open_count from public.employee_workload where employee_id = helper_employee) <> 1 then
     raise exception 'Việc phối hợp chỉ tính cho người phụ trách chính';
+  end if;
+
+  -- Nhân viên không có việc, chưa thuộc phòng nào: vẫn có dòng, mọi số đếm 0, không có Dashboard.
+  select * into load from public.employee_workload where employee_id = admin_employee;
+  if not found then
+    raise exception 'Nhân viên không có việc vẫn phải có dòng';
+  end if;
+  if load.todo_count <> 0 or load.in_progress_count <> 0 or load.open_count <> 0
+    or load.overdue_count <> 0 or load.done_30d_count <> 0
+    or load.department_id is not null or load.dashboard_id is not null then
+    raise exception 'Nhân viên không có việc phải có số đếm 0 và không có phòng / Dashboard';
   end if;
 
   -- Phòng B bị xoá → việc trên board B không còn tính.
