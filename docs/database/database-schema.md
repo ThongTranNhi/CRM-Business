@@ -71,6 +71,10 @@ task_overdue`, task_id, comment_id, dedupe_key, read_at); index theo người nh
   done_30d_count). Chỉ tính task nhân viên là **người phụ trách chính**, mọi Dashboard, bỏ task lưu trữ và phòng đã
   xoá; quá hạn và 30 ngày theo ngày Việt Nam. Nhân viên đã xoá không có dòng. Chỉ `service_role` đọc. Kiểm tra:
   `supabase/tests/workload.sql`.
+- Migration `20261017090000_my_task_status_filter.sql` (Đợt 4 S2): `my_task_rows` thêm `is_done_this_week`,
+  `is_due_soon` (ngày Việt Nam); `crm_my_task_counts(employee_uuid, department_uuid, task_priority, project_uuid,
+search, task_status, done_this_week)` → jsonb `{ today, week, overdue, open, done, todo, in_progress,
+done_this_week }`. Kiểm tra: `supabase/tests/my_task_status_filter.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
