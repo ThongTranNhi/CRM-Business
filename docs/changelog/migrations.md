@@ -31,10 +31,11 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 21  | `20261013090000_notifications.sql`                    | 14/10/2026                 |
 | 22  | `20261016090000_workload.sql`                         | 17/10/2026                 |
 | 23  | `20261017090000_my_task_status_filter.sql`            |                            |
+| 24  | `20261018090000_products.sql`                         |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql`, `supabase/tests/products.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt`, `products: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -43,6 +44,13 @@ select name, applied_at from app_private.applied_migrations order by name;
 ```
 
 ## Nhật ký
+
+- `20261018090000_products.sql` (Tài sản → tab Sản phẩm, chủ dự án chốt 17/10/2026): bảng `products` (link chỉ
+  `http(s)://`, trạng thái 4 giá trị, 1 người phụ trách chính, dự án cùng phòng qua khoá ngoại ghép — BR-30),
+  `product_members` (người cùng phụ trách, mọi phòng), view `product_summaries`, RPC `crm_create_product`,
+  `crm_update_product`, `crm_archive_product` (ghi `audit_logs` cùng giao dịch). RLS bật, chỉ `service_role` đọc.
+  Kiểm tra file trước (`20261017090000`) đã chạy. Áp trước khi deploy API (`/api/assets/products`). Kiểm tra:
+  `supabase/tests/products.sql`.
 
 - `20261017090000_my_task_status_filter.sql` (Đợt 4 S2, Tổng quan cá nhân): view `my_task_rows` thêm 2 cột ở cuối —
   `is_done_this_week` (xong từ 00:00 Thứ Hai, giờ Việt Nam) và `is_due_soon` (chưa xong, hạn hôm nay → 6 ngày sau).
