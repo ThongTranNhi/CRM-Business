@@ -29,7 +29,7 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 19  | `20261011090000_my_tasks.sql`                         | 09/10/2026                 |
 | 20  | `20261012090000_project_owner_handover.sql`           | 11/10/2026                 |
 | 21  | `20261013090000_notifications.sql`                    | 14/10/2026                 |
-| 22  | `20261016090000_workload.sql`                         |                            |
+| 22  | `20261016090000_workload.sql`                         | 17/10/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
 `supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql` (tự ROLLBACK, thấy
@@ -42,6 +42,12 @@ select name, applied_at from app_private.applied_migrations order by name;
 ```
 
 ## Nhật ký
+
+- 17/10/2026: đã áp `20261016090000_workload.sql` trên project dev `CRM-Local-company`
+  (`umsabjhsemgsbrqmqjgv`). Tracking: `2026-10-16 17:09:05.470156+00` (00:09 ngày 17/10 giờ Việt Nam).
+  Đã chạy nguyên `supabase/tests/workload.sql` ở commit `e0d079c`, gồm biên 29/30 ngày và nhân viên không có
+  việc; kết quả `workload: đạt`. SELECT chỉ đọc sau ROLLBACK xác nhận view `employee_workload` tồn tại và
+  không còn tài khoản test có email `test-load-%@example.test`. Chưa bấm thử trang Khối lượng việc.
 
 - `20261016090000_workload.sql` (Đợt 4 S1, Khối lượng việc): view `employee_workload` — mỗi nhân viên chưa xoá một
   dòng, đếm việc người đó là **người phụ trách chính** trên mọi Dashboard (không cộng việc phối hợp; bỏ task lưu
