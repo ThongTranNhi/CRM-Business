@@ -18,6 +18,8 @@ const PERMISSIONS = {
   'dashboards.create': ['super_admin', 'department_manager'],
   // Đợt 3 S1: Super Admin mọi phòng, Trưởng phòng chỉ phòng mình (như dashboards.create).
   'projects.create': ['super_admin', 'department_manager'],
+  // Tài sản → Sản phẩm: thêm sản phẩm, như projects.create (sửa / xoá theo permissions của từng sản phẩm).
+  'products.create': ['super_admin', 'department_manager'],
   'recruitment.view': ['super_admin', 'hr_admin', 'department_manager'],
   'onboarding.view': ['super_admin', 'hr_admin', 'department_manager'],
   'payroll.manage': ['super_admin', 'hr_admin'],
@@ -40,8 +42,11 @@ export function can(
   const roles: readonly Role[] = PERMISSIONS[permission];
   if (!roles.includes(user.role)) return false;
   // BR-05, Q1: Trưởng phòng = role department_manager VÀ là trưởng phòng của đúng phòng đó.
-  // Không truyền phòng → có phòng nào để tạo không (nút [+ Tạo Dashboard] / [+ Tạo dự án]).
-  const isScoped = permission === 'dashboards.create' || permission === 'projects.create';
+  // Không truyền phòng → có phòng nào để tạo không (nút [+ Tạo Dashboard] / [+ Tạo dự án] / [Thêm sản phẩm]).
+  const isScoped =
+    permission === 'dashboards.create' ||
+    permission === 'projects.create' ||
+    permission === 'products.create';
   if (isScoped && user.role === 'department_manager') {
     if (user.managedDepartmentId === null) return false;
     return scope.departmentId === undefined || scope.departmentId === user.managedDepartmentId;
