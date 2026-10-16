@@ -3,13 +3,33 @@ import type { RequestScope } from '../../lib/request-scope';
 import { taskPermissions } from '../../lib/work-access';
 import { getEmployeeSummary } from '../auth/auth.service';
 import * as mineRepository from './tasks.mine.repository';
-import type { MyTaskRow } from './tasks.mine.repository';
-import type { MyTask, MyTaskCounts, MyTasksQuery } from './tasks.types';
+import type { MyTaskCountsRow, MyTaskRow } from './tasks.mine.repository';
+import type { MyTask, MyTaskCardCounts, MyTaskCounts, MyTasksQuery } from './tasks.types';
 
 // Việc của tôi (Đợt 3 S2): chỉ việc của CHÍNH người gọi — employee_id lấy từ phiên đăng nhập, không nhận từ
 // query. View my_task_rows đã bỏ task lưu trữ, phòng đã xoá, board người đó không còn xem được.
 
 const EMPTY_COUNTS: MyTaskCounts = { today: 0, week: 0, overdue: 0, open: 0, done: 0 };
+const EMPTY_CARD_COUNTS: MyTaskCardCounts = { todo: 0, inProgress: 0, overdue: 0, doneThisWeek: 0 };
+
+/** Tổng quan cá nhân: tối đa 8 dòng "Việc sắp đến hạn" (frontend-spec 4.2). */
+const DUE_SOON_LIMIT = 8;
+
+/** meta.counts của danh sách chỉ gồm số các tab (RPC trả thêm số của thẻ Tổng quan). */
+const toTabCounts = ({ today, week, overdue, open, done }: MyTaskCountsRow): MyTaskCounts => ({
+  today,
+  week,
+  overdue,
+  open,
+  done,
+});
+
+const toCardCounts = (row: MyTaskCountsRow): MyTaskCardCounts => ({
+  todo: row.todo,
+  inProgress: row.in_progress,
+  overdue: row.overdue,
+  doneThisWeek: row.done_this_week,
+});
 
 /** Quyền sửa theo đúng luật board (lib/work-access.ts); phòng đã xoá không vào view nên không chỉ đọc. */
 function toMyTask(row: MyTaskRow, role: RequestScope['actor']['role']): MyTask {
@@ -59,5 +79,21 @@ export async function listMyTasks(scope: RequestScope, query: MyTasksQuery) {
     total,
     pagination,
   );
-  return { ...page, meta: { ...page.meta, counts } };
+  return { ...page, meta: { ...page.meta, counts: toTabCounts(counts) } };
+}
+
+/** Cho module overview: 4 thẻ số việc + việc sắp đến hạn của chính người gọi (phụ trách + phối hợp). */
+export async function getMyTaskSummary(
+  scope: RequestScope,
+): Promise<{ counts: MyTaskCardCounts; dueSoon: MyTask[] }> {
+  const employee = await getEmployeeSummary(scope.env, scope.actor.id);
+  if (!employee?.employeeId) return { counts: EMPTY_CARD_COUNTS, dueSoon: [] };
+  const [counts, dueSoon] = await Promise.all([
+    mineRepository.countMyTasks(scope.env, employee.employeeId),
+    mineRepository.listDueSoon(scope.env, employee.employeeId, DUE_SOON_LIMIT),
+  ]);
+  return {
+    counts: toCardCounts(counts),
+    dueSoon: dueSoon.map((row) => toMyTask(row, scope.actor.role)),
+  };
 }

@@ -36,6 +36,9 @@ Mặc định **từ chối** khi không khớp quy tắc nào.
 | Duyệt nghỉ phép                                     | ✅                                    | ✅ (cấp cuối) | 🏢 (cấp 1)           | —           | —                                 |
 | Executive Overview                                  | ✅                                    | —             | 🏢 (phần phòng mình) | —           | —                                 |
 | Workload                                            | ✅                                    | —             | 🏢                   | 🏢          | —                                 |
+| Xem sản phẩm (Tài sản → Sản phẩm)                   | ✅                                    | ✅            | ✅                   | ✅          | ✅                                |
+| Thêm / sửa / xoá sản phẩm                           | ✅                                    | —             | 🏢                   | —           | —                                 |
+| Sửa link, mô tả sản phẩm                            | ✅                                    | —             | 🏢                   | 👤          | 👤 người phụ trách chính / cùng   |
 | Roles & Permissions                                 | ✅                                    | —             | —                    | —           | —                                 |
 | Audit log                                           | ✅                                    | ✅ (phần HR)  | —                    | —           | —                                 |
 

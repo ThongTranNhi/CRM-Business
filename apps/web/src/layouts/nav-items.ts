@@ -71,7 +71,7 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'onboarding.view',
         ready: false,
       },
-      { to: '/app/assets', label: 'Tài sản', icon: 'package', ready: false },
+      { to: '/app/assets', label: 'Tài sản', icon: 'package', ready: true },
       { to: '/app/documents', label: 'Tài liệu', icon: 'file', ready: false },
       { to: '/app/approvals', label: 'Phê duyệt', icon: 'approval', ready: false },
     ],

@@ -53,6 +53,8 @@ const row = (facts = {}) => ({
   ...facts,
 });
 const counts = { today: 1, week: 2, overdue: 1, open: 4, done: 9 };
+// RPC trả thêm số của thẻ Tổng quan; meta.counts của danh sách chỉ giữ số các tab.
+const rpcCounts = { ...counts, todo: 3, in_progress: 1, done_this_week: 2 };
 
 function fakeDatabase(routes) {
   const calls = [];
@@ -80,7 +82,7 @@ test('my tasks service (Đợt 3 S2)', async (t) => {
     const database = fakeDatabase({
       active_employees: me,
       my_task_rows: list([row(), row({ id: 'other', is_assignee: false })]),
-      crm_my_task_counts: counts,
+      crm_my_task_counts: rpcCounts,
     });
     globalThis.fetch = database.fetch;
     const page = await service.listMyTasks(scopeAs('employee'), query({ tab: 'overdue' }));
@@ -98,7 +100,7 @@ test('my tasks service (Đợt 3 S2)', async (t) => {
     const database = fakeDatabase({
       active_employees: me,
       my_task_rows: list([]),
-      crm_my_task_counts: counts,
+      crm_my_task_counts: rpcCounts,
     });
     globalThis.fetch = database.fetch;
     await service.listMyTasks(
@@ -118,6 +120,8 @@ test('my tasks service (Đợt 3 S2)', async (t) => {
       task_priority: 'urgent',
       project_uuid: null,
       search: '50\\%\\_',
+      task_status: null,
+      done_this_week: false,
     });
   });
   await t.test('collaborator who is still in the board can complete (canEdit)', async () => {
@@ -126,7 +130,7 @@ test('my tasks service (Đợt 3 S2)', async (t) => {
       my_task_rows: list([
         row({ is_assignee: false, is_department_member: false, is_board_member: true }),
       ]),
-      crm_my_task_counts: counts,
+      crm_my_task_counts: rpcCounts,
     }).fetch;
     const page = await service.listMyTasks(scopeAs('employee'), query());
     assert.equal(page.data[0].canEdit, true);
@@ -139,7 +143,62 @@ test('my tasks service (Đợt 3 S2)', async (t) => {
     assert.deepEqual(page.meta.counts, { today: 0, week: 0, overdue: 0, open: 0, done: 0 });
     assert.ok(!database.calls.some(({ path }) => path.includes('my_task_rows')));
   });
-  await t.test('unknown tab is rejected by the schema', () => {
+  await t.test('status filter (Đợt 4 S2) narrows both list and counts', async () => {
+    const database = fakeDatabase({
+      active_employees: me,
+      my_task_rows: list([]),
+      crm_my_task_counts: rpcCounts,
+    });
+    globalThis.fetch = database.fetch;
+    await service.listMyTasks(scopeAs('employee'), query({ tab: 'open', status: 'in_progress' }));
+    const listCall = database.calls.find(({ path }) => path.includes('my_task_rows'));
+    assert.ok(listCall.path.includes('status=neq.done&status=eq.in_progress'), listCall.path);
+    const rpc = database.calls.find(({ path }) => path.includes('crm_my_task_counts'));
+    assert.equal(rpc.body.task_status, 'in_progress');
+    assert.equal(rpc.body.done_this_week, false);
+  });
+  await t.test('"done this week" filter uses the view flag, not a status value', async () => {
+    const database = fakeDatabase({
+      active_employees: me,
+      my_task_rows: list([]),
+      crm_my_task_counts: rpcCounts,
+    });
+    globalThis.fetch = database.fetch;
+    await service.listMyTasks(scopeAs('employee'), query({ tab: 'done', status: 'done_week' }));
+    const listCall = database.calls.find(({ path }) => path.includes('my_task_rows'));
+    assert.ok(listCall.path.includes('is_done_this_week=is.true'));
+    assert.ok(!listCall.path.includes('status=eq.done_week'));
+    const rpc = database.calls.find(({ path }) => path.includes('crm_my_task_counts'));
+    assert.equal(rpc.body.task_status, null);
+    assert.equal(rpc.body.done_this_week, true);
+  });
+  await t.test('summary for the overview: card counts + due soon (max 8)', async () => {
+    const database = fakeDatabase({
+      active_employees: me,
+      my_task_rows: [row({ is_overdue: false })],
+      crm_my_task_counts: rpcCounts,
+    });
+    globalThis.fetch = database.fetch;
+    const summary = await service.getMyTaskSummary(scopeAs('employee'));
+    assert.deepEqual(summary.counts, { todo: 3, inProgress: 1, overdue: 1, doneThisWeek: 2 });
+    assert.equal(summary.dueSoon[0].id, ids.task);
+    const listCall = database.calls.find(({ path }) => path.includes('my_task_rows'));
+    assert.ok(listCall.path.includes('is_due_soon=is.true'));
+    assert.ok(listCall.path.includes('limit=8'));
+    assert.ok(listCall.path.includes('order=due_date.asc'));
+  });
+  await t.test('summary without employee profile → zeros, no query', async () => {
+    const database = fakeDatabase({ active_employees: [] });
+    globalThis.fetch = database.fetch;
+    const summary = await service.getMyTaskSummary(scopeAs('super_admin'));
+    assert.deepEqual(summary, {
+      counts: { todo: 0, inProgress: 0, overdue: 0, doneThisWeek: 0 },
+      dueSoon: [],
+    });
+    assert.ok(!database.calls.some(({ path }) => path.includes('crm_my_task_counts')));
+  });
+  await t.test('unknown tab or status is rejected by the schema', () => {
     assert.throws(() => query({ tab: 'later' }));
+    assert.throws(() => query({ status: 'done' }));
   });
 });

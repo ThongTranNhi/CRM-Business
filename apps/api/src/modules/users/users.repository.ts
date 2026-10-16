@@ -193,6 +193,23 @@ export async function listEmployeeOptions(
   }));
 }
 
+/** Mọi nhân viên chưa xoá (ô chọn người cho nhiều phòng): tên + phòng, theo tên. Giới hạn 1000 — đủ cho công ty. */
+export async function listAllPeopleOptions(env: Env) {
+  const params = new URLSearchParams({
+    select: 'id,full_name,department_name',
+    order: 'full_name,id',
+    limit: '1000',
+  });
+  const rows = await supabaseRequest<
+    { id: string; full_name: string; department_name: string | null }[]
+  >(env, `/rest/v1/active_employees?${params}`);
+  return rows.map((row) => ({
+    id: row.id,
+    fullName: row.full_name,
+    departmentName: row.department_name,
+  }));
+}
+
 export const listDepartmentOptions = (env: Env) =>
   supabaseRequest<{ id: string; name: string }[]>(
     env,

@@ -17,8 +17,8 @@ import { NAV_GROUPS } from '@/layouts/nav-items';
 import { PlaceholderPage } from '@/layouts/PlaceholderPage';
 
 // Trang trong /app lazy load để giảm dung lượng tải ban đầu. Trang đăng nhập nạp sẵn.
-const DashboardPage = lazy(() =>
-  import('@/features/overview').then((m) => ({ default: m.DashboardPage })),
+const PersonalOverviewPage = lazy(() =>
+  import('@/features/overview').then((m) => ({ default: m.PersonalOverviewPage })),
 );
 const ProfilePage = lazy(() =>
   import('@/features/employees').then((m) => ({ default: m.ProfilePage })),
@@ -56,6 +56,7 @@ const BoardPage = lazy(() =>
 const WorkloadPage = lazy(() =>
   import('@/features/workload').then((m) => ({ default: m.WorkloadPage })),
 );
+const AssetsPage = lazy(() => import('@/features/assets').then((m) => ({ default: m.AssetsPage })));
 
 function page(element: ReactNode) {
   return <Suspense fallback={<Skeleton className="h-40 w-full" />}>{element}</Suspense>;
@@ -82,7 +83,7 @@ const unfinishedPages: { path: string; title: string; permission?: Permission }[
 ];
 
 const appRoutes: RouteObject[] = [
-  { index: true, element: page(<DashboardPage />) },
+  { index: true, element: page(<PersonalOverviewPage />) },
   { path: 'profile', element: page(<ProfilePage />) },
   { path: 'change-password', element: <ChangePasswordPage /> },
   guarded('employees.view', { path: 'employees', element: page(<EmployeeDirectoryPage />) }),
@@ -96,6 +97,7 @@ const appRoutes: RouteObject[] = [
   { path: 'projects', element: page(<ProjectListPage />) },
   { path: 'projects/:id', element: page(<ProjectDetailPage />) },
   guarded('workload.view', { path: 'workload', element: page(<WorkloadPage />) }),
+  { path: 'assets', element: page(<AssetsPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>
     guarded(permission, { path, element: <PlaceholderPage title={title} /> }),
   ),

@@ -31,9 +31,13 @@ export const boardQuerySchema = z.object({
 /** Tab của trang Việc của tôi (Đợt 3 S2). */
 export const MY_TASK_TABS = ['today', 'week', 'overdue', 'open', 'done'] as const;
 
-/** `GET /api/tasks/mine?tab=&departmentId=&priority=&projectId=&q=&page=&pageSize=`. */
+/** Lọc trạng thái (Đợt 4 S2 — link thẻ Tổng quan): Cần làm, Đang làm, Xong tuần này. */
+export const MY_TASK_STATUS_FILTERS = ['todo', 'in_progress', 'done_week'] as const;
+
+/** `GET /api/tasks/mine?tab=&status=&departmentId=&priority=&projectId=&q=&page=&pageSize=`. */
 export const myTasksQuerySchema = paginationSchema.extend({
   tab: z.enum(MY_TASK_TABS).default('open'),
+  status: z.enum(MY_TASK_STATUS_FILTERS).optional(),
   departmentId: z.uuid().optional(),
   priority: z.enum(PRIORITIES).optional(),
   projectId: z.uuid().optional(),

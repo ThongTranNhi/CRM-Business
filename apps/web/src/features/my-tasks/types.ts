@@ -30,9 +30,14 @@ export interface MyTasksMeta extends PageMeta {
   counts: MyTaskCounts;
 }
 
-/** Bộ lọc trên URL: `?tab=&department=&priority=&project=&q=&page=`. */
+/** Lọc trạng thái (link thẻ Tổng quan): Cần làm, Đang làm, Xong tuần này. */
+export const MY_TASK_STATUS_FILTERS = ['todo', 'in_progress', 'done_week'] as const;
+export type MyTaskStatusFilter = (typeof MY_TASK_STATUS_FILTERS)[number];
+
+/** Bộ lọc trên URL: `?tab=&status=&department=&priority=&project=&q=&page=`. */
 export interface MyTaskParams {
   tab: MyTaskTab;
+  status: MyTaskStatusFilter | '';
   departmentId: string;
   priority: TaskPriority | '';
   projectId: string;

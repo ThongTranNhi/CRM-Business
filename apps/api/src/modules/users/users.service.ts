@@ -9,6 +9,7 @@ import {
   editEmployee,
   findAccount,
   findProfile,
+  listAllPeopleOptions,
   listDepartmentOptions,
   listDirectory,
   listEmployeeOptions,
@@ -122,6 +123,9 @@ export async function requireActiveAccount(env: Env, userId: string) {
   if (!account || account.status !== 'active') throw forbidden();
   return account;
 }
+
+/** Cho module assets (người phụ trách sản phẩm, mọi phòng): quyền do module gọi kiểm tra. */
+export const listPeopleOptions = (env: Env) => listAllPeopleOptions(env);
 
 /** Map employeeId → signed URL; ảnh nằm ngoài thư mục của chính chủ thì không ký. */
 export async function getAvatarUrls(env: Env, owners: AvatarOwner[]): Promise<Map<string, string>> {

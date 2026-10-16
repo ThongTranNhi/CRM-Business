@@ -71,6 +71,17 @@ task_overdue`, task_id, comment_id, dedupe_key, read_at); index theo người nh
   done_30d_count). Chỉ tính task nhân viên là **người phụ trách chính**, mọi Dashboard, bỏ task lưu trữ và phòng đã
   xoá; quá hạn và 30 ngày theo ngày Việt Nam. Nhân viên đã xoá không có dòng. Chỉ `service_role` đọc. Kiểm tra:
   `supabase/tests/workload.sql`.
+- Migration `20261017090000_my_task_status_filter.sql` (Đợt 4 S2): `my_task_rows` thêm `is_done_this_week`,
+  `is_due_soon` (ngày Việt Nam); `crm_my_task_counts(employee_uuid, department_uuid, task_priority, project_uuid,
+search, task_status, done_this_week)` → jsonb `{ today, week, overdue, open, done, todo, in_progress,
+done_this_week }`. Kiểm tra: `supabase/tests/my_task_status_filter.sql`.
+- Migration `20261018090000_products.sql` (Tài sản → Sản phẩm): `products` (department_id, project_id, name, url —
+  check chỉ `http(s)://`, description, status `developing|active|paused|discontinued`, owner_employee_id NOT NULL,
+  archived_at, created_by; tên unique theo `(department_id, lower(name))` khi chưa lưu trữ; khoá ngoại ghép
+  `products_project_department_fk (project_id, department_id)` → `projects(id, department_id)` như task — BR-30),
+  `product_members (product_id, employee_id)` = người cùng phụ trách (mọi phòng, không gồm người chính). View
+  `product_summaries` (phòng, dự án, người chính, `members` jsonb). RPC `crm_create_product`, `crm_update_product`,
+  `crm_archive_product` ghi `audit_logs` (`resource_type = 'products'`). Kiểm tra: `supabase/tests/products.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 

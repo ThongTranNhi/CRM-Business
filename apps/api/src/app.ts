@@ -9,7 +9,9 @@ import { healthRoutes } from './modules/health/health.routes';
 import { departmentDashboardRoutes } from './modules/department-dashboards/department-dashboards.routes';
 import { departmentRoutes } from './modules/departments/departments.routes';
 import { notificationRoutes } from './modules/notifications/notifications.routes';
+import { overviewRoutes } from './modules/overview/overview.routes';
 import { projectRoutes } from './modules/projects/projects.routes';
+import { assetRoutes } from './modules/assets/assets.routes';
 import { searchRoutes } from './modules/search/search.routes';
 import { boardRoutes, taskRoutes } from './modules/tasks/tasks.routes';
 import { userRoutes } from './modules/users/users.routes';
@@ -43,6 +45,8 @@ app.route('/api/projects', projectRoutes);
 app.route('/api/notifications', notificationRoutes);
 app.route('/api/search', searchRoutes);
 app.route('/api/workload', workloadRoutes);
+app.route('/api/overview', overviewRoutes);
+app.route('/api/assets', assetRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

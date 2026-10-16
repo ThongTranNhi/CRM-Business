@@ -37,7 +37,14 @@ export function MyTasksPage() {
         isFiltering={hasFilters(params)}
         onPageChange={(page) => updateParams({ page })}
         onClearFilters={() =>
-          updateParams({ department: null, priority: null, project: null, q: null, page: null })
+          updateParams({
+            status: null,
+            department: null,
+            priority: null,
+            project: null,
+            q: null,
+            page: null,
+          })
         }
       />
     </>

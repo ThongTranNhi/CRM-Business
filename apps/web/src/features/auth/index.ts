@@ -2,6 +2,7 @@ export { signOut } from './api/auth.api';
 export { ProtectedRoute } from './components/ProtectedRoute';
 export { RequireAccess } from './components/RequireAccess';
 export { useCan } from './hooks/useCan';
+export { useClearCacheOnUserChange } from './hooks/useClearCacheOnUserChange';
 export { useCurrentUser } from './hooks/useCurrentUser';
 export { useSession } from './hooks/useSession';
 export { ChangePasswordPage } from './pages/ChangePasswordPage';

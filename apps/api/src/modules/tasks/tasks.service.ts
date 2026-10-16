@@ -39,6 +39,9 @@ export const countOpenTasks = (env: Env, employeeId: string) =>
 export const searchTaskTitles = (env: Env, boardIds: string[], q: string, limit: number) =>
   searchRepository.searchTaskTitles(env, boardIds, q, limit);
 
+/** Cho module overview: 4 thẻ số việc + việc sắp đến hạn của người gọi. */
+export { getMyTaskSummary } from './tasks.mine.service';
+
 /** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
 const relationTo = (
   access: WorkAccess,
