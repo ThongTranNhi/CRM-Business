@@ -113,8 +113,12 @@ phiên đăng nhập, không nhận qua query. Đọc view `my_task_rows` + RPC 
 `20261011090000_my_tasks.sql`) — 2 truy vấn song song, không N+1. Bỏ task đã lưu trữ, phòng ban đã xoá, và board
 người gọi không còn xem được (không thuộc phòng, không còn trong `board_members`).
 
-Query: `tab` (`today` | `week` | `overdue` | `open` | `done`, mặc định `open`), `departmentId`, `priority`,
-`projectId`, `q` (tên việc, `%` `_` được escape), `page`, `pageSize` (mặc định 20).
+Query: `tab` (`today` | `week` | `overdue` | `open` | `done`, mặc định `open`), `status`, `departmentId`,
+`priority`, `projectId`, `q` (tên việc, `%` `_` được escape), `page`, `pageSize` (mặc định 20).
+
+`status` (Đợt 4 S2, link 4 thẻ Tổng quan — migration `20261017090000_my_task_status_filter.sql`): `todo` (Cần làm),
+`in_progress` (Đang làm), `done_week` (xong từ 00:00 Thứ Hai tuần này, giờ Việt Nam). Kết hợp AND với tab, nên
+`tab=done&status=todo` rỗng. Giá trị khác → `400 VALIDATION_ERROR`.
 
 | Tab       | Điều kiện (ngày Việt Nam, tuần Thứ Hai → Chủ nhật) | Sắp xếp                                      |
 | --------- | -------------------------------------------------- | -------------------------------------------- |

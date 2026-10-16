@@ -191,3 +191,16 @@ export interface MyTask {
 
 /** Số việc từng tab (cùng bộ lọc với danh sách). */
 export type MyTaskCounts = Record<MyTaskTab, number>;
+
+/** 4 thẻ của Tổng quan cá nhân (Đợt 4 S2): việc mình phụ trách + phối hợp. */
+export interface MyTaskCardCounts {
+  todo: number;
+  inProgress: number;
+  overdue: number;
+  doneThisWeek: number;
+}
+
+/** Bộ lọc dùng chung cho danh sách và số đếm Việc của tôi (không gồm tab và phân trang). */
+export type MyTaskFilters = Partial<
+  Pick<MyTasksQuery, 'status' | 'departmentId' | 'priority' | 'projectId' | 'q'>
+>;

@@ -145,6 +145,22 @@ export async function createDashboard(scope: RequestScope, input: CreateDashboar
   return getDashboard(scope, result.dashboardId);
 }
 
+/**
+ * Cho module overview (Super Admin): tổng việc đang mở / quá hạn trên mọi Dashboard của phòng chưa xoá — cùng số
+ * liệu thẻ Workspace (view dashboard_summaries, quá hạn theo giờ Việt Nam).
+ */
+export async function getCompanyTaskTotals({ env, actor }: RequestScope) {
+  assertRole(actor, ['super_admin']);
+  const summaries = await dashboardsRepository.listVisible(env, actor.id, true);
+  return summaries.reduce(
+    (totals, { counts }) => ({
+      open: totals.open + counts.open,
+      overdue: totals.overdue + counts.overdue,
+    }),
+    { open: 0, overdue: 0 },
+  );
+}
+
 /** Cho module search: board người xem được thấy (cùng quy tắc với Workspace — BR-41, BR-06). */
 export async function listVisibleBoards({ env, actor }: RequestScope) {
   const includeAll = actor.role === 'super_admin' || actor.role === 'hr_admin';
