@@ -1,10 +1,12 @@
 import { PRIORITIES, type TaskStatus } from '@/features/tasks';
 import { readOption, readPage } from '@/lib/use-url-params';
 import {
+  MY_TASK_STATUS_FILTERS,
   MY_TASK_TABS,
   type MyTask,
   type MyTaskCounts,
   type MyTaskParams,
+  type MyTaskStatusFilter,
   type MyTaskTab,
 } from './types';
 
@@ -16,6 +18,12 @@ export const TAB_LABEL: Record<MyTaskTab, string> = {
   done: 'Đã xong',
 };
 
+export const STATUS_FILTER_LABEL: Record<MyTaskStatusFilter, string> = {
+  todo: 'Cần làm',
+  in_progress: 'Đang làm',
+  done_week: 'Xong tuần này',
+};
+
 /** "Hôm nay (3)"; chưa có số đếm → chỉ tên tab. */
 export const tabLabel = (tab: MyTaskTab, counts: MyTaskCounts | undefined) =>
   counts ? `${TAB_LABEL[tab]} (${counts[tab]})` : TAB_LABEL[tab];
@@ -23,9 +31,11 @@ export const tabLabel = (tab: MyTaskTab, counts: MyTaskCounts | undefined) =>
 /** Đọc bộ lọc từ URL; giá trị sai → mặc định. */
 export function readMyTaskParams(params: URLSearchParams): MyTaskParams {
   const priority = params.get('priority');
+  const status = params.get('status');
   return {
     // Tab đầu (Hôm nay) là mặc định.
     tab: readOption(params, 'tab', MY_TASK_TABS),
+    status: MY_TASK_STATUS_FILTERS.find((value) => value === status) ?? '',
     departmentId: params.get('department') ?? '',
     priority: PRIORITIES.find((value) => value === priority) ?? '',
     projectId: params.get('project') ?? '',
@@ -35,6 +45,7 @@ export function readMyTaskParams(params: URLSearchParams): MyTaskParams {
 }
 
 export const hasFilters = (params: MyTaskParams) =>
+  params.status !== '' ||
   params.departmentId !== '' ||
   params.priority !== '' ||
   params.projectId !== '' ||

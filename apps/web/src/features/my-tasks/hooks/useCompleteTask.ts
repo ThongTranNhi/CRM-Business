@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui';
 import { dashboardKeys } from '@/features/department-dashboards/cache-keys';
 import { projectKeys } from '@/features/projects/project-options';
+import { overviewKeys } from '@/features/overview/overview-keys';
 import { moveTask, taskKeys, type MovedTask } from '@/features/tasks';
 import { workloadKeys } from '@/features/workload/workload-keys';
 import type { MyTask } from '../types';
@@ -17,7 +18,7 @@ const markRow = (page: MyTaskPage | undefined, taskId: string, changes: Partial<
     data: page.data.map((task) => (task.id === taskId ? { ...task, ...changes } : task)),
   };
 
-/** Việc của tôi, board, drawer, số liệu thẻ Workspace, tiến độ dự án, Khối lượng việc đều đổi theo. */
+/** Việc của tôi, board, drawer, thẻ Workspace, tiến độ dự án, Khối lượng việc, Tổng quan đều đổi theo. */
 const AFFECTED_KEYS = [
   myTaskKeys.all,
   taskKeys.boards(),
@@ -25,6 +26,7 @@ const AFFECTED_KEYS = [
   dashboardKeys.all,
   projectKeys.all,
   workloadKeys.all,
+  overviewKeys.all,
 ];
 
 /**

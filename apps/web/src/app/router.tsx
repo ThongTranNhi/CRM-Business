@@ -17,8 +17,8 @@ import { NAV_GROUPS } from '@/layouts/nav-items';
 import { PlaceholderPage } from '@/layouts/PlaceholderPage';
 
 // Trang trong /app lazy load để giảm dung lượng tải ban đầu. Trang đăng nhập nạp sẵn.
-const DashboardPage = lazy(() =>
-  import('@/features/overview').then((m) => ({ default: m.DashboardPage })),
+const PersonalOverviewPage = lazy(() =>
+  import('@/features/overview').then((m) => ({ default: m.PersonalOverviewPage })),
 );
 const ProfilePage = lazy(() =>
   import('@/features/employees').then((m) => ({ default: m.ProfilePage })),
@@ -82,7 +82,7 @@ const unfinishedPages: { path: string; title: string; permission?: Permission }[
 ];
 
 const appRoutes: RouteObject[] = [
-  { index: true, element: page(<DashboardPage />) },
+  { index: true, element: page(<PersonalOverviewPage />) },
   { path: 'profile', element: page(<ProfilePage />) },
   { path: 'change-password', element: <ChangePasswordPage /> },
   guarded('employees.view', { path: 'employees', element: page(<EmployeeDirectoryPage />) }),

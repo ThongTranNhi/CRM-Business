@@ -1,10 +1,13 @@
 import { SearchInput, Select } from '@/components/ui';
 import { useDepartmentOptions } from '@/features/departments';
 import { PRIORITIES, PRIORITY_META } from '@/features/tasks';
-import type { MyTaskParams } from '../types';
+import { STATUS_FILTER_LABEL } from '../my-tasks.utils';
+import { MY_TASK_STATUS_FILTERS, type MyTaskParams } from '../types';
 import { ProjectFilter } from './ProjectFilter';
 
-type FilterChanges = Partial<Record<'department' | 'priority' | 'project' | 'q', string>>;
+type FilterChanges = Partial<
+  Record<'status' | 'department' | 'priority' | 'project' | 'q', string>
+>;
 
 interface MyTaskFiltersProps {
   params: MyTaskParams;
@@ -12,16 +15,27 @@ interface MyTaskFiltersProps {
   onChange: (changes: FilterChanges) => void;
 }
 
-/** Bộ lọc trên URL: phòng ban (Dashboard), ưu tiên, dự án; ô tìm theo tên việc. */
+/** Bộ lọc trên URL: trạng thái, phòng ban (Dashboard), ưu tiên, dự án; ô tìm theo tên việc. */
 export function MyTaskFilters({ params, onChange }: MyTaskFiltersProps) {
   const departments = useDepartmentOptions();
   return (
-    <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       <SearchInput
         label="Tìm việc"
         placeholder="Tìm theo tên việc"
         value={params.q}
         onSearch={(q) => onChange({ q })}
+      />
+      <Select
+        label="Lọc theo trạng thái"
+        hideLabel
+        placeholder="Mọi trạng thái"
+        options={MY_TASK_STATUS_FILTERS.map((status) => ({
+          value: status,
+          label: STATUS_FILTER_LABEL[status],
+        }))}
+        value={params.status}
+        onChange={(event) => onChange({ status: event.target.value })}
       />
       <Select
         label="Lọc theo phòng ban"

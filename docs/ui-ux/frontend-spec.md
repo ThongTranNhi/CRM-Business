@@ -55,7 +55,7 @@ Quy ước: route phẳng `/app/<module>`, tên module theo `rules/architecture-
 | `/auth/login`                 | Đăng nhập                                 | auth                    | Khách                                       | Đã có                                                                                   |
 | `/auth/register`              | Đăng ký                                   | auth                    | Khách                                       | Đã có                                                                                   |
 | `/app/change-password`        | Đổi mật khẩu                              | auth                    | Mọi người                                   | Đã có                                                                                   |
-| `/app`                        | Tổng quan cá nhân                         | overview                | Mọi người (nội dung theo role)              | Cần làm                                                                                 |
+| `/app`                        | Tổng quan cá nhân                         | overview                | Mọi người (nội dung theo role)              | Đã có (Đợt 4 S2): `/api/overview/me`; khối Đợt 5 chưa có                                |
 | `/app/workspace`              | Workspace                                 | workspace               | Mọi người (chỉ Dashboard được xem)          | Đã có (Đợt 2): `/api/department-dashboards`, `/api/departments?withoutDashboard=true`   |
 | `/app/workspace/:dashboardId` | Board phòng ban (`?task=` mở chi tiết)    | department-dashboards   | Thành viên phòng / được mời / Super Admin   | Đã có (Đợt 2): `/api/department-dashboards/:id`, `/api/boards/:boardId`, `/api/tasks/*` |
 | `/app/my-tasks`               | Việc của tôi                              | my-tasks                | Mọi người                                   | Đã có (Đợt 3 S2): `/api/tasks/mine`; badge số việc quá hạn trên Sidebar                 |
@@ -133,6 +133,11 @@ Nội dung (theo thứ tự trên trang):
 6. **Thông báo mới** (5 dòng) → đối tượng tương ứng.
 7. Super Admin: thêm khối **Toàn công ty hôm nay** (đi làm/ nghỉ / quá hạn) → `/app/overview`.
 
+Đã có (Đợt 4 S2, `docs/api/endpoints/overview.md`): mục 1 (chỉ **[Vào Workspace]**), 2, 3, 6; mục 7 chỉ phần công
+việc (việc đang mở, quá hạn toàn công ty → `/app/workload`). Thẻ đếm việc phụ trách + phối hợp như Việc của tôi; bấm
+thẻ → Việc của tôi với `?status=` để số khớp. Chấm công, Tạo đơn nghỉ, mục 4, 5, đi làm / nghỉ thêm ở Đợt 5 (ẩn, không
+hiện chỗ trống).
+
 ### 4.3 Workspace `/app/workspace` và Board `/app/workspace/:dashboardId`
 
 Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.md`, `task-management.md`, `drag-and-drop.md`, `activity-log.md` và bản demo. Bổ sung liên kết:
@@ -145,7 +150,7 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 ### 4.4 Việc của tôi `/app/my-tasks`
 
 - Tab: **Hôm nay · Tuần này · Quá hạn · Tất cả đang mở · Đã xong** (URL `?tab=`), số đếm trên tab.
-- Bộ lọc: phòng ban/Dashboard, ưu tiên, dự án; tìm theo tên.
+- Bộ lọc: trạng thái (Cần làm / Đang làm / Xong tuần này — `?status=`, Đợt 4 S2), phòng ban/Dashboard, ưu tiên, dự án; tìm theo tên.
 - Danh sách nhóm theo trạng thái; mỗi dòng: tên, Dashboard, dự án, ưu tiên, hạn, checklist x/y.
 - Bấm dòng → `/app/workspace/:dashboardId?task=<id>`. Checkbox nhanh ở đầu dòng ✓ đánh dấu hoàn thành (áp BR-14, có hoàn tác trong toast 5 giây).
 - Gồm cả việc mình là **người phối hợp** (nhãn "Phối hợp").

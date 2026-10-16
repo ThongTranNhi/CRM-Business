@@ -29,9 +29,12 @@ const task = (facts: Partial<MyTask> = {}): MyTask => ({
 
 describe('readMyTaskParams', () => {
   it('defaults to Hôm nay and ignores invalid values', () => {
-    const params = readMyTaskParams(new URLSearchParams('tab=later&priority=max&page=-2'));
+    const params = readMyTaskParams(
+      new URLSearchParams('tab=later&status=done&priority=max&page=-2'),
+    );
     expect(params).toEqual({
       tab: 'today',
+      status: '',
       departmentId: '',
       priority: '',
       projectId: '',
@@ -44,6 +47,11 @@ describe('readMyTaskParams', () => {
       new URLSearchParams('tab=done&department=d-1&priority=urgent&project=p-1&q=báo&page=3'),
     );
     expect(params).toMatchObject({ tab: 'done', priority: 'urgent', projectId: 'p-1', page: 3 });
+    expect(hasFilters(params)).toBe(true);
+  });
+  it('reads the status filter used by the overview cards', () => {
+    const params = readMyTaskParams(new URLSearchParams('tab=done&status=done_week'));
+    expect(params).toMatchObject({ tab: 'done', status: 'done_week' });
     expect(hasFilters(params)).toBe(true);
   });
 });
