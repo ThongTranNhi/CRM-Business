@@ -1,3 +1,4 @@
+import type { Env } from '../../config/env';
 import type { Role } from '../../config/constants';
 import { forbidden } from '../../lib/app-error';
 import { toPage } from '../../lib/pagination';
@@ -33,3 +34,10 @@ export async function listWorkload(scope: RequestScope, query: WorkloadQuery) {
   const { rows, total } = await workloadRepository.listWorkload(scope.env, query, departmentId);
   return toPage(rows, total, pagination);
 }
+
+/** Quá tải: hơn 10 việc đang mở (cùng ngưỡng tô màu warning ở bảng Khối lượng việc — frontend-spec 4.6). */
+export const OVERLOAD_OPEN_TASKS = 10;
+
+/** Cho module overview (Tổng quan điều hành): nhân viên quá tải / có việc quá hạn; phạm vi phòng do nơi gọi chốt. */
+export const listOverloadedEmployees = (env: Env, departmentId: string | null, limit: number) =>
+  workloadRepository.listOverloaded(env, departmentId, OVERLOAD_OPEN_TASKS, limit);

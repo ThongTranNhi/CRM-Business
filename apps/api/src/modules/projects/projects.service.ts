@@ -182,3 +182,7 @@ export const countOwnedProjects = (env: Env, employeeId: string) =>
 /** Cho module department-dashboards: ô "Dự án" của task (dự án chưa lưu trữ cùng phòng, BR-30). */
 export const listProjectOptions = (env: Env, departmentId: string) =>
   projectsRepository.listProjectOptions(env, departmentId);
+
+/** Cho module overview (Tổng quan điều hành): dự án chưa xong của một phòng (null = mọi phòng). */
+export const listUnfinishedProjects = (env: Env, departmentId: string | null, limit: number) =>
+  projectsRepository.listUnfinished(env, departmentId, limit);

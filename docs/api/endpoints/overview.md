@@ -46,3 +46,55 @@ Link của 4 thẻ (số trên thẻ = số trên tab vì cùng bộ lọc ở A
 | Đang làm      | `/app/my-tasks?tab=open&status=in_progress` |
 | Quá hạn       | `/app/my-tasks?tab=overdue`                 |
 | Xong tuần này | `/app/my-tasks?tab=done&status=done_week`   |
+
+## GET `/api/overview/executive?period=week|month|quarter`
+
+Tổng quan điều hành (`/app/overview`, frontend-spec 4.7, chủ dự án chốt 22/10/2026). Chỉ **Super Admin** (mọi phòng)
+và **Trưởng phòng** (phòng của chính họ, lấy từ phiên đăng nhập như Khối lượng việc); role khác `403`. `period` mặc
+định `month`, giá trị khác → `400`. Trưởng phòng chưa thuộc phòng nào → số 0, danh sách rỗng.
+
+```json
+{
+  "data": {
+    "period": "month",
+    "departmentId": null,
+    "totals": { "total": 10, "todo": 4, "inProgress": 1, "done": 5, "overdue": 2 },
+    "departments": [
+      {
+        "department": { "id": "uuid", "name": "Kinh doanh" },
+        "dashboardId": "uuid",
+        "todo": 3,
+        "inProgress": 1,
+        "done": 4,
+        "overdue": 2
+      }
+    ],
+    "projects": ["ProjectSummary như GET /api/projects"],
+    "upcoming": [
+      {
+        "id": "uuid",
+        "title": "Gửi báo giá",
+        "status": "todo",
+        "priority": "high",
+        "dueDate": "2026-10-24",
+        "daysLeft": 2,
+        "department": { "id": "uuid", "name": "Kinh doanh" },
+        "dashboardId": "uuid",
+        "assignee": { "id": "uuid", "fullName": "An" }
+      }
+    ],
+    "overloaded": ["WorkloadRow như GET /api/workload"]
+  }
+}
+```
+
+| Khối          | Nguồn và quy tắc                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `totals`      | Cộng `departments`. Chỉ việc **tạo trong kỳ** (từ Thứ Hai / ngày 1 tháng / ngày 1 quý, giờ Việt Nam); `total` = 3 nhóm |
+| `departments` | RPC `crm_executive_task_stats` — phòng có ít nhất 1 việc tạo trong kỳ; quá hạn = chưa xong, hạn trước hôm nay          |
+| `projects`    | `project_summaries`: dự án chưa xong, chưa lưu trữ, phòng chưa xoá; hạn gần nhất trước; tối đa 8. **Không theo kỳ**    |
+| `upcoming`    | View `upcoming_task_rows`: việc chưa xong, hạn hôm nay → 6 ngày sau; tối đa 8. **Không theo kỳ**                       |
+| `overloaded`  | `employee_workload`: có việc quá hạn hoặc > 10 việc đang mở; quá hạn nhiều nhất trước; tối đa 5. **Không theo kỳ**     |
+
+Bỏ task đã lưu trữ và task của phòng đã xoá. Thẻ số trên giao diện bấm → `/app/workload` (Đợt 7 đổi sang Báo cáo).
+Khối Nhân sự hôm nay thêm ở Đợt 5.
