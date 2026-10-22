@@ -171,7 +171,7 @@ Làm đúng `docs/features/work-management/workspace.md`, `department-dashboard.
 - Bảng: nhân viên · phòng ban · Cần làm · Đang làm · Quá hạn · Xong (30 ngày) · thanh `BarList` tổng việc đang mở. Sắp xếp theo cột; lọc phòng ban (Trưởng phòng mặc định phòng mình).
 - Bấm tên → `/app/employees/:id?tab=tasks`. Bấm một con số → Dashboard phòng đó lọc `?assignee=<id>&status=<...>`.
 - Tô màu warning cho người có > 10 việc đang mở, danger cho người có việc quá hạn.
-- Đã có (Đợt 4 S1): đếm việc **phụ trách chính** trên mọi Dashboard (`docs/api/endpoints/workload.md`). Trưởng phòng / Trưởng nhóm không có ô chọn phòng (API chỉ trả phòng mình). Tên → hồ sơ nhân viên khi có quyền xem (`?tab=tasks` thêm khi làm tab Công việc).
+- Đã có (Đợt 4 S1): đếm việc **phụ trách chính** trên mọi Dashboard (`docs/api/endpoints/workload.md`). Trưởng phòng / Trưởng nhóm không có ô chọn phòng (API chỉ trả phòng mình). Tên → hồ sơ nhân viên tab Công việc (`?tab=tasks`) khi có quyền xem.
 
 ### 4.7 Tổng quan điều hành `/app/overview`
 
@@ -194,7 +194,7 @@ hạn chót, quá tải là hiện tại. Thẻ số bấm → `/app/workload` (
 - Hồ sơ, tab (URL `?tab=`):
   - **Thông tin** (API thật): như hiện có; Super Admin sửa tên, chức vụ, phòng ban, trạng thái; **[Đặt lại mật khẩu]** ⧉ (đã có, BR-54).
   - Super Admin có **[Xoá nhân viên]** ✓ (BR-53): ConfirmDialog nói rõ hậu quả; nếu là trưởng phòng → báo phòng sẽ "Chưa có trưởng phòng" + ô chọn trưởng phòng mới (tuỳ chọn); nếu còn việc đang mở → hiện số việc + ô chọn người nhận bàn giao (tuỳ chọn). Xong → về danh sách, toast "Đã xoá nhân viên" kèm **Hoàn tác** 5 giây. Hồ sơ "Đã xoá" có **[Khôi phục]** ✓. Không hiện nút với chính mình và Super Admin khác.
-  - **Công việc**: việc đang mở của người này → task; link **Xem khối lượng** → `/app/workload`.
+  - **Công việc**: việc đang mở của người này → task; link **Xem khối lượng** → `/app/workload`. Đã có (Đợt 4): tab con Đang mở / Quá hạn / Đã xong (`?taskTab=`), việc phụ trách + phối hợp như Việc của tôi, tích ô hoàn thành nhanh — `GET /api/users/employees/:id/tasks`.
   - **Chấm công**: bảng công tháng hiện tại → `/app/attendance?employee=<id>`.
   - **Nghỉ phép**: số ngày còn lại theo loại + đơn gần đây → `/app/approvals?request=`.
   - **Tài sản**: tài sản đang giữ → `/app/assets?asset=<id>`.

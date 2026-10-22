@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Card, ErrorState, Icon, PageHeader, Skeleton } from '@/components/ui';
+import { Button, Card, ErrorState, Icon, PageHeader, Skeleton, Tabs } from '@/components/ui';
 import { useCan, useCurrentUser } from '@/features/auth';
+import { readPage, useUrlParams } from '@/lib/use-url-params';
 import { DeleteEmployeeDialog } from '../components/DeleteEmployeeDialog';
 import { EmployeeAdminForm } from '../components/EmployeeAdminForm';
 import { EmployeeProfileCard } from '../components/EmployeeProfileCard';
+import { EmployeeTasksTab } from '../components/EmployeeTasksTab';
 import { ResetPasswordForm } from '../components/ResetPasswordForm';
 import { RestoreEmployeeButton } from '../components/RestoreEmployeeButton';
+import { readProfileTabs } from '../employees.utils';
 import { useEmployeeDetail } from '../hooks/useDirectory';
-import type { EmployeeDetail } from '../types';
+import type { EmployeeDetail, ProfileTab } from '../types';
+
+const PROFILE_TAB_ITEMS: { value: ProfileTab; label: string }[] = [
+  { value: 'info', label: 'Thông tin' },
+  { value: 'tasks', label: 'Công việc' },
+];
 
 export function EmployeeDetailPage() {
   const { id = '' } = useParams();
@@ -38,6 +46,8 @@ function EmployeeProfile({ employee, departments }: EmployeeProfileProps) {
   const canDo = useCan();
   const { data: currentUser } = useCurrentUser();
   const [deleting, setDeleting] = useState(false);
+  const [params, updateParams] = useUrlParams();
+  const { tab, taskTab } = readProfileTabs(params);
   const isDeleted = employee.archivedAt !== null;
   const isAdmin = employee.role === 'super_admin';
   // BR-53: không xoá được chính mình và Super Admin khác.
@@ -63,12 +73,34 @@ function EmployeeProfile({ employee, departments }: EmployeeProfileProps) {
           </>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <EmployeeProfileCard employee={employee} />
-        <Card className="space-y-6 p-5">
-          <ProfileManagement employee={employee} departments={departments} />
-        </Card>
+      <div className="mb-4">
+        <Tabs<ProfileTab>
+          label="Hồ sơ nhân viên"
+          items={PROFILE_TAB_ITEMS}
+          value={tab}
+          // Đổi tab → bỏ tab con và trang của tab Công việc.
+          onChange={(next) =>
+            updateParams({ tab: next === 'info' ? null : next, taskTab: null, page: null })
+          }
+        />
       </div>
+      {tab === 'tasks' ? (
+        <EmployeeTasksTab
+          employeeId={employee.id}
+          tab={taskTab}
+          page={readPage(params)}
+          onChange={({ taskTab: nextTab, page }) =>
+            updateParams(nextTab ? { taskTab: nextTab, page: null } : { page: page ?? null })
+          }
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <EmployeeProfileCard employee={employee} />
+          <Card className="space-y-6 p-5">
+            <ProfileManagement employee={employee} departments={departments} />
+          </Card>
+        </div>
+      )}
       {deleting && <DeleteEmployeeDialog employee={employee} onClose={() => setDeleting(false)} />}
     </>
   );

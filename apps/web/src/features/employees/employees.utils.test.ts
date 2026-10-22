@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handedOverText, handoverScopeText } from './employees.utils';
+import { handedOverText, handoverScopeText, readProfileTabs } from './employees.utils';
 
 const result = (handedOverTaskCount: number, handedOverProjectCount: number) => ({
   deleted: true as const,
@@ -32,5 +32,19 @@ describe('handedOverText', () => {
 
   it('không bàn giao gì → chuỗi rỗng', () => {
     expect(handedOverText(result(0, 0), 'An')).toBe('');
+  });
+});
+
+describe('readProfileTabs', () => {
+  it('defaults to the info tab and open tasks; ignores unknown values', () => {
+    expect(readProfileTabs(new URLSearchParams())).toEqual({ tab: 'info', taskTab: 'open' });
+    expect(readProfileTabs(new URLSearchParams('tab=salary&taskTab=x'))).toEqual({
+      tab: 'info',
+      taskTab: 'open',
+    });
+    expect(readProfileTabs(new URLSearchParams('tab=tasks&taskTab=overdue'))).toEqual({
+      tab: 'tasks',
+      taskTab: 'overdue',
+    });
   });
 });

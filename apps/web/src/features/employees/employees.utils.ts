@@ -1,5 +1,13 @@
 import type { BadgeTone } from '@/components/ui';
-import type { DeleteEmployeeResult, DirectoryEmployee, EmployeeDetail } from './types';
+import {
+  EMPLOYEE_TASK_TABS,
+  PROFILE_TABS,
+  type DeleteEmployeeResult,
+  type DirectoryEmployee,
+  type EmployeeDetail,
+  type EmployeeTaskTab,
+  type ProfileTab,
+} from './types';
 
 /** Nhãn trạng thái hồ sơ: Đã xoá (BR-53) > Đã khoá > Đang làm; chưa có tài khoản thì xám. */
 export function employeeStatusBadge(employee: DirectoryEmployee): {
@@ -34,4 +42,17 @@ export function handedOverText(
     handedOverProjectCount > 0 ? `${handedOverProjectCount} dự án` : '',
   ].filter(Boolean);
   return parts.length > 0 ? `, bàn giao ${parts.join(' và ')} cho ${receiverName}` : '';
+}
+
+/** `?tab=` và `?taskTab=` của hồ sơ nhân viên; giá trị sai → mặc định. */
+export function readProfileTabs(params: URLSearchParams): {
+  tab: ProfileTab;
+  taskTab: EmployeeTaskTab;
+} {
+  const tab = params.get('tab');
+  const taskTab = params.get('taskTab');
+  return {
+    tab: PROFILE_TABS.find((value) => value === tab) ?? 'info',
+    taskTab: EMPLOYEE_TASK_TABS.find((value) => value === taskTab) ?? 'open',
+  };
 }
