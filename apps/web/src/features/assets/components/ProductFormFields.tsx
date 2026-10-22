@@ -2,9 +2,9 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { Input, Select, Textarea } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth';
 import { useDepartmentOptions } from '@/features/departments';
-import { PRODUCT_STATUS_META } from '../assets.utils';
+import { PRODUCT_KIND_LABELS, PRODUCT_STATUS_META } from '../assets.utils';
 import type { ProductForm, ProductFormErrors } from '../schemas/product.schema';
-import { PRODUCT_STATUSES, type ProductFormOptions } from '../types';
+import { PRODUCT_KINDS, PRODUCT_STATUSES, type ProductFormOptions } from '../types';
 import { ProductPeopleFields } from './ProductPeopleFields';
 
 interface ProductFormFieldsProps {
@@ -62,6 +62,18 @@ export function ProductFormFields({ form, errors, canEditAll, ...props }: Produc
       />
       {canEditAll && (
         <>
+          <Select
+            label="Loại"
+            options={PRODUCT_KINDS.map((kind) => ({
+              value: kind,
+              label: PRODUCT_KIND_LABELS[kind],
+            }))}
+            value={form.kind}
+            onChange={(event) => {
+              const kind = PRODUCT_KINDS.find((value) => value === event.target.value);
+              if (kind) onChange({ kind });
+            }}
+          />
           <Select
             label="Trạng thái"
             options={PRODUCT_STATUSES.map((status) => ({
