@@ -41,6 +41,12 @@ phòng cũ đã xoá thì để trống. Mã nhân viên đã bị người khá
 Người dùng được khôi phục phải đăng nhập lại.
 Quyền kiểm tra cả middleware lẫn service; RPC kiểm tra actor role lần nữa.
 
+GET `/api/users/employees/:id/tasks?tab=&status=&departmentId=&priority=&projectId=&q=&page=&pageSize=` — tab
+**Công việc** ở hồ sơ (Đợt 4): việc người này phụ trách hoặc phối hợp, cùng tham số, dạng trả và số đếm `meta.counts`
+như `GET /api/tasks/mine` (docs/api/endpoints/tasks.md) nhưng cho nhân viên `:id` thay vì người gọi. Giao diện dùng
+`tab=open|overdue|done`. `canEdit` tính theo role người xem (Super Admin → sửa được). Nhân viên không có → `404`.
+Không migration (đọc view `my_task_rows`).
+
 ## Ô chọn nhân viên — super_admin, hr_admin
 
 GET `/api/users/employees/options?q=&departmentId=`: tối đa 20 người **chưa bị xoá** (view `active_employees`),

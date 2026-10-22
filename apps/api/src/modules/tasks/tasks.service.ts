@@ -42,6 +42,10 @@ export const searchTaskTitles = (env: Env, boardIds: string[], q: string, limit:
 /** Cho module overview: 4 thẻ số việc + việc sắp đến hạn của người gọi. */
 export { getMyTaskSummary } from './tasks.mine.service';
 
+/** Cho module users: tab Công việc ở hồ sơ nhân viên (Super Admin) — cùng bộ lọc với Việc của tôi. */
+export { listEmployeeTasks } from './tasks.mine.service';
+export { myTasksQuerySchema } from './tasks.schema';
+
 /** Quan hệ của người xem với task, tính từ chính dữ liệu task (không cần gọi lại crm_work_access). */
 const relationTo = (
   access: WorkAccess,

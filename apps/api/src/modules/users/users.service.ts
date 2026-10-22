@@ -1,6 +1,7 @@
 import type { Role } from '../../config/constants';
 import type { Env } from '../../config/env';
 import { forbidden, notFound } from '../../lib/app-error';
+import type { RequestScope } from '../../lib/request-scope';
 import { signStorageUrl, signStorageUrls } from '../../lib/storage';
 import {
   beginPasswordReset,
@@ -27,7 +28,8 @@ import type {
 } from './users.types';
 import { setLocalPassword } from '../auth/auth.service';
 import { countOwnedProjects } from '../projects/projects.service';
-import { countOpenTasks } from '../tasks/tasks.service';
+import { countOpenTasks, listEmployeeTasks } from '../tasks/tasks.service';
+import type { MyTasksQuery } from '../tasks/tasks.types';
 
 const AVATAR_BUCKET = 'profile-avatars';
 
@@ -63,6 +65,16 @@ export async function getEmployeeDetail(
     countOwnedProjects(env, employeeId),
   ]);
   return { ...employee, openTaskCount, ownedProjectCount };
+}
+/** Tab Công việc ở hồ sơ (frontend-spec 4.8): việc người này phụ trách / phối hợp; nhân viên không có → 404. */
+export async function getEmployeeTasks(
+  scope: RequestScope,
+  employeeId: string,
+  query: MyTasksQuery,
+) {
+  await requireAdmin(scope.env, scope.actor.id);
+  if (!(await directoryEmployee(scope.env, employeeId))) throw notFound();
+  return listEmployeeTasks(scope, employeeId, query);
 }
 export async function getDepartmentOptions(env: Env, actorId: string) {
   await requireAdmin(env, actorId);
