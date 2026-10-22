@@ -54,3 +54,9 @@ Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều t
 - `service_role` chỉ SELECT bảng và view `product_summaries`; ghi qua RPC `security definer` (`crm_create_product`,
   `crm_update_product`, `crm_archive_product`). Hàm trợ giúp `crm_assert_product_person`, `crm_lock_product`,
   `crm_product_json`, `crm_log_product`, `crm_put_product_members` không ai gọi trực tiếp được.
+
+## Đợt 4 — Tổng quan điều hành
+
+- View `upcoming_task_rows` (`security_invoker = true`): chỉ `service_role` SELECT. Hàm đọc `crm_executive_task_stats`
+  (`security definer`, chỉ đọc): chỉ `service_role` EXECUTE; `app_private.crm_period_start` không ai gọi trực tiếp
+  được. Không bảng mới. Phạm vi phòng (Trưởng phòng chỉ phòng mình) kiểm tra ở API.
