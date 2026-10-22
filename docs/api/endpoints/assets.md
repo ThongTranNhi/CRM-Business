@@ -21,10 +21,12 @@ mỗi thao tác ghi `audit_logs` (`resource_type = 'products'`, action `product.
 
 Không đủ quyền → `403 FORBIDDEN`. Người phụ trách gửi trường khác ngoài `url` / `description` → `403`.
 
-## GET `/api/assets/products?q=&departmentId=&status=&page=&pageSize=`
+## GET `/api/assets/products?q=&departmentId=&status=&kind=&page=&pageSize=`
 
 Sản phẩm chưa xoá, thuộc phòng chưa xoá; sắp theo tên. `q` tìm theo tên (`%` `_` được escape). `status`:
 `developing` (Đang phát triển) · `active` (Đang hoạt động) · `paused` (Tạm ngừng) · `discontinued` (Ngừng hẳn).
+`kind` (Loại, migration `20261022090000_product_kind.sql`, chốt 22/10/2026): `company` (Sản phẩm công ty, mặc định)
+· `partner` (Website doanh nghiệp hợp tác). Loại tách khỏi trạng thái: sản phẩm hợp tác vẫn có trạng thái riêng.
 
 ```json
 {
@@ -35,6 +37,7 @@ Sản phẩm chưa xoá, thuộc phòng chưa xoá; sắp theo tên. `q` tìm th
       "url": "https://shop.example.com",
       "description": "Trang bán hàng chính",
       "status": "active",
+      "kind": "company",
       "department": { "id": "uuid", "name": "Kinh doanh" },
       "project": { "id": "uuid", "name": "Ra mắt web" },
       "owner": { "id": "uuid", "fullName": "Nguyễn An", "isArchived": false },
@@ -64,18 +67,19 @@ Sản phẩm chưa xoá, thuộc phòng chưa xoá; sắp theo tên. `q` tìm th
   "url": "https://shop.example.com",
   "description": null,
   "status": "developing",
+  "kind": "company",
   "ownerEmployeeId": "uuid",
   "projectId": null,
   "memberIds": []
 }
 ```
 
-`201` + sản phẩm như một dòng của GET. `url` bắt buộc `http://` / `https://` (chặn `javascript:`, `data:`… — schema
+`201` + sản phẩm như một dòng của GET. `kind` không gửi → `company`. `url` bắt buộc `http://` / `https://` (chặn `javascript:`, `data:`… — schema
 và check DB). `memberIds` tối đa 20; người phụ trách chính có trong `memberIds` thì tự bỏ ra.
 
 ## PATCH `/api/assets/products/:id`
 
-Chỉ gửi trường cần đổi: `name`, `url`, `description` (null = xoá), `status`, `ownerEmployeeId`, `projectId` (null =
+Chỉ gửi trường cần đổi: `name`, `url`, `description` (null = xoá), `status`, `kind`, `ownerEmployeeId`, `projectId` (null =
 bỏ), `memberIds` (thay cả danh sách). Không đổi phòng ban. Đổi người phụ trách chính sang người đang cùng phụ trách →
 người đó rời danh sách cùng phụ trách. Body rỗng → `400`.
 

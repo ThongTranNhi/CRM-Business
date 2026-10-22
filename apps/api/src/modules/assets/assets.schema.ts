@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import { paginationSchema, searchSchema } from '../../lib/pagination';
-import { PRODUCT_STATUSES } from './assets.types';
+import { PRODUCT_KINDS, PRODUCT_STATUSES } from './assets.types';
 
 export const uuidSchema = z.uuid();
 
-/** `?q=&departmentId=&status=&page=&pageSize=` — q tìm theo tên sản phẩm. */
+/** `?q=&departmentId=&status=&kind=&page=&pageSize=` — q tìm theo tên sản phẩm. */
 export const listProductsQuerySchema = paginationSchema.extend({
   q: searchSchema,
   departmentId: z.uuid().optional(),
   status: z.enum(PRODUCT_STATUSES).optional(),
+  kind: z.enum(PRODUCT_KINDS).optional(),
 });
 
 export const formOptionsQuerySchema = z.object({ departmentId: z.uuid() });
@@ -29,6 +30,7 @@ export const createProductSchema = z.object({
   url,
   description: description.default(null),
   status: z.enum(PRODUCT_STATUSES).default('developing'),
+  kind: z.enum(PRODUCT_KINDS).default('company'),
   ownerEmployeeId: z.uuid(),
   projectId: z.uuid().nullable().default(null),
   memberIds: memberIds.default([]),
@@ -41,6 +43,7 @@ export const updateProductSchema = z
     url,
     description,
     status: z.enum(PRODUCT_STATUSES),
+    kind: z.enum(PRODUCT_KINDS),
     ownerEmployeeId: z.uuid(),
     projectId: z.uuid().nullable(),
     memberIds,

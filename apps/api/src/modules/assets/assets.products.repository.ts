@@ -3,9 +3,9 @@ import { rangeParams } from '../../lib/pagination';
 import { callRpc, supabaseList, supabaseRequest } from '../../lib/supabase';
 import { PRODUCT_ERRORS } from './assets.errors';
 import type { CreateProductInput, ListProductsQuery, UpdateProductInput } from './assets.schema';
-import type { ProductRecord, ProductStatus } from './assets.types';
+import type { ProductKind, ProductRecord, ProductStatus } from './assets.types';
 
-/** Một dòng view product_summaries (migration 20261018090000). */
+/** Một dòng view product_summaries (migration 20261018090000; cột kind từ 20261022090000). */
 interface ProductSummaryRow {
   id: string;
   department_id: string;
@@ -16,6 +16,7 @@ interface ProductSummaryRow {
   url: string;
   description: string | null;
   status: ProductStatus;
+  kind: ProductKind;
   updated_at: string;
   owner_employee_id: string;
   owner_name: string;
@@ -23,7 +24,7 @@ interface ProductSummaryRow {
   members: { id: string; name: string; isArchived: boolean }[];
 }
 const PRODUCT_SELECT =
-  'id,department_id,department_name,project_id,project_name,name,url,description,status,updated_at,' +
+  'id,department_id,department_name,project_id,project_name,name,url,description,status,kind,updated_at,' +
   'owner_employee_id,owner_name,owner_archived,members';
 
 const toRecord = (row: ProductSummaryRow): ProductRecord => ({
@@ -32,6 +33,7 @@ const toRecord = (row: ProductSummaryRow): ProductRecord => ({
   url: row.url,
   description: row.description,
   status: row.status,
+  kind: row.kind,
   department: { id: row.department_id, name: row.department_name },
   project:
     row.project_id && row.project_name ? { id: row.project_id, name: row.project_name } : null,
@@ -57,6 +59,7 @@ export async function listProducts(env: Env, query: ListProductsQuery) {
   if (query.q) params.set('name', `ilike.*${query.q}*`);
   if (query.departmentId) params.set('department_id', `eq.${query.departmentId}`);
   if (query.status) params.set('status', `eq.${query.status}`);
+  if (query.kind) params.set('kind', `eq.${query.kind}`);
   const { rows, total } = await supabaseList<ProductSummaryRow>(
     env,
     `/rest/v1/product_summaries?${params}`,
@@ -90,6 +93,7 @@ export const createProduct = (env: Env, actorId: string, input: CreateProductInp
       product_url: input.url,
       product_description: input.description,
       product_status: input.status,
+      product_kind: input.kind,
       owner_uuid: input.ownerEmployeeId,
       project_uuid: input.projectId,
       member_uuids: input.memberIds,
