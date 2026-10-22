@@ -82,6 +82,10 @@ done_this_week }`. Kiểm tra: `supabase/tests/my_task_status_filter.sql`.
   `product_members (product_id, employee_id)` = người cùng phụ trách (mọi phòng, không gồm người chính). View
   `product_summaries` (phòng, dự án, người chính, `members` jsonb). RPC `crm_create_product`, `crm_update_product`,
   `crm_archive_product` ghi `audit_logs` (`resource_type = 'products'`). Kiểm tra: `supabase/tests/products.sql`.
+- Migration `20261022090000_product_kind.sql`: `products.kind` (`company|partner`, mặc định `company` — Sản phẩm
+  công ty / Website doanh nghiệp hợp tác, tách khỏi status); view `product_summaries` thêm cột `kind` ở cuối;
+  `crm_create_product` thêm tham số `product_kind` (mặc định `company`, bỏ chữ ký 9 tham số); `crm_update_product`
+  nhận khoá `kind`; audit ghi `kind`. Kiểm tra: `supabase/tests/product_kind.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
