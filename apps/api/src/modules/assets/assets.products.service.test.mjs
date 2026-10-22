@@ -39,6 +39,7 @@ const productRow = (facts = {}) => ({
   url: 'https://shop.example.test',
   description: 'Trang bán hàng',
   status: 'active',
+  kind: 'partner',
   updated_at: '2026-10-17T00:00:00Z',
   owner_employee_id: ids.owner,
   owner_name: 'Chủ sản phẩm',
@@ -93,8 +94,9 @@ test('products service (Tài sản → Sản phẩm)', async (t) => {
     globalThis.fetch = database.fetch;
     const page = await service.listProducts(
       scopeAs('employee'),
-      schema.listProductsQuerySchema.parse({ q: 'web', status: 'active' }),
+      schema.listProductsQuerySchema.parse({ q: 'web', status: 'active', kind: 'partner' }),
     );
+    assert.equal(page.data[0].kind, 'partner');
     assert.deepEqual(page.data[0].permissions, {
       canEdit: false,
       canEditContent: true,
@@ -110,6 +112,7 @@ test('products service (Tài sản → Sản phẩm)', async (t) => {
     assert.ok(list.path.includes('department_archived_at=is.null'));
     assert.ok(list.path.includes('name=ilike.*web*'));
     assert.ok(list.path.includes('status=eq.active'));
+    assert.ok(list.path.includes('kind=eq.partner'));
   });
 
   await t.test('manager creates only in the department they lead', async () => {
@@ -137,6 +140,7 @@ test('products service (Tài sản → Sản phẩm)', async (t) => {
       product_url: 'https://shop.example.test',
       product_description: null,
       product_status: 'developing',
+      product_kind: 'company',
       owner_uuid: ids.owner,
       project_uuid: null,
       member_uuids: [ids.me],
@@ -158,6 +162,10 @@ test('products service (Tài sản → Sản phẩm)', async (t) => {
     globalThis.fetch = second.fetch;
     await rejectsWithStatus(
       service.updateProduct(scopeAs('employee'), ids.product, { status: 'paused' }),
+      403,
+    );
+    await rejectsWithStatus(
+      service.updateProduct(scopeAs('employee'), ids.product, { kind: 'company' }),
       403,
     );
     assert.equal(second.rpc('crm_update_product'), undefined);
@@ -217,5 +225,6 @@ test('products service (Tài sản → Sản phẩm)', async (t) => {
     assert.throws(() => createInput({ url: 'shop.example.test' }));
     assert.throws(() => schema.updateProductSchema.parse({}));
     assert.throws(() => createInput({ status: 'deleted' }));
+    assert.throws(() => createInput({ kind: 'vendor' }));
   });
 });

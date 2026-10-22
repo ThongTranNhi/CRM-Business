@@ -73,3 +73,11 @@ export interface EmployeeOption {
   departmentName: string | null;
   role: Role | null;
 }
+
+/** Hồ sơ nhân viên: `?tab=` (frontend-spec 4.8; các tab Chấm công, Nghỉ phép… thêm theo đợt). */
+export const PROFILE_TABS = ['info', 'tasks'] as const;
+export type ProfileTab = (typeof PROFILE_TABS)[number];
+
+/** Tab Công việc: `?taskTab=` — cùng tab của Việc của tôi. */
+export const EMPLOYEE_TASK_TABS = ['open', 'overdue', 'done'] as const;
+export type EmployeeTaskTab = (typeof EMPLOYEE_TASK_TABS)[number];

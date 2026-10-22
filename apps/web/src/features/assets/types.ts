@@ -6,6 +6,10 @@ export type AssetTab = (typeof ASSET_TABS)[number];
 export const PRODUCT_STATUSES = ['developing', 'active', 'paused', 'discontinued'] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
+/** Loại: sản phẩm công ty (mặc định) hoặc website doanh nghiệp hợp tác — tách khỏi trạng thái. */
+export const PRODUCT_KINDS = ['company', 'partner'] as const;
+export type ProductKind = (typeof PRODUCT_KINDS)[number];
+
 export interface ProductPerson {
   id: string;
   fullName: string;
@@ -19,6 +23,7 @@ export interface Product {
   url: string;
   description: string | null;
   status: ProductStatus;
+  kind: ProductKind;
   department: { id: string; name: string };
   project: { id: string; name: string } | null;
   owner: ProductPerson;
@@ -40,6 +45,7 @@ export interface ProductInput {
   url: string;
   description: string | null;
   status: ProductStatus;
+  kind: ProductKind;
   ownerEmployeeId: string;
   projectId: string | null;
   memberIds: string[];
@@ -50,10 +56,11 @@ export interface ProductFormOptions {
   projects: { id: string; name: string }[];
 }
 
-/** Bộ lọc trên URL: `?tab=products&q=&department=&status=&page=`. */
+/** Bộ lọc trên URL: `?tab=products&q=&department=&status=&kind=&page=`. */
 export interface ProductParams {
   q: string;
   departmentId: string;
   status: ProductStatus | '';
+  kind: ProductKind | '';
   page: number;
 }

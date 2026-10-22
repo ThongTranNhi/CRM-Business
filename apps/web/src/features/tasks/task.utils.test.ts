@@ -31,6 +31,7 @@ const board: BoardData = {
   ],
   tasks: [task('a', 'todo', 0), task('b', 'todo', 1024), task('c', 'done', 0)],
   doneTotal: 1,
+  doneSince: '2026-09-21',
 };
 
 describe('isOverdue (BR-16)', () => {

@@ -48,6 +48,8 @@ export interface BoardData {
   columns: BoardColumn[];
   tasks: BoardTask[];
   doneTotal: number;
+  /** YYYY-MM-DD: cột Đã hoàn thành chỉ hiện việc xong từ ngày này (~1 tháng); việc cũ hơn không bị xoá. */
+  doneSince: string;
 }
 
 export interface CreateTaskInput {

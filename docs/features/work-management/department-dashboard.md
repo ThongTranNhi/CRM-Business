@@ -9,7 +9,7 @@
 - 3 cột ngang: **VIỆC CẦN LÀM** (`todo`) · **VIỆC ĐANG LÀM** (`in_progress`) · **ĐÃ HOÀN THÀNH** (`done`).
   Màu cột: gray / info / success. Tiêu đề cột kèm số task. Cột đầu có nút "Thêm công việc" ở cuối.
 - Màn hình nhỏ: cuộn ngang, mỗi cột rộng tối thiểu 280px. Trên cảm ứng, đổi trạng thái trong drawer chi tiết.
-- Cột ĐÃ HOÀN THÀNH hiện N task gần nhất + "Xem thêm".
+- Cột ĐÃ HOÀN THÀNH hiện N task gần nhất + "Xem thêm". Chỉ gồm việc xong khoảng 1 tháng gần đây (tuần này + 4 tuần trước, chốt 22/10/2026): sang tuần mới thì tuần cũ nhất rời board; việc cũ **không bị xoá** (vẫn có ở Việc của tôi, dự án, tìm kiếm, báo cáo).
 
 ## Tìm kiếm & lọc
 

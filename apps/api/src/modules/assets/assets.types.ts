@@ -4,6 +4,10 @@ import type { ProductPermissions } from '../../lib/product-access';
 export const PRODUCT_STATUSES = ['developing', 'active', 'paused', 'discontinued'] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
+/** Loại: sản phẩm công ty (mặc định) hoặc website doanh nghiệp hợp tác — tách khỏi trạng thái. */
+export const PRODUCT_KINDS = ['company', 'partner'] as const;
+export type ProductKind = (typeof PRODUCT_KINDS)[number];
+
 export interface ProductPerson {
   id: string;
   fullName: string;
@@ -18,6 +22,7 @@ export interface Product {
   url: string;
   description: string | null;
   status: ProductStatus;
+  kind: ProductKind;
   department: { id: string; name: string };
   project: { id: string; name: string } | null;
   /** Người phụ trách chính. */

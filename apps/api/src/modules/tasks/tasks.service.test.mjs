@@ -98,9 +98,18 @@ test('tasks service (permission-model.md, BR-11 → BR-15, BR-19)', async (t) =>
   });
   await t.test('HR Admin reads but cannot create a task outside their department', async () => {
     const database = fakeDatabase({ crm_work_access: access('hr_admin'), board_columns: [] });
-    globalThis.fetch = database.fetch;
+    const paths = [];
+    globalThis.fetch = (url, init) => {
+      paths.push(decodeURIComponent(String(url)));
+      return database.fetch(url, init);
+    };
     const board = await service.getBoard(scopeAs('hr_admin'), ids.board, 20);
     assert.deepEqual(board.tasks, []);
+    // Cột Đã hoàn thành chỉ lấy việc xong từ mốc ~1 tháng (lib/board-retention.ts).
+    assert.match(board.doneSince, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(
+      paths.some((path) => path.includes('status=eq.done') && path.includes('completed_at=gte.')),
+    );
     await assert.rejects(() => service.createTask(scopeAs('hr_admin'), ids.board, createInput), {
       code: 'FORBIDDEN',
     });

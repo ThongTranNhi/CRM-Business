@@ -22,7 +22,8 @@ export function ProductsTab() {
   const [form, setForm] = useState<FormState>(null);
   const [archiving, setArchiving] = useState<Product | null>(null);
   const canCreate = canDo('products.create');
-  const clearFilters = () => updateParams({ q: null, department: null, status: null, page: null });
+  const clearFilters = () =>
+    updateParams({ q: null, department: null, status: null, kind: null, page: null });
 
   function renderBody() {
     if (query.isPending) return <Skeleton className="h-64 w-full" />;

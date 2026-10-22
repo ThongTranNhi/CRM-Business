@@ -32,10 +32,12 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 22  | `20261016090000_workload.sql`                         | 17/10/2026                 |
 | 23  | `20261017090000_my_task_status_filter.sql`            |                            |
 | 24  | `20261018090000_products.sql`                         |                            |
+| 25  | `20261022090000_product_kind.sql`                     |                            |
+| 26  | `20261023090000_executive_overview.sql`               |                            |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql`, `supabase/tests/products.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt`, `products: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql`, `supabase/tests/products.sql`, `supabase/tests/product_kind.sql`, `supabase/tests/executive_overview.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt`, `products: đạt`, `product_kind: đạt`, `executive_overview: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -44,6 +46,19 @@ select name, applied_at from app_private.applied_migrations order by name;
 ```
 
 ## Nhật ký
+
+- `20261023090000_executive_overview.sql` (Đợt 4, Tổng quan điều hành, chốt 22/10/2026): hàm đọc
+  `crm_executive_task_stats(period, department_uuid)` — việc tạo trong kỳ tuần / tháng / quý theo phòng; view
+  `upcoming_task_rows` (hạn chót 7 ngày tới); index `tasks_department_created_idx`. Không đổi bảng. Kiểm tra file
+  trước (`20261022090000`) đã chạy. Áp trước khi deploy API (`/api/overview/executive`). Kiểm tra:
+  `supabase/tests/executive_overview.sql`.
+
+- `20261022090000_product_kind.sql` (Tài sản → Sản phẩm, chủ dự án chốt 22/10/2026): thêm Loại sản phẩm
+  `products.kind` — `company` (Sản phẩm công ty, mặc định cho mọi sản phẩm cũ) · `partner` (Website doanh nghiệp
+  hợp tác); tách khỏi trạng thái. View `product_summaries` thêm cột `kind` ở cuối; `crm_create_product` thêm tham số
+  `product_kind` có mặc định (DROP chữ ký 9 tham số — API cũ gọi theo tên vẫn chạy); `crm_update_product` nhận khoá
+  `kind`. Kiểm tra file trước (`20261018090000`) đã chạy. Áp trước khi deploy API mới. Kiểm tra:
+  `supabase/tests/product_kind.sql`.
 
 - `20261018090000_products.sql` (Tài sản → tab Sản phẩm, chủ dự án chốt 17/10/2026): bảng `products` (link chỉ
   `http(s)://`, trạng thái 4 giá trị, 1 người phụ trách chính, dự án cùng phòng qua khoá ngoại ghép — BR-30),

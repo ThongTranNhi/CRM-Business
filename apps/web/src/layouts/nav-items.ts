@@ -37,7 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Tổng quan điều hành',
         icon: 'trending',
         permission: 'executive-overview.view',
-        ready: false,
+        ready: true,
       },
     ],
   },

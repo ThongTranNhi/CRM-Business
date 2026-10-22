@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import { readEnv } from '../../config/env';
 import type { AppEnv } from '../../lib/app-env';
+import { requestScope } from '../../lib/request-scope';
 import { parseInput, readJson } from '../../lib/validation';
 import {
   adminEmployeeSchema,
@@ -16,6 +17,7 @@ import {
   getEmployeeDetail,
   getEmployeeDirectory,
   getEmployeeOptions,
+  getEmployeeTasks,
   getOwnProfile,
   resetEmployeePassword,
   restoreEmployee,
@@ -23,6 +25,7 @@ import {
   updateOwnProfile,
 } from './users.service';
 import { newPasswordSchema } from '../auth/auth.schema';
+import { myTasksQuerySchema } from '../tasks/tasks.service';
 
 const employeeId = (c: Context<AppEnv>) => parseInput(employeeIdSchema, c.req.param('id'));
 
@@ -41,6 +44,11 @@ export async function directory(c: Context<AppEnv>) {
 }
 export async function detail(c: Context<AppEnv>) {
   return c.json({ data: await getEmployeeDetail(readEnv(c.env), c.get('user').id, employeeId(c)) });
+}
+/** GET /api/employees/:id/tasks?tab=&page= — tab Công việc ở hồ sơ nhân viên. */
+export async function tasks(c: Context<AppEnv>) {
+  const query = parseInput(myTasksQuerySchema, c.req.query());
+  return c.json(await getEmployeeTasks(requestScope(c), employeeId(c), query));
 }
 export async function departmentOptions(c: Context<AppEnv>) {
   return c.json({ data: await getDepartmentOptions(readEnv(c.env), c.get('user').id) });

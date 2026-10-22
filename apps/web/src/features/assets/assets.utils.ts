@@ -2,9 +2,11 @@ import type { BadgeTone } from '@/components/ui';
 import { readPage } from '@/lib/use-url-params';
 import type { ProductForm } from './schemas/product.schema';
 import {
+  PRODUCT_KINDS,
   PRODUCT_STATUSES,
   type Product,
   type ProductInput,
+  type ProductKind,
   type ProductParams,
   type ProductStatus,
 } from './types';
@@ -17,19 +19,26 @@ export const PRODUCT_STATUS_META: Record<ProductStatus, { label: string; tone: B
   discontinued: { label: 'Ngừng hẳn', tone: 'neutral' },
 };
 
+export const PRODUCT_KIND_LABELS: Record<ProductKind, string> = {
+  company: 'Sản phẩm công ty',
+  partner: 'Website doanh nghiệp hợp tác',
+};
+
 /** Đọc bộ lọc tab Sản phẩm từ URL; giá trị sai → mặc định. */
 export function readProductParams(params: URLSearchParams): ProductParams {
   const status = params.get('status');
+  const kind = params.get('kind');
   return {
     q: params.get('q') ?? '',
     departmentId: params.get('department') ?? '',
     status: PRODUCT_STATUSES.find((value) => value === status) ?? '',
+    kind: PRODUCT_KINDS.find((value) => value === kind) ?? '',
     page: readPage(params),
   };
 }
 
 export const hasProductFilters = (params: ProductParams): boolean =>
-  params.q !== '' || params.departmentId !== '' || params.status !== '';
+  params.q !== '' || params.departmentId !== '' || params.status !== '' || params.kind !== '';
 
 /** "link.example.com/path" — hiện gọn dưới tên sản phẩm (bỏ giao thức, dấu / cuối). */
 export const displayUrl = (url: string): string =>
@@ -41,6 +50,7 @@ export const productInputOf = (form: ProductForm): ProductInput => ({
   url: form.url,
   description: form.description || null,
   status: form.status,
+  kind: form.kind,
   ownerEmployeeId: form.ownerEmployeeId,
   projectId: form.projectId || null,
   memberIds: form.memberIds,
@@ -53,6 +63,7 @@ export const productFormOf = (product: Product | undefined, departmentId: string
   url: product?.url ?? '',
   description: product?.description ?? '',
   status: product?.status ?? 'developing',
+  kind: product?.kind ?? 'company',
   ownerEmployeeId: product?.owner.id ?? '',
   projectId: product?.project?.id ?? '',
   memberIds: product?.members.map((member) => member.id) ?? [],

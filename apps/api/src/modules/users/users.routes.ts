@@ -11,6 +11,7 @@ import {
   removeEmployee,
   resetPassword,
   restore,
+  tasks,
 } from './users.controller';
 import { requireRole } from '../../middleware/permission.middleware';
 
@@ -24,6 +25,7 @@ userRoutes.use('/employees/*', requireRole('super_admin'));
 userRoutes.get('/employees', directory);
 userRoutes.get('/employees/department-options', departmentOptions);
 userRoutes.get('/employees/:id', detail);
+userRoutes.get('/employees/:id/tasks', tasks);
 userRoutes.patch('/employees/:id', patchEmployee);
 userRoutes.delete('/employees/:id', removeEmployee);
 userRoutes.post('/employees/:id/restore', restore);

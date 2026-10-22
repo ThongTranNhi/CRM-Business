@@ -1,6 +1,6 @@
 import type { Env } from '../../config/env';
 import { rangeParams } from '../../lib/pagination';
-import { supabaseList } from '../../lib/supabase';
+import { supabaseList, supabaseRequest } from '../../lib/supabase';
 import type { WorkloadQuery } from './workload.schema';
 import type { WorkloadRow, WorkloadSort } from './workload.types';
 
@@ -63,4 +63,28 @@ export async function listWorkload(env: Env, query: WorkloadQuery, departmentId:
     `/rest/v1/employee_workload?${params}`,
   );
   return { rows: rows.map(toWorkloadRow), total };
+}
+
+/**
+ * Tổng quan điều hành: người có việc quá hạn hoặc quá `openLimit` việc đang mở; nhiều việc quá hạn nhất trước.
+ * `departmentId` null → mọi nhân viên.
+ */
+export async function listOverloaded(
+  env: Env,
+  departmentId: string | null,
+  openLimit: number,
+  limit: number,
+) {
+  const params = new URLSearchParams({
+    select: WORKLOAD_SELECT,
+    or: `(overdue_count.gt.0,open_count.gt.${openLimit})`,
+    order: 'overdue_count.desc,open_count.desc,full_name.asc,employee_id.asc',
+    limit: String(limit),
+  });
+  if (departmentId) params.set('department_id', `eq.${departmentId}`);
+  const rows = await supabaseRequest<EmployeeWorkloadRow[]>(
+    env,
+    `/rest/v1/employee_workload?${params}`,
+  );
+  return rows.map(toWorkloadRow);
 }

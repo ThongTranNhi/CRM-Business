@@ -63,16 +63,15 @@ function toMyTask(row: MyTaskRow, role: RequestScope['actor']['role']): MyTask {
 }
 
 /** Danh sách một tab (phân trang) + số việc mọi tab — `{ data, meta: { page, pageSize, total, counts } }`. */
-export async function listMyTasks(scope: RequestScope, query: MyTasksQuery) {
-  const employee = await getEmployeeSummary(scope.env, scope.actor.id);
+async function listTasksOf(scope: RequestScope, employeeId: string | null, query: MyTasksQuery) {
   const pagination = { page: query.page, pageSize: query.pageSize };
-  if (!employee?.employeeId) {
+  if (!employeeId) {
     const page = toPage<MyTask>([], 0, pagination);
     return { ...page, meta: { ...page.meta, counts: EMPTY_COUNTS } };
   }
   const [{ rows, total }, counts] = await Promise.all([
-    mineRepository.listMyTasks(scope.env, employee.employeeId, query),
-    mineRepository.countMyTasks(scope.env, employee.employeeId, query),
+    mineRepository.listMyTasks(scope.env, employeeId, query),
+    mineRepository.countMyTasks(scope.env, employeeId, query),
   ]);
   const page = toPage(
     rows.map((row) => toMyTask(row, scope.actor.role)),
@@ -81,6 +80,18 @@ export async function listMyTasks(scope: RequestScope, query: MyTasksQuery) {
   );
   return { ...page, meta: { ...page.meta, counts: toTabCounts(counts) } };
 }
+
+export async function listMyTasks(scope: RequestScope, query: MyTasksQuery) {
+  const employee = await getEmployeeSummary(scope.env, scope.actor.id);
+  return listTasksOf(scope, employee?.employeeId ?? null, query);
+}
+
+/**
+ * Cho module users (tab Công việc ở hồ sơ nhân viên — chỉ Super Admin, nơi gọi kiểm tra quyền): việc người khác phụ
+ * trách / phối hợp, cùng bộ lọc với Việc của tôi. `canEdit` tính theo role người xem (Super Admin sửa được mọi việc).
+ */
+export const listEmployeeTasks = (scope: RequestScope, employeeId: string, query: MyTasksQuery) =>
+  listTasksOf(scope, employeeId, query);
 
 /** Cho module overview: 4 thẻ số việc + việc sắp đến hạn của chính người gọi (phụ trách + phối hợp). */
 export async function getMyTaskSummary(

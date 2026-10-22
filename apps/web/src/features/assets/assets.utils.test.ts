@@ -15,6 +15,7 @@ const product = (facts: Partial<Product> = {}): Product => ({
   url: 'https://shop.example.test/',
   description: null,
   status: 'active',
+  kind: 'company',
   department: { id: 'd-1', name: 'Kinh doanh' },
   project: null,
   owner: { id: 'e-owner', fullName: 'Chủ', isArchived: false },
@@ -29,9 +30,12 @@ const product = (facts: Partial<Product> = {}): Product => ({
 
 describe('readProductParams', () => {
   it('reads filters and ignores bad values', () => {
-    const params = readProductParams(new URLSearchParams('q=web&status=deleted&page=0'));
-    expect(params).toEqual({ q: 'web', departmentId: '', status: '', page: 1 });
+    const params = readProductParams(new URLSearchParams('q=web&status=deleted&kind=x&page=0'));
+    expect(params).toEqual({ q: 'web', departmentId: '', status: '', kind: '', page: 1 });
     expect(hasProductFilters(params)).toBe(true);
+    const partner = readProductParams(new URLSearchParams('kind=partner'));
+    expect(partner.kind).toBe('partner');
+    expect(hasProductFilters(partner)).toBe(true);
     expect(hasProductFilters(readProductParams(new URLSearchParams()))).toBe(false);
   });
 });
@@ -59,6 +63,11 @@ describe('productChanges', () => {
     });
   });
 
+  it('changing only the kind sends just the kind', () => {
+    const input = productInputOf({ ...productFormOf(product(), ''), kind: 'partner' });
+    expect(productChanges(product(), input)).toEqual({ kind: 'partner' });
+  });
+
   it('empty description and project become null', () => {
     const current = product({ description: 'Cũ', project: { id: 'pr-1', name: 'Dự án' } });
     const form = productFormOf(current, '');
@@ -72,6 +81,7 @@ describe('productFormOf', () => {
     expect(productFormOf(undefined, 'd-9')).toMatchObject({
       departmentId: 'd-9',
       status: 'developing',
+      kind: 'company',
       memberIds: [],
     });
   });

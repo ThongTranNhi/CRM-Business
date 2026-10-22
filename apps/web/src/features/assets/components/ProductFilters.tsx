@@ -1,9 +1,9 @@
 import { SearchInput, Select } from '@/components/ui';
 import { useDepartmentOptions } from '@/features/departments';
-import { PRODUCT_STATUS_META } from '../assets.utils';
-import { PRODUCT_STATUSES, type ProductParams } from '../types';
+import { PRODUCT_KIND_LABELS, PRODUCT_STATUS_META } from '../assets.utils';
+import { PRODUCT_KINDS, PRODUCT_STATUSES, type ProductParams } from '../types';
 
-type FilterChanges = Partial<Record<'q' | 'department' | 'status', string>>;
+type FilterChanges = Partial<Record<'q' | 'department' | 'status' | 'kind', string>>;
 
 interface ProductFiltersProps {
   params: ProductParams;
@@ -11,11 +11,11 @@ interface ProductFiltersProps {
   onChange: (changes: FilterChanges) => void;
 }
 
-/** Bộ lọc trên URL: tìm theo tên, phòng ban, trạng thái. */
+/** Bộ lọc trên URL: tìm theo tên, phòng ban, loại, trạng thái. */
 export function ProductFilters({ params, onChange }: ProductFiltersProps) {
   const departments = useDepartmentOptions();
   return (
-    <div className="mb-4 grid gap-3 sm:grid-cols-3">
+    <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <SearchInput
         label="Tìm sản phẩm"
         placeholder="Tìm theo tên sản phẩm"
@@ -32,6 +32,14 @@ export function ProductFilters({ params, onChange }: ProductFiltersProps) {
         }))}
         value={params.departmentId}
         onChange={(event) => onChange({ department: event.target.value })}
+      />
+      <Select
+        label="Lọc theo loại"
+        hideLabel
+        placeholder="Mọi loại"
+        options={PRODUCT_KINDS.map((kind) => ({ value: kind, label: PRODUCT_KIND_LABELS[kind] }))}
+        value={params.kind}
+        onChange={(event) => onChange({ kind: event.target.value })}
       />
       <Select
         label="Lọc theo trạng thái"

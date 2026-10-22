@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Badge, Icon, Table, type TableColumn } from '@/components/ui';
-import { displayUrl, PRODUCT_STATUS_META } from '../assets.utils';
+import { displayUrl, PRODUCT_KIND_LABELS, PRODUCT_STATUS_META } from '../assets.utils';
 import type { Product } from '../types';
 import { ProductActions, ResponsiblePeople } from './ProductCells';
 
@@ -14,7 +14,7 @@ interface ProductTableProps {
 
 const emptyCell = <span className="text-gray-400">—</span>;
 
-/** Bảng sản phẩm: tên + link (mở tab mới), mô tả, phòng ban, người phụ trách, dự án, trạng thái, thao tác. */
+/** Bảng sản phẩm: tên + link (mở tab mới), loại, mô tả, phòng ban, người phụ trách, dự án, trạng thái, thao tác. */
 export function ProductTable({ products, canOpenProfile, onEdit, onArchive }: ProductTableProps) {
   const columns: TableColumn<Product>[] = [
     {
@@ -36,6 +36,12 @@ export function ProductTable({ products, canOpenProfile, onEdit, onArchive }: Pr
           </a>
         </div>
       ),
+    },
+    {
+      key: 'kind',
+      header: 'Loại',
+      className: 'min-w-36',
+      render: (product) => PRODUCT_KIND_LABELS[product.kind],
     },
     {
       key: 'description',

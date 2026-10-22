@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PRODUCT_STATUSES } from '../types';
+import { PRODUCT_KINDS, PRODUCT_STATUSES } from '../types';
 
 /** Form thêm / sửa sản phẩm. '' ở ô chọn = chưa chọn. */
 export const productFormSchema = z.object({
@@ -18,6 +18,7 @@ export const productFormSchema = z.object({
     .regex(/^https?:\/\/\S+$/i, 'Link phải bắt đầu bằng http:// hoặc https://'),
   description: z.string().trim().max(2000, 'Mô tả tối đa 2000 ký tự'),
   status: z.enum(PRODUCT_STATUSES),
+  kind: z.enum(PRODUCT_KINDS),
   ownerEmployeeId: z.string().min(1, 'Vui lòng chọn người phụ trách chính'),
   projectId: z.string(),
   memberIds: z.array(z.string()).max(20, 'Tối đa 20 người cùng phụ trách'),

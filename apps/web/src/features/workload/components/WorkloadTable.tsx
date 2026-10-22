@@ -55,7 +55,7 @@ export function WorkloadTable({ rows, sort, onSort, canOpenProfile }: WorkloadTa
       render: (row) =>
         canOpenProfile ? (
           <Link
-            to={`/app/employees/${row.employee.id}`}
+            to={`/app/employees/${row.employee.id}?tab=tasks`}
             className="font-medium text-gray-900 hover:underline"
           >
             {row.employee.fullName}

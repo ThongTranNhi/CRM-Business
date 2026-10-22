@@ -214,3 +214,18 @@ export const restoreProject = (env: Env, actorId: string, projectId: string) =>
     args: { actor_uuid: actorId, project_uuid: projectId },
     errors: PROJECT_ERRORS,
   });
+
+/** Tổng quan điều hành: dự án chưa xong, chưa lưu trữ, phòng chưa xoá; hạn gần nhất trước (chưa có hạn ở cuối). */
+export async function listUnfinished(env: Env, departmentId: string | null, limit: number) {
+  const params = new URLSearchParams({
+    select: SUMMARY_SELECT,
+    archived_at: 'is.null',
+    department_archived_at: 'is.null',
+    status: 'neq.done',
+    order: 'due_date.asc.nullslast,name,id',
+    limit: String(limit),
+  });
+  if (departmentId) params.set('department_id', `eq.${departmentId}`);
+  const rows = await supabaseRequest<SummaryRow[]>(env, `/rest/v1/project_summaries?${params}`);
+  return rows.map(mapSummary);
+}
