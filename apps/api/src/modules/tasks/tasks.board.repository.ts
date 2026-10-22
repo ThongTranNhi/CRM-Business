@@ -84,13 +84,22 @@ export async function listOpenCards(env: Env, boardId: string): Promise<TaskCard
   return rows.map(mapCard);
 }
 
-/** `limit` việc Đã hoàn thành gần nhất + tổng số (department-dashboard.md: N việc + [Xem thêm]). */
-export async function listDoneCards(env: Env, boardId: string, limit: number) {
+/**
+ * `limit` việc Đã hoàn thành gần nhất, xong từ `completedSince` (ISO) + tổng số trong khoảng đó
+ * (department-dashboard.md: N việc + [Xem thêm]; lib/board-retention.ts).
+ */
+export async function listDoneCards(
+  env: Env,
+  boardId: string,
+  limit: number,
+  completedSince: string,
+) {
   const { rows, total } = await supabaseList<CardRow>(
     env,
     cardsPath({
       board_id: `eq.${boardId}`,
       status: 'eq.done',
+      completed_at: `gte.${completedSince}`,
       order: 'completed_at.desc,id',
       limit: String(limit),
     }),

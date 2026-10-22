@@ -1,4 +1,5 @@
 import type { Env } from '../../config/env';
+import { doneVisibleSince } from '../../lib/board-retention';
 import type { RequestScope } from '../../lib/request-scope';
 import {
   boardPermissions,
@@ -63,16 +64,26 @@ function withPermissions(access: WorkAccess, card: TaskCard): BoardTask {
   return { ...rest, canMove: permissions.canEdit, canArchive: permissions.canArchive };
 }
 
-/** 1 request trả cột + việc đang mở + `doneLimit` việc xong gần nhất (department-dashboard.md). */
+/**
+ * 1 request trả cột + việc đang mở + `doneLimit` việc xong gần nhất (department-dashboard.md). Cột Đã hoàn thành chỉ
+ * gồm việc xong từ `doneSince` (khoảng 1 tháng — lib/board-retention.ts); việc cũ hơn không bị xoá.
+ */
 export async function getBoard(scope: RequestScope, boardId: string, doneLimit: number) {
   const access = await requireBoardAccess(scope, boardId);
+  const retention = doneVisibleSince();
   const [columns, openCards, done] = await Promise.all([
     boardRepository.listColumns(scope.env, boardId),
     boardRepository.listOpenCards(scope.env, boardId),
-    boardRepository.listDoneCards(scope.env, boardId, doneLimit),
+    boardRepository.listDoneCards(scope.env, boardId, doneLimit, retention.since),
   ]);
   const tasks = [...openCards, ...done.cards].map((card) => withPermissions(access, card));
-  return { boardId, columns, tasks, doneTotal: done.total } satisfies BoardData;
+  return {
+    boardId,
+    columns,
+    tasks,
+    doneTotal: done.total,
+    doneSince: retention.date,
+  } satisfies BoardData;
 }
 
 /** BR-11, BR-12: department_id theo Dashboard (RPC), đúng 1 người phụ trách. */

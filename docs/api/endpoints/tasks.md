@@ -58,13 +58,17 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
         "project": { "id": "uuid", "name": "Ra mắt web" }
       }
     ],
-    "doneTotal": 42
+    "doneTotal": 42,
+    "doneSince": "2026-09-21"
   }
 }
 ```
 
 - Cột vẽ theo `columns` (sắp theo `position`); `status` là nhóm trạng thái của cột (BR-10).
 - `tasks`: mọi việc chưa xong + `doneLimit` việc xong gần nhất; thứ tự trong cột theo `position`.
+- Cột Đã hoàn thành chỉ gồm việc xong từ `doneSince` (00:00 giờ Việt Nam, Thứ Hai cách tuần này 4 tuần — chủ dự án
+  chốt 22/10/2026): sang tuần mới thì tuần cũ nhất rời board. `doneTotal` đếm trong khoảng đó. **Không xoá dữ liệu**:
+  việc cũ vẫn mở được bằng `?task=`, vẫn có ở Việc của tôi, dự án, hồ sơ nhân viên, tìm kiếm, báo cáo và tiến độ dự án.
 - `assignee.isArchived`: người phụ trách đã nghỉ (BR-53) → giao diện hiện "Đã nghỉ".
 - `canMove`: người xem kéo / đổi cột được thẻ này không. `canArchive`: xoá (lưu trữ) được không — người tạo,
   Trưởng phòng, Super Admin (BR-19). Avatar lấy theo id từ `members` của

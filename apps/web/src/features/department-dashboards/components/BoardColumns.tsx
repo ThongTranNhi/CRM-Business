@@ -2,6 +2,7 @@ import type { QueryKey } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button } from '@/components/ui';
 import { DeleteTaskDialog, type BoardData, type BoardTask } from '@/features/tasks';
+import { formatDayMonth } from '@/lib/format-date';
 import { columnTasks } from '../board.utils';
 import { BOARD_RELATED_KEYS } from '../hooks/board-related-keys';
 import { useBoardDrag } from '../hooks/useBoardDrag';
@@ -82,6 +83,12 @@ export function BoardColumns(props: BoardColumnsProps) {
                   >
                     Xem thêm việc đã hoàn thành
                   </Button>
+                )}
+                {column.status === 'done' && (
+                  <p className="mx-2.5 mb-2.5 text-xs text-gray-500">
+                    Chỉ hiện việc xong từ {formatDayMonth(board.doneSince)}. Việc cũ hơn không bị
+                    xoá — xem ở Việc của tôi, Dự án hoặc tìm kiếm.
+                  </p>
                 )}
               </>
             }

@@ -74,8 +74,10 @@ export interface BoardData {
   boardId: string;
   columns: BoardColumn[];
   tasks: BoardTask[];
-  /** Tổng số việc Đã hoàn thành (chỉ trả `doneLimit` việc gần nhất). */
+  /** Tổng số việc Đã hoàn thành từ `doneSince` (chỉ trả `doneLimit` việc gần nhất). */
   doneTotal: number;
+  /** Ngày VN (YYYY-MM-DD): cột Đã hoàn thành chỉ hiện việc xong từ ngày này (lib/board-retention.ts). */
+  doneSince: string;
 }
 
 export interface TaskDetail {
