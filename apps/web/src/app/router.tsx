@@ -20,6 +20,9 @@ import { PlaceholderPage } from '@/layouts/PlaceholderPage';
 const PersonalOverviewPage = lazy(() =>
   import('@/features/overview').then((m) => ({ default: m.PersonalOverviewPage })),
 );
+const ExecutiveOverviewPage = lazy(() =>
+  import('@/features/overview').then((m) => ({ default: m.ExecutiveOverviewPage })),
+);
 const ProfilePage = lazy(() =>
   import('@/features/employees').then((m) => ({ default: m.ProfilePage })),
 );
@@ -97,6 +100,10 @@ const appRoutes: RouteObject[] = [
   { path: 'projects', element: page(<ProjectListPage />) },
   { path: 'projects/:id', element: page(<ProjectDetailPage />) },
   guarded('workload.view', { path: 'workload', element: page(<WorkloadPage />) }),
+  guarded('executive-overview.view', {
+    path: 'overview',
+    element: page(<ExecutiveOverviewPage />),
+  }),
   { path: 'assets', element: page(<AssetsPage />) },
   ...unfinishedPages.map(({ path, title, permission }) =>
     guarded(permission, { path, element: <PlaceholderPage title={title} /> }),

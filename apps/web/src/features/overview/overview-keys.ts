@@ -3,4 +3,5 @@
 export const overviewKeys = {
   all: ['overview'] as const,
   personal: () => [...overviewKeys.all, 'personal'] as const,
+  executive: (period: string) => [...overviewKeys.all, 'executive', period] as const,
 };
