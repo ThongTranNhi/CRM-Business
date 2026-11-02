@@ -4,7 +4,7 @@ Monorepo pnpm + Turborepo gồm 2 app và Supabase:
 
 |             | Công nghệ                               | Hosting              |
 | ----------- | --------------------------------------- | -------------------- |
-| `apps/web`  | React + Vite + React Query + Tailwind   | Netlify              |
+| `apps/web`  | React + Vite + React Query + Tailwind   | Vercel               |
 | `apps/api`  | Hono                                    | Cloudflare Workers   |
 | `supabase/` | Postgres + RLS, Auth, Storage, Realtime | Supabase (Singapore) |
 

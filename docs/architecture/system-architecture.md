@@ -4,7 +4,7 @@
 ┌──────────────────────┐   HTTPS JSON (Bearer JWT)   ┌────────────────────────────┐
 │ apps/web             │ ──────────────────────────▶ │ apps/api                   │
 │ React + Vite (SPA)   │                             │ Hono @ Cloudflare Workers  │
-│ Netlify              │                             │ request-id → cors → auth → │
+│ Vercel               │                             │ request-id → cors → auth → │
 └─────────┬────────────┘                             │ permission → module → error│
           │ Auth · Storage upload · Realtime          └─────────────┬──────────────┘
           ▼                                                         │ service role

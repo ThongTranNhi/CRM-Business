@@ -22,3 +22,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Vercel CLI (vercel link / vercel pull)
+.vercel/

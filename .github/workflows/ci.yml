@@ -1,0 +1,58 @@
+# Kiểm tra mọi pull request và mỗi lần push main (docs/deployment/ci-cd.md).
+# Không deploy: web do Vercel Git Integration tự build; API deploy tay (docs/deployment/cloudflare.md).
+# Không dùng secret nào — build web không cần VITE_* (giá trị thật nằm ở Vercel).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Commit mới trên cùng PR / nhánh → huỷ lượt CI cũ đang chạy.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    # Tên check này dùng cho "Require status checks" của main (docs/deployment/ci-cd.md).
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Phiên bản pnpm lấy từ "packageManager" trong package.json (10.18.0).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm exec prettier --check .
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test (API + web)
+        run: pnpm test
+
+      - name: Build web (Vite)
+        run: pnpm --filter @crm/web build
+
+      # Đóng gói Worker như khi deploy nhưng không gửi lên Cloudflare (không cần token).
+      - name: Build API (wrangler dry-run)
+        run: pnpm --filter @crm/api exec wrangler deploy --dry-run --outdir dist

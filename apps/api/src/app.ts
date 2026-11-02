@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { allowedOrigins } from './config/env';
+import { allowedOrigins, isAllowedOrigin } from './config/env';
 import type { AppEnv } from './lib/app-env';
 import { auth } from './middleware/auth.middleware';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
@@ -25,9 +25,13 @@ app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
   await next();
 });
-app.use('/api/*', (c, next) =>
-  cors({ origin: allowedOrigins(c.env.ALLOWED_ORIGINS ?? ''), credentials: true })(c, next),
-);
+app.use('/api/*', (c, next) => {
+  const allowed = allowedOrigins(c.env.ALLOWED_ORIGINS ?? '');
+  // Origin không được phép → không trả header CORS, trình duyệt chặn.
+  const origin = (requestOrigin: string) =>
+    isAllowedOrigin(requestOrigin, allowed) ? requestOrigin : null;
+  return cors({ origin, credentials: true })(c, next);
+});
 
 // Route công khai
 app.route('/api/health', healthRoutes);

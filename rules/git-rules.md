@@ -1,10 +1,10 @@
 # Quy tắc Git
 
-Repo: `github.com/ThongTranU/CRM-Business`. Đổi máy → `git pull`, không copy tay.
+Repo: `github.com/ThongTranNhi/CRM-Business`. Đổi máy → `git pull`, không copy tay.
 
 ## Branch
 
-- `main`: luôn chạy được, deploy production.
+- `main`: luôn chạy được; Vercel tự deploy Production web khi `main` đổi (API, migration làm tay — `docs/deployment/`).
 - Nhánh làm việc: `feat/<module>-<mo-ta>`, `fix/...`, `chore/...`, `docs/...`.
 
 ## Commit (Conventional Commits)
@@ -19,5 +19,5 @@ Repo: `github.com/ThongTranU/CRM-Business`. Đổi máy → `git pull`, không c
 ## Pull request
 
 - Theo `.github/pull_request_template.md`.
-- CI (lint, typecheck, test) phải xanh.
+- CI (`.github/workflows/ci.yml`: format, lint, typecheck, test, build) phải xanh; `main` chỉ nhận merge qua PR.
 - Có migration → ghi rõ trong PR.
