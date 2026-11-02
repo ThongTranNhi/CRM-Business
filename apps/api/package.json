@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --env production",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"src/**/*.test.mjs\""
