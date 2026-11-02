@@ -52,7 +52,7 @@ Monorepo **pnpm + Turborepo**, TypeScript strict ở mọi nơi.
 
 | Lớp     | Công nghệ                                                            | Chạy ở                     |
 | ------- | -------------------------------------------------------------------- | -------------------------- |
-| Web     | React 19, Vite, React Query, react-router, Tailwind CSS (`apps/web`) | Netlify                    |
+| Web     | React 19, Vite, React Query, react-router, Tailwind CSS (`apps/web`) | Vercel                     |
 | API     | Hono, zod, jose (`apps/api`)                                         | Cloudflare Workers + Cron  |
 | Dữ liệu | Postgres + Row Level Security, Auth, Storage (`supabase/`)           | Supabase, region Singapore |
 
@@ -60,7 +60,7 @@ Monorepo **pnpm + Turborepo**, TypeScript strict ở mọi nơi.
 flowchart LR
   user(["Người dùng<br/>trình duyệt"])
 
-  subgraph web["apps/web — Netlify"]
+  subgraph web["apps/web — Vercel"]
     spa["React SPA<br/>React Query cache"]
   end
 

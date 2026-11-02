@@ -22,14 +22,14 @@ Trước khi code, trả lời ngắn: file sẽ tạo/sửa (đường dẫn đ
 
 ## 3. Stack đã chốt — không đổi, không thêm
 
-| Lớp                      | Công nghệ                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------- |
-| Monorepo                 | pnpm 10.18 + Turborepo                                                                 |
-| Ngôn ngữ                 | TypeScript 5.9 strict, cấm `any`                                                       |
-| Web                      | `apps/web`: React + Vite + React Query + react-router-dom + Tailwind CSS → **Netlify** |
-| API                      | `apps/api`: Hono → **Cloudflare Workers**                                              |
-| DB/Auth/Storage/Realtime | **Supabase** (Postgres + RLS), region Singapore                                        |
-| Validation               | zod · Xác thực JWT ở API: jose (JWKS)                                                  |
+| Lớp                      | Công nghệ                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| Monorepo                 | pnpm 10.18 + Turborepo                                                                |
+| Ngôn ngữ                 | TypeScript 5.9 strict, cấm `any`                                                      |
+| Web                      | `apps/web`: React + Vite + React Query + react-router-dom + Tailwind CSS → **Vercel** |
+| API                      | `apps/api`: Hono → **Cloudflare Workers**                                             |
+| DB/Auth/Storage/Realtime | **Supabase** (Postgres + RLS), region Singapore                                       |
+| Validation               | zod · Xác thực JWT ở API: jose (JWKS)                                                 |
 
 - MỌI thao tác **ghi** đi qua API Hono. Web chỉ dùng Supabase trực tiếp cho: đăng nhập, upload file, nhận realtime.
 - Username đăng ký/đăng nhập qua hai endpoint công khai `/api/auth/register`, `/api/auth/login` có rate limit; các endpoint khác trừ health yêu cầu phiên đăng nhập hợp lệ. Xem `docs/development/username-admin-setup.md`.

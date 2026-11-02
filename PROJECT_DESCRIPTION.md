@@ -26,13 +26,13 @@ Quy tắc đầy đủ: `docs/requirements/business-rules.md`. Giao diện tham 
 
 ## 5. Công nghệ & hạ tầng
 
-| Lớp      | Lựa chọn                                                                     |
-| -------- | ---------------------------------------------------------------------------- |
-| Monorepo | pnpm 10.18 + Turborepo                                                       |
-| Ngôn ngữ | TypeScript 5.9 strict                                                        |
-| Web      | React + Vite + React Query + react-router-dom + Tailwind + zod → **Netlify** |
-| API      | Hono + zod + jose → **Cloudflare Workers**                                   |
-| Dữ liệu  | **Supabase** Singapore (Postgres + RLS, Auth, Storage, Realtime)             |
+| Lớp      | Lựa chọn                                                                    |
+| -------- | --------------------------------------------------------------------------- |
+| Monorepo | pnpm 10.18 + Turborepo                                                      |
+| Ngôn ngữ | TypeScript 5.9 strict                                                       |
+| Web      | React + Vite + React Query + react-router-dom + Tailwind + zod → **Vercel** |
+| API      | Hono + zod + jose → **Cloudflare Workers**                                  |
+| Dữ liệu  | **Supabase** Singapore (Postgres + RLS, Auth, Storage, Realtime)            |
 
 Lý do: `docs/decisions/`.
 

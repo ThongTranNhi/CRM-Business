@@ -3,7 +3,7 @@
 ## 1. Monorepo
 
 ```
-apps/web   React + Vite (Netlify)
+apps/web   React + Vite (Vercel)
 apps/api   Hono (Cloudflare Workers)
 supabase/  migrations, seed, config
 docs/  rules/  scripts/  .github/
