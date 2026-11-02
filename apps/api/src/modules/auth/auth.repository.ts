@@ -1,6 +1,6 @@
 import type { Env } from '../../config/env';
 import { AppError } from '../../lib/app-error';
-import { supabaseRequest } from '../../lib/supabase';
+import { serviceRoleHeaders, supabaseRequest } from '../../lib/supabase';
 
 export interface SessionContext {
   id: string;
@@ -44,7 +44,7 @@ export async function authRequest<T>(
 ): Promise<T> {
   const response = await fetch(`${env.SUPABASE_URL}/auth/v1${path}`, {
     method,
-    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, 'Content-Type': 'application/json' },
+    headers: { ...serviceRoleHeaders(env), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!response.ok) {
@@ -61,7 +61,7 @@ export async function findLocalIdentity(env: Env, username: string) {
   const account = await findUsernameAccount(env, username);
   if (!account) return null;
   const response = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${account.auth_user_id}`, {
-    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY },
+    headers: serviceRoleHeaders(env),
   });
   if (!response.ok) throw new AppError('AUTH_UNAVAILABLE', 'Dịch vụ tài khoản chưa sẵn sàng', 503);
   const user = (await response.json()) as { email: string };
