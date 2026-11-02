@@ -16,7 +16,7 @@ Quyết định: [ADR 009](../decisions/009-hosting-vercel-workers-supabase.md).
 
 ## Tạo project lần đầu (chủ dự án, làm một lần)
 
-1. Vercel → **Add New → Project** → Import repo GitHub `ThongTranU/CRM-Business` (cấp quyền Vercel GitHub App cho
+1. Vercel → **Add New → Project** → Import repo GitHub `ThongTranNhi/CRM-Business` (cấp quyền Vercel GitHub App cho
    repo này).
 2. **Root Directory**: `apps/web`. Bật "Include files outside the root directory" (mặc định bật — cần cho
    workspace pnpm). Framework: Vite (tự nhận từ `vercel.json`). Không sửa Build / Install / Output trên giao diện —
@@ -39,8 +39,10 @@ secret nào ở Vercel.
 | `VITE_SUPABASE_URL`      | `https://<project-hiện-tại>.supabase.co` | `https://<project-staging>.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | anon key project hiện tại                | anon key project staging                |
 
-Preview **không** trỏ tới project Supabase đang có dữ liệu nhân sự thật. Chưa có staging → để trống 3 biến Preview:
-bản Preview chỉ để xem giao diện, đăng nhập sẽ báo lỗi (chấp nhận được, an toàn hơn).
+Preview **không** trỏ tới project Supabase đang có dữ liệu nhân sự thật — cần **project Supabase staging** (dữ liệu
+giả) để Preview chạy được. Chưa có staging thì bản Preview chỉ hiện màn hình **"Chưa cấu hình môi trường"** kèm tên
+biến còn thiếu (`apps/web/src/main.tsx` kiểm tra trước khi tải App, vì `createClient()` của Supabase lỗi ngay khi
+thiếu URL) — không xem được giao diện, nhưng cũng không chạm dữ liệu thật. Cả 3 biến phải có đủ.
 
 Đổi biến xong phải **Redeploy** (Vite đóng biến vào bundle lúc build).
 

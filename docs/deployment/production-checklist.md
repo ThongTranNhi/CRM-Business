@@ -3,7 +3,8 @@
 ## Một lần (trước lần deploy Production đầu tiên)
 
 - [ ] Vercel project tạo đúng theo `vercel.md` (Root Directory `apps/web`, Production Branch `main`).
-- [ ] Biến `VITE_*` Production khai báo xong; Preview trỏ staging hoặc để trống — không trỏ dữ liệu thật.
+- [ ] Đủ 3 biến `VITE_*` cho Production; Preview trỏ Supabase / API staging (chưa có thì Preview chỉ hiện "Chưa cấu
+      hình môi trường") — không bao giờ trỏ dữ liệu thật.
 - [ ] Preview bật Deployment Protection.
 - [ ] Worker `crm-api`: secret `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS` = domain Production (`cloudflare.md`).
 - [ ] Supabase Auth: Site URL + Redirect URLs có domain Production (`supabase.md`).

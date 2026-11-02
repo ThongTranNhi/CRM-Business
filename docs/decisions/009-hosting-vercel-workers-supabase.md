@@ -22,7 +22,8 @@ kiểm tra không đạt. Vercel có sẵn Preview theo từng PR / nhánh, tự
 - **CI = GitHub Actions** (`.github/workflows/ci.yml`): format, lint, typecheck, test, build cho mọi PR và push
   `main`; là required check của nhánh `main`.
 - **Preview không dùng database có dữ liệu nhân sự thật**: biến môi trường Preview của Vercel trỏ tới API staging +
-  project Supabase staging (dữ liệu giả). Chưa có staging thì Preview chỉ để xem giao diện, không đăng nhập được.
+  project Supabase staging (dữ liệu giả). Chưa có staging thì Preview hiện màn hình "Chưa cấu hình môi trường" (web
+  kiểm tra biến `VITE_*` trước khi khởi tạo Supabase client) — không xem được giao diện.
 
 ## Hệ quả
 

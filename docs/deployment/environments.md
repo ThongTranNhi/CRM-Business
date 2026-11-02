@@ -7,8 +7,8 @@
 | Supabase     | project hiện tại            | project **staging — dữ liệu giả** | project hiện tại (Free)  |
 | Ai tạo / đổi | lập trình viên              | tự động khi push                  | tự động khi merge `main` |
 
-Preview không bao giờ trỏ tới project có dữ liệu nhân sự thật. Chưa có staging thì để trống biến Preview (chỉ xem
-giao diện).
+Preview không bao giờ trỏ tới project có dữ liệu nhân sự thật, nên cần project Supabase staging để Preview chạy.
+Chưa có staging: bản Preview chỉ hiện màn hình "Chưa cấu hình môi trường" (không xem được giao diện).
 
 ## Biến — ở đâu, ai thấy
 
