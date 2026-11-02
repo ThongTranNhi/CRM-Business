@@ -36,12 +36,21 @@ async function toAppError(response: Response, errors: DatabaseErrorMap): Promise
   return key ? errors[key]!({ detail: details ?? null }) : databaseUnavailable();
 }
 
+/**
+ * Header service role cho REST / Auth admin của Supabase. Key service role dạng JWT phải đi kèm cả
+ * `Authorization: Bearer` — chỉ có `apikey` thì Supabase không coi request là service role (lỗi quyền).
+ */
+export const serviceRoleHeaders = (env: Env): Record<'apikey' | 'Authorization', string> => ({
+  apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+  Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+});
+
 async function send(env: Env, path: string, init: SupabaseRequestInit) {
   const { errors = {}, headers, ...rest } = init;
   const response = await fetch(`${env.SUPABASE_URL}${path}`, {
     ...rest,
     headers: {
-      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      ...serviceRoleHeaders(env),
       'Content-Type': 'application/json',
       ...headers,
     },
