@@ -21,6 +21,9 @@ Module `apps/api/src/modules/tasks`. Mọi endpoint yêu cầu đăng nhập. Gh
 | POST   | `/api/tasks/:id/checklist`         | Sửa task                                                                    | Thêm mục vào cuối; trả danh sách mới                          |
 | PATCH  | `/api/tasks/:id/checklist/:itemId` | Sửa task                                                                    | Sửa nội dung / tick; trả danh sách mới                        |
 | DELETE | `/api/tasks/:id/checklist/:itemId` | Sửa task                                                                    | Xoá mềm mục; trả danh sách mới                                |
+| GET    | `/api/tasks/:id/links`             | Xem board                                                                   | Link kết quả / tài liệu, cũ trước                             |
+| POST   | `/api/tasks/:id/links`             | Sửa task                                                                    | Thêm link (tối đa 10); trả danh sách mới                      |
+| DELETE | `/api/tasks/:id/links/:linkId`     | Sửa task                                                                    | Xoá mềm link; trả danh sách mới                               |
 | GET    | `/api/tasks/:id/comments`          | Xem board                                                                   | Bình luận gốc mới nhất trước + trả lời 1 cấp, phân trang      |
 | POST   | `/api/tasks/:id/comments`          | Ghi board (`canComment`)                                                    | Bình luận / trả lời (`parentId`)                              |
 | GET    | `/api/tasks/:id/activities`        | Xem board                                                                   | Lịch sử hoạt động mới nhất trước, phân trang                  |
@@ -53,6 +56,7 @@ Query: `doneLimit` (20 → 200, mặc định 20) — số việc Đã hoàn th�
         "collaborators": [{ "id": "uuid", "fullName": "Trần Thị B" }],
         "checklist": { "done": 2, "total": 5 },
         "commentCount": 3,
+        "linkCount": 1,
         "canMove": true,
         "canArchive": false,
         "project": { "id": "uuid", "name": "Ra mắt web" }
@@ -223,7 +227,7 @@ trước. Không có xoá vĩnh viễn (BR-19).
 
 ## Drawer chi tiết task — checklist, bình luận, lịch sử
 
-Module tách file: `tasks.checklist.*`, `tasks.comments.*`, `tasks.activities.*` (quyền dùng chung ở
+Module tách file: `tasks.checklist.*`, `tasks.links.*`, `tasks.comments.*`, `tasks.activities.*` (quyền dùng chung ở
 `tasks.access.ts`). Task đã lưu trữ → `404 TASK_NOT_FOUND`; phòng đã xoá → ghi trả `409 DASHBOARD_READ_ONLY`.
 
 ### Checklist — `/api/tasks/:id/checklist[/:itemId]`
@@ -233,6 +237,20 @@ Module tách file: `tasks.checklist.*`, `tasks.comments.*`, `tasks.activities.*`
   DELETE xoá mềm (`deleted_at`). Cả ba trả danh sách mới; RPC ghi activity `checklist_changed` (BR-20).
 - Quyền ghi = sửa task (`canEdit`): Super Admin, Trưởng phòng, Trưởng nhóm, người phụ trách, người phối hợp.
 - Lỗi: `404 CHECKLIST_ITEM_NOT_FOUND`, `400 VALIDATION_ERROR`.
+
+### Link kết quả / tài liệu — `/api/tasks/:id/links[/:linkId]`
+
+Chủ dự án chốt 03/11/2026 (migration `20261104090000_task_links.sql`): link OneDrive, Google Docs, bài viết, file
+.docx… gắn vào công việc ở **mọi trạng thái**, tối đa **10** link chưa xoá mỗi task.
+
+- GET trả `[{ "id", "url", "title", "createdAt" }]` (cũ trước). `title` null = không tên (giao diện hiện link).
+- POST `{ "url": "https://…", "title": "Báo cáo tháng 10" | null }` → `201` + danh sách mới. `url` chỉ `http://` /
+  `https://` (≤ 2000 ký tự — chặn `javascript:`, `data:`… ở schema và check DB); `title` ≤ 120 ký tự, rỗng = null.
+- DELETE xoá mềm (`deleted_at`) → `200` + danh sách mới.
+- RPC ghi activity `attachment_added` / `attachment_removed` với `linkId`, `linkUrl`, `linkTitle`; lịch sử trả
+  `to.link` / `from.link = { url, title }`.
+- Quyền ghi = sửa task (`canEdit`), như checklist. Thẻ board có `linkCount`.
+- Lỗi: `409 TASK_LINK_LIMIT` (đã đủ 10), `404 TASK_LINK_NOT_FOUND`, `400 VALIDATION_ERROR`.
 
 ### Bình luận — `/api/tasks/:id/comments`
 

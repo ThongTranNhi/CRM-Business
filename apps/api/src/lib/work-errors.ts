@@ -61,4 +61,11 @@ export const WORK_ERRORS: DatabaseErrorMap = {
     new AppError('VALIDATION_ERROR', 'Mục checklist cần từ 1 đến 500 ký tự', 400),
   task_comments_body_check: () =>
     new AppError('VALIDATION_ERROR', 'Bình luận cần từ 1 đến 5000 ký tự', 400),
+  // Link kết quả của task (migration 20261104090000_task_links.sql).
+  TASK_LINK_LIMIT: () => new AppError('TASK_LINK_LIMIT', 'Mỗi công việc có tối đa 10 link', 409),
+  TASK_LINK_NOT_FOUND: () => new AppError('TASK_LINK_NOT_FOUND', 'Link không còn tồn tại', 404),
+  task_links_url_check: () =>
+    new AppError('VALIDATION_ERROR', 'Link phải bắt đầu bằng http:// hoặc https://', 400),
+  task_links_title_check: () =>
+    new AppError('VALIDATION_ERROR', 'Tên link cần từ 1 đến 120 ký tự', 400),
 };

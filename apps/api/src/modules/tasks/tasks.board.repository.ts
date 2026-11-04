@@ -45,6 +45,7 @@ interface CardRow {
   checklist_total: number;
   checklist_done: number;
   comment_count: number;
+  link_count: number;
   created_by: string;
   project_id: string | null;
   project_name: string | null;
@@ -52,7 +53,7 @@ interface CardRow {
 const CARD_SELECT =
   'id,column_id,status,title,position,priority,due_date,completed_at,assignee_id,assignee_name,' +
   'assignee_archived,collaborators,checklist_total,checklist_done,comment_count,created_by,' +
-  'project_id,project_name';
+  'project_id,project_name,link_count';
 
 const mapCard = (row: CardRow): TaskCard => ({
   id: row.id,
@@ -67,6 +68,7 @@ const mapCard = (row: CardRow): TaskCard => ({
   collaborators: row.collaborators.map((person) => ({ id: person.id, fullName: person.name })),
   checklist: { done: row.checklist_done, total: row.checklist_total },
   commentCount: row.comment_count,
+  linkCount: row.link_count,
   createdById: row.created_by,
   project:
     row.project_id && row.project_name ? { id: row.project_id, name: row.project_name } : null,

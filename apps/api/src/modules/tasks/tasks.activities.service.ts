@@ -30,6 +30,7 @@ function toValue(value: RawValue | null, names: Map<string, string>): ActivityVa
   if (value.dueDate !== undefined) result.dueDate = value.dueDate;
   if (value.columnName) result.columnName = value.columnName;
   if (value.projectId) result.project = { id: value.projectId, name: value.projectName ?? '' };
+  if (value.linkUrl) result.link = { url: value.linkUrl, title: value.linkTitle ?? null };
   if (value.content !== undefined) {
     result.checklistItem =
       value.isDone === undefined

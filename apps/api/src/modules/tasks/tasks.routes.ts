@@ -20,6 +20,7 @@ import {
   removeChecklistItem,
   updateChecklistItem,
 } from './tasks.detail.controller';
+import { addLink, links, removeLink } from './tasks.links.controller';
 import { mine } from './tasks.mine.controller';
 
 // Mọi role đều qua được route; quyền theo dữ liệu (thành viên phòng / board) kiểm tra ở service.
@@ -31,7 +32,7 @@ boardRoutes.get('/:boardId/trash', trash);
 boardRoutes.post('/:boardId/tasks', create);
 
 /**
- * /api/tasks/:id — chi tiết, sửa, kéo thả, người phối hợp, lưu trữ (xoá mềm), hoàn tác; checklist,
+ * /api/tasks/:id — chi tiết, sửa, kéo thả, người phối hợp, lưu trữ (xoá mềm), hoàn tác; checklist, link kết quả,
  * bình luận, lịch sử cho drawer chi tiết.
  */
 export const taskRoutes = new Hono<AppEnv>();
@@ -47,6 +48,9 @@ taskRoutes.get('/:id/checklist', checklist);
 taskRoutes.post('/:id/checklist', addChecklistItem);
 taskRoutes.patch('/:id/checklist/:itemId', updateChecklistItem);
 taskRoutes.delete('/:id/checklist/:itemId', removeChecklistItem);
+taskRoutes.get('/:id/links', links);
+taskRoutes.post('/:id/links', addLink);
+taskRoutes.delete('/:id/links/:linkId', removeLink);
 taskRoutes.get('/:id/comments', comments);
 taskRoutes.post('/:id/comments', addComment);
 taskRoutes.get('/:id/activities', activities);

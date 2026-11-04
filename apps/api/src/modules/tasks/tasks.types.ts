@@ -3,6 +3,7 @@ import type { PersonRef } from '../departments/departments.types';
 import type {
   addChecklistItemSchema,
   addCommentSchema,
+  addTaskLinkSchema,
   createTaskSchema,
   movedTaskSchema,
   moveTaskSchema,
@@ -22,6 +23,7 @@ export type MyTaskTab = (typeof MY_TASK_TABS)[number];
 export type AddChecklistItemInput = z.infer<typeof addChecklistItemSchema>;
 export type UpdateChecklistItemInput = z.infer<typeof updateChecklistItemSchema>;
 export type AddCommentInput = z.infer<typeof addCommentSchema>;
+export type AddTaskLinkInput = z.infer<typeof addTaskLinkSchema>;
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -53,6 +55,8 @@ export interface TaskCard {
   collaborators: PersonRef[];
   checklist: { done: number; total: number };
   commentCount: number;
+  /** Số link kết quả / tài liệu (biểu tượng link trên thẻ). */
+  linkCount: number;
   /** app_accounts.id người tạo — tính quyền xoá (BR-19), không trả ra API. */
   createdById: string;
   /** BR-30: dự án (cùng phòng) của task; null nếu không gắn. */
@@ -132,6 +136,14 @@ export interface ChecklistItem {
   position: number;
 }
 
+/** Link kết quả / tài liệu (OneDrive, bài viết, .docx…); luôn http(s). */
+export interface TaskLink {
+  id: string;
+  url: string;
+  title: string | null;
+  createdAt: string;
+}
+
 /** Người viết bình luận: id = app_accounts.id; employeeId để giao diện lấy ảnh đại diện (CEO có thể null). */
 export interface CommentAuthor extends PersonRef {
   employeeId: string | null;
@@ -158,6 +170,8 @@ export interface ActivityValue {
   dueDate?: string | null;
   columnName?: string;
   checklistItem?: { content: string; isDone?: boolean };
+  /** attachment_added / attachment_removed của link kết quả. */
+  link?: { url: string; title: string | null };
   /** 'project_changed': dự án trước / sau (tên chụp lúc đổi). */
   project?: ProjectRef;
 }

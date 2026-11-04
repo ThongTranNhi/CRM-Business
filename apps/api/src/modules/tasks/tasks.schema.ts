@@ -150,5 +150,26 @@ export const activityValueSchema = z
     isDone: z.boolean().optional(),
     projectId: z.uuid().optional(),
     projectName: z.string().optional(),
+    // attachment_added / attachment_removed của link kết quả (migration 20261104090000).
+    linkUrl: z.string().optional(),
+    linkTitle: z.string().nullable().optional(),
   })
   .nullable();
+
+/** Link kết quả / tài liệu; khớp check task_links_url_check, task_links_title_check. Tên rỗng = không tên. */
+export const addTaskLinkSchema = z
+  .object({
+    url: z
+      .string()
+      .trim()
+      .max(2000, 'Link tối đa 2000 ký tự')
+      .regex(/^https?:\/\/\S+$/i, 'Link phải bắt đầu bằng http:// hoặc https://'),
+    title: z
+      .string()
+      .trim()
+      .max(120, 'Tên link tối đa 120 ký tự')
+      .nullable()
+      .default(null)
+      .transform((value) => value || null),
+  })
+  .strict();
