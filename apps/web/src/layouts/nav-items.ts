@@ -52,7 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
         ready: true,
       },
       { to: '/app/departments', label: 'Phòng ban', icon: 'building', ready: true },
-      { to: '/app/org-chart', label: 'Sơ đồ tổ chức', icon: 'network', ready: false },
+      { to: '/app/org-chart', label: 'Sơ đồ tổ chức', icon: 'network', ready: true },
       { to: '/app/attendance', label: 'Chấm công', icon: 'clock', ready: false },
       { to: '/app/leave', label: 'Nghỉ phép', icon: 'calendar', ready: false },
       { to: '/app/payroll', label: 'Bảng lương', icon: 'wallet', ready: false },

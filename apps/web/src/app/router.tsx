@@ -60,6 +60,9 @@ const WorkloadPage = lazy(() =>
   import('@/features/workload').then((m) => ({ default: m.WorkloadPage })),
 );
 const AssetsPage = lazy(() => import('@/features/assets').then((m) => ({ default: m.AssetsPage })));
+const OrgChartPage = lazy(() =>
+  import('@/features/org-chart').then((m) => ({ default: m.OrgChartPage })),
+);
 
 function page(element: ReactNode) {
   return <Suspense fallback={<Skeleton className="h-40 w-full" />}>{element}</Suspense>;
@@ -93,6 +96,7 @@ const appRoutes: RouteObject[] = [
   guarded('employees.view', { path: 'employees/:id', element: page(<EmployeeDetailPage />) }),
   { path: 'departments', element: page(<DepartmentListPage />) },
   { path: 'departments/:id', element: page(<DepartmentDetailPage />) },
+  { path: 'org-chart', element: page(<OrgChartPage />) },
   { path: 'workspace', element: page(<WorkspacePage />) },
   { path: 'workspace/:dashboardId', element: page(<BoardPage />) },
   { path: 'my-tasks', element: page(<MyTasksPage />) },
