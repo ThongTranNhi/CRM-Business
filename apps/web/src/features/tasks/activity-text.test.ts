@@ -13,6 +13,16 @@ const activity = (action: string, from: TaskActivity['from'], to: TaskActivity['
 });
 
 describe('activity sentences (activity-log.md)', () => {
+  it('describes result links by title, or by url when untitled', () => {
+    const report = { url: 'https://onedrive.live.com/x', title: 'Báo cáo' };
+    expect(activityText(activity('attachment_added', null, { link: report }))).toBe(
+      'Nguyễn Văn An thêm link “Báo cáo”',
+    );
+    expect(
+      activityText(activity('attachment_removed', { link: { ...report, title: null } }, null)),
+    ).toBe('Nguyễn Văn An xoá link “https://onedrive.live.com/x”');
+  });
+
   it('describes column moves with sentence-case names', () => {
     const moved = activity(
       'moved',

@@ -12,6 +12,9 @@ const names = (people: PersonRef[]) => people.map((person) => person.fullName).j
 const dueText = (value: ActivityValue | null) =>
   value?.dueDate ? formatDate(new Date(`${value.dueDate}T00:00:00+07:00`)) : 'không có hạn';
 
+/** Link kết quả: tên hiển thị, không có thì chính link. */
+const linkName = (link: NonNullable<ActivityValue['link']>) => link.title ?? link.url;
+
 const priorityText = (value: ActivityValue | null) =>
   value?.priority ? PRIORITY_META[value.priority].label : '—';
 
@@ -58,8 +61,9 @@ const DESCRIBE: Record<string, Describe> = {
   archived: () => 'đã xoá công việc',
   restored: () => 'đã khôi phục công việc',
   title_changed: (from, to) => `đổi tên: “${from?.title ?? ''}” → “${to?.title ?? ''}”`,
-  attachment_added: () => 'đính kèm tệp',
-  attachment_removed: () => 'gỡ tệp đính kèm',
+  attachment_added: (_from, to) => (to?.link ? `thêm link “${linkName(to.link)}”` : 'đính kèm tệp'),
+  attachment_removed: (from) =>
+    from?.link ? `xoá link “${linkName(from.link)}”` : 'gỡ tệp đính kèm',
   project_changed: (from, to) =>
     to?.project
       ? `chuyển vào dự án “${to.project.name}”`

@@ -8,11 +8,12 @@ export const taskKeys = {
   trashes: () => [...taskKeys.all, 'trash'] as const,
   trash: (boardId: string, params: TrashParams) =>
     [...taskKeys.trashes(), boardId, params.page, params.q] as const,
-  /** Mọi dữ liệu drawer của các task (chi tiết, checklist, bình luận, lịch sử). */
+  /** Mọi dữ liệu drawer của các task (chi tiết, checklist, link, bình luận, lịch sử). */
   details: () => [...taskKeys.all, 'task'] as const,
   task: (taskId: string) => [...taskKeys.details(), taskId] as const,
   detail: (taskId: string) => [...taskKeys.task(taskId), 'detail'] as const,
   checklist: (taskId: string) => [...taskKeys.task(taskId), 'checklist'] as const,
+  links: (taskId: string) => [...taskKeys.task(taskId), 'links'] as const,
   comments: (taskId: string) => [...taskKeys.task(taskId), 'comments'] as const,
   activities: (taskId: string) => [...taskKeys.task(taskId), 'activities'] as const,
 };

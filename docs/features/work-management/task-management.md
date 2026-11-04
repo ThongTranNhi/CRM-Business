@@ -2,7 +2,7 @@
 
 ## Card (trên board)
 
-Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nếu quá hạn, success kèm dấu tick nếu đã xong) · thanh tiến độ checklist · avatar + tên người phụ trách · checklist `5/7` · số bình luận · số file đính kèm. Task đã xong: tên gạch ngang, màu nhạt.
+Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nếu quá hạn, success kèm dấu tick nếu đã xong) · thanh tiến độ checklist · avatar + tên người phụ trách · checklist `5/7` · số bình luận · số link kết quả (biểu tượng link) · số file đính kèm. Task đã xong: tên gạch ngang, màu nhạt.
 
 ## Tạo task (+ Thêm công việc)
 
@@ -15,7 +15,7 @@ Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nế
 
 - Thanh chọn trạng thái 3 nút (Việc cần làm / Việc đang làm / Đã hoàn thành).
 - Thuộc tính: phòng ban, người phụ trách, người phối hợp, deadline, ưu tiên, thời điểm + người hoàn thành.
-- Mô tả · Checklist (tick được, có % tiến độ) · Bình luận · File · Lịch sử hoạt động.
+- Mô tả · Checklist (tick được, có % tiến độ) · Link kết quả / tài liệu · Bình luận · File · Lịch sử hoạt động.
 - Đóng bằng nút X, bấm ra ngoài hoặc phím Esc; nút Back của trình duyệt cũng đóng (mở từ board).
 - Mở bằng bấm thẻ hoặc Enter khi thẻ đang focus; URL `?task=<id>` chia sẻ được ([Sao chép link]).
 - Đầu drawer: tên sửa tại chỗ (Enter / rời ô để lưu, Esc huỷ), cột hiện tại + "Chuyển sang cột…", menu ⋯ → Xoá.
@@ -35,6 +35,13 @@ Tên · badge priority · badge deadline (warning nếu ≤ 2 ngày, danger nế
 ## Checklist
 
 Thêm/sửa/xoá/đánh dấu/đổi thứ tự mục. Tiến độ tự tính (BR-17).
+
+## Link kết quả / tài liệu
+
+Chủ dự án chốt 03/11/2026: mục "Link kết quả / tài liệu" trong drawer — tối đa 10 link (OneDrive, Google Docs, bài
+viết, file .docx…), mỗi link có tên hiển thị tuỳ chọn, bấm mở tab mới. Nhập được ở mọi trạng thái, không bắt buộc khi
+hoàn thành. Ai sửa được công việc thì thêm / xoá (xoá mềm); ai xem được thì xem. Chỉ nhận link `http://` /
+`https://`. Thêm / xoá ghi lịch sử hoạt động.
 
 ## Bình luận
 

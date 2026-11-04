@@ -8,6 +8,7 @@ import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { TaskActivitySection } from './TaskActivitySection';
 import { TaskChecklistSection } from './TaskChecklistSection';
 import { TaskCommentsSection } from './TaskCommentsSection';
+import { TaskLinksSection } from './TaskLinksSection';
 import { TaskDetailFields } from './TaskDetailFields';
 import { TaskDetailHeader } from './TaskDetailHeader';
 
@@ -102,6 +103,11 @@ function TaskDetailView({ task, board, onRequestDelete }: TaskDetailViewProps) {
       <TaskDetailHeader task={task} board={board} onRequestDelete={() => onRequestDelete(task)} />
       <TaskDetailFields task={task} board={board} />
       <TaskChecklistSection
+        taskId={task.id}
+        canEdit={task.permissions.canEdit}
+        boardKey={board.boardKey}
+      />
+      <TaskLinksSection
         taskId={task.id}
         canEdit={task.permissions.canEdit}
         boardKey={board.boardKey}

@@ -114,6 +114,12 @@ export function TaskCard({
             {task.checklist.done}/{task.checklist.total}
           </span>
         )}
+        {task.linkCount > 0 && (
+          <span className="inline-flex items-center gap-0.5" title="Link kết quả / tài liệu">
+            <Icon name="link" size={14} />
+            {task.linkCount}
+          </span>
+        )}
         {task.commentCount > 0 && (
           <span className="inline-flex items-center gap-0.5" title="Bình luận">
             <Icon name="message" size={14} />

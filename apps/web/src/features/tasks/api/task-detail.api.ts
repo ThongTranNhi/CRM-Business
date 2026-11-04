@@ -1,6 +1,7 @@
 import { apiPage, apiRequest, withQuery } from '@/lib/api-client';
 import type {
   ChecklistItem,
+  TaskLink,
   TaskActivity,
   TaskComment,
   TaskDetail,
@@ -54,3 +55,12 @@ export const getActivities = (taskId: string, page: number) =>
   apiPage<TaskActivity>(
     withQuery(`/api/tasks/${taskId}/activities`, { page, pageSize: FEED_PAGE_SIZE }),
   );
+
+export const getTaskLinks = (taskId: string) =>
+  apiRequest<TaskLink[]>(`/api/tasks/${taskId}/links`);
+
+export const addTaskLink = (taskId: string, link: { url: string; title: string | null }) =>
+  apiRequest<TaskLink[]>(`/api/tasks/${taskId}/links`, json('POST', link));
+
+export const removeTaskLink = (taskId: string, linkId: string) =>
+  apiRequest<TaskLink[]>(`/api/tasks/${taskId}/links/${linkId}`, { method: 'DELETE' });

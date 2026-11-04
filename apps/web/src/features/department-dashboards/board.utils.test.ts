@@ -60,6 +60,7 @@ const task = (overrides: Partial<BoardTask>): BoardTask => ({
   collaborators: [],
   checklist: { done: 0, total: 0 },
   commentCount: 0,
+  linkCount: 0,
   canMove: true,
   canArchive: false,
   project: null,

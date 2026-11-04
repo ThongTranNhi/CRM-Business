@@ -30,6 +30,8 @@ export interface BoardTask {
   collaborators: PersonRef[];
   checklist: { done: number; total: number };
   commentCount: number;
+  /** Số link kết quả / tài liệu (biểu tượng link trên thẻ). */
+  linkCount: number;
   /** Người xem kéo / đổi cột được thẻ này. */
   canMove: boolean;
   /** Người xem xoá (lưu trữ) được: người tạo, Trưởng phòng, Super Admin (BR-19). */
@@ -143,6 +145,14 @@ export interface UpdateTaskInput {
   projectId?: string | null;
 }
 
+/** Link kết quả / tài liệu (OneDrive, bài viết, .docx…); luôn http(s) — server kiểm tra. */
+export interface TaskLink {
+  id: string;
+  url: string;
+  title: string | null;
+  createdAt: string;
+}
+
 export interface ChecklistItem {
   id: string;
   content: string;
@@ -175,6 +185,8 @@ export interface ActivityValue {
   dueDate?: string | null;
   columnName?: string;
   checklistItem?: { content: string; isDone?: boolean };
+  /** attachment_added / attachment_removed của link kết quả. */
+  link?: { url: string; title: string | null };
   project?: ProjectRef;
 }
 
