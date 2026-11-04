@@ -5,10 +5,45 @@
 - KHÔNG tạo/sửa bảng bằng tay trên Supabase Table Editor. Mọi thay đổi viết migration trong repo trước, rồi mới áp lên Supabase (ADR 008).
 - Trước khi tạo bảng: kiểm tra migration cũ, không tạo trùng bảng/cột đã có.
 
-- Mọi thay đổi schema = file mới trong `supabase/migrations/` (`YYYYMMDDHHMMSS_mo_ta.sql`).
+- Mọi thay đổi schema = file mới trong `supabase/migrations/` (`YYYYMMDDHHMMSS_mo_ta.sql`), đặt tên theo mục
+  "Đặt tên file SQL" bên dưới.
 - KHÔNG sửa migration đã chạy. Sai thì viết migration mới để sửa.
 - Sau khi đổi schema: chạy `scripts/generate-types.sh`. Không viết type DB bằng tay.
 - Ghi lại thay đổi trong `docs/changelog/migrations.md`.
+
+## Đặt tên file SQL — đọc tên là biết dùng cho việc gì
+
+Người mở thư mục `supabase/migrations/` hay SQL Editor phải đoán đúng file làm gì mà không cần mở ra đọc.
+
+- **Migration**: `YYYYMMDDHHMMSS_<đối tượng>_<thay đổi>.sql`, snake_case, tiếng Anh không dấu, 2–6 từ.
+  - `<đối tượng>`: bảng / tính năng bị đổi, dùng đúng tên module (`naming-rules.md`): `tasks`, `task_links`,
+    `issued_assets`, `employees`…
+  - `<thay đổi>`: việc migration làm — danh từ hoặc động từ cụ thể: `kind`, `status_filter`, `soft_delete`,
+    `owner_handover`, `add_due_reminder`, `drop_legacy_view`…
+  - Đúng: `20261022090000_product_kind.sql`, `20261007090000_task_restore.sql`,
+    `20261012090000_project_owner_handover.sql`, `20261104090000_task_links.sql`.
+  - **Cấm** tên chung chung hoặc không có đối tượng: `fix.sql`, `update.sql`, `changes.sql`, `new_table.sql`,
+    `temp.sql`, `test.sql`, `misc.sql`, `v2.sql`, `final.sql`, `migration.sql`, `patch_1.sql`, tên người, tên đợt
+    (`dot_4.sql`), số ticket một mình.
+  - Migration sửa lỗi của migration trước: nêu đối tượng và cái được sửa, không chỉ ghi "fix" —
+    `..._tasks_due_date_check_fix.sql`, không `..._fix_bug.sql` hay `..._review_fixes.sql`.
+  - Timestamp lấy giờ tạo file, tăng dần, không trùng; hai migration cùng ngày thì cách nhau ít nhất 1 phút.
+- **SQL test**: `supabase/tests/<tên migration bỏ timestamp>.sql` (vd. `tests/task_links.sql` cho
+  `20261104090000_task_links.sql`); thông báo khi đạt là `<tên đó>: đạt`.
+- **Seed / script dùng một lần**: không để trong `migrations/`. Seed ở `supabase/seed.sql`; script khác ghi rõ việc và
+  môi trường trong tên (`seed_demo_departments.sql`), không `script1.sql`.
+- **Dòng đầu mỗi file**: comment 1–3 dòng nói file làm gì, cho tính năng nào (vd. `-- Link kết quả của task`).
+  Tên ngắn, comment giải thích thêm.
+- **Không đổi tên** migration đã áp lên bất kỳ môi trường nào: tên nằm trong `app_private.applied_migrations` và
+  các file sau kiểm tra theo tên. File cũ chưa khớp rule (vd. `20261010090000_projects_review_fixes.sql`,
+  `tests/soft_delete_views.sql`) giữ nguyên; rule áp dụng cho file tạo từ 04/11/2026.
+- **Object trong SQL** cũng phải tự nói việc của nó:
+  - RPC: `crm_<động từ>_<đối tượng>` — `crm_create_issued_asset`, `crm_return_asset`.
+  - Hàm nội bộ (`app_private`): `crm_<động từ>_<đối tượng>` hoặc `crm_assert_…`, `crm_lock_…`, `crm_log_…`.
+  - View: `<đối tượng>_summaries` (danh sách), `<đối tượng>_rows` (dòng chi tiết), hoặc tên nói rõ nội dung
+    (`upcoming_task_rows`).
+  - Constraint / index: `<bảng>_<cột>_check`, `<bảng>_<cột>_key`, `<bảng>_<cột>_idx` — API map tên constraint
+    sang mã lỗi (`*.errors.ts`), nên không để Postgres tự đặt.
 
 ## Thiết kế bảng
 
