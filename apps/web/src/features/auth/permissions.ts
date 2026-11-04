@@ -20,6 +20,8 @@ const PERMISSIONS = {
   'projects.create': ['super_admin', 'department_manager'],
   // Tài sản → Sản phẩm: thêm sản phẩm, như projects.create (sửa / xoá theo permissions của từng sản phẩm).
   'products.create': ['super_admin', 'department_manager'],
+  // Tài sản được cấp: thêm, sửa, xoá, cấp, thu hồi, xem lịch sử (người khác chỉ xem tài sản trong phạm vi mình).
+  'issued-assets.manage': ['super_admin', 'hr_admin'],
   'recruitment.view': ['super_admin', 'hr_admin', 'department_manager'],
   'onboarding.view': ['super_admin', 'hr_admin', 'department_manager'],
   'payroll.manage': ['super_admin', 'hr_admin'],

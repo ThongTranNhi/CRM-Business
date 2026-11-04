@@ -1,5 +1,6 @@
-import { Card, EmptyState, PageHeader, Tabs } from '@/components/ui';
+import { PageHeader, Tabs } from '@/components/ui';
 import { readOption, useUrlParams } from '@/lib/use-url-params';
+import { IssuedAssetsTab } from '../components/IssuedAssetsTab';
 import { ProductsTab } from '../components/ProductsTab';
 import { ASSET_TABS, type AssetTab } from '../types';
 
@@ -10,7 +11,7 @@ const TAB_LABEL: Record<AssetTab, string> = {
 
 /**
  * /app/assets — Tài sản (chủ dự án chốt 17/10/2026): tab Sản phẩm (sản phẩm công ty, có link) và tab Tài sản được
- * cấp (phần mềm, thiết bị cấp cho nhân viên — spec 4.18, làm sau). Tab lưu trên URL `?tab=`.
+ * cấp (phần mềm, thiết bị cấp cho cá nhân, phòng ban hoặc công ty — chốt 03/11/2026). Tab lưu trên URL `?tab=`.
  */
 export function AssetsPage() {
   const [urlParams, updateParams] = useUrlParams();
@@ -19,7 +20,7 @@ export function AssetsPage() {
     <>
       <PageHeader
         title="Tài sản"
-        description="Sản phẩm công ty đang sở hữu và tài sản được cấp cho nhân viên."
+        description="Sản phẩm công ty đang sở hữu và tài sản được cấp cho nhân viên, phòng ban."
       />
       <div className="mb-4 overflow-x-auto">
         <Tabs
@@ -28,21 +29,20 @@ export function AssetsPage() {
           value={tab}
           // Đổi tab → bỏ bộ lọc của tab cũ.
           onChange={(value) =>
-            updateParams({ tab: value, q: null, department: null, status: null, page: null })
+            updateParams({
+              tab: value,
+              q: null,
+              department: null,
+              status: null,
+              kind: null,
+              category: null,
+              holder: null,
+              page: null,
+            })
           }
         />
       </div>
-      {tab === 'products' ? (
-        <ProductsTab />
-      ) : (
-        <Card>
-          <EmptyState
-            icon="package"
-            title="Tính năng đang được xây dựng"
-            description="Phần mềm, thiết bị cấp cho nhân viên sẽ được quản lý ở đây."
-          />
-        </Card>
-      )}
+      {tab === 'products' ? <ProductsTab /> : <IssuedAssetsTab />}
     </>
   );
 }
