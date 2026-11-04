@@ -60,3 +60,13 @@ Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều t
 - View `upcoming_task_rows` (`security_invoker = true`): chỉ `service_role` SELECT. Hàm đọc `crm_executive_task_stats`
   (`security definer`, chỉ đọc): chỉ `service_role` EXECUTE; `app_private.crm_period_start` không ai gọi trực tiếp
   được. Không bảng mới. Phạm vi phòng (Trưởng phòng chỉ phòng mình) kiểm tra ở API.
+
+## Tài sản → Tài sản được cấp
+
+- Bật RLS trên `issued_assets`, `asset_assignments`, không policy cho `anon` / `authenticated` (giao diện đọc qua API).
+- `service_role` chỉ SELECT bảng và view `issued_asset_summaries`, `asset_assignment_rows`; ghi qua RPC
+  `security definer` (`crm_create_issued_asset`, `crm_update_issued_asset`, `crm_archive_issued_asset`,
+  `crm_issue_asset`, `crm_return_asset`), RPC tự kiểm tra role Super Admin / HR Admin. Hàm trợ giúp
+  `crm_asset_actor`, `crm_assert_asset_person`, `crm_lock_issued_asset`, `crm_issued_asset_json`,
+  `crm_log_issued_asset` không ai gọi trực tiếp được. Phạm vi xem (người khác chỉ thấy tài sản đang cấp cho mình,
+  phòng mình, công ty) kiểm tra ở API.

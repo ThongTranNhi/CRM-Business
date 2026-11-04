@@ -91,6 +91,17 @@ done_this_week }`. Kiểm tra: `supabase/tests/my_task_status_filter.sql`.
   Nam) theo phòng (cần làm, đang làm, xong, quá hạn); view `upcoming_task_rows` (việc chưa xong có hạn + phòng, Dashboard, người phụ trách, `days_left`); index
   `tasks_department_created_idx (department_id, created_at)`. Không bảng mới. Kiểm tra:
   `supabase/tests/executive_overview.sql`.
+- Migration `20261103090000_issued_assets.sql` (Tài sản → Tài sản được cấp): `issued_assets` (code tuỳ chọn — duy
+  nhất không phân biệt hoa thường giữa tài sản chưa xoá, name, `category`
+  `laptop|phone|monitor|sim|access_card|software|other`, `status` `in_stock|issued|repair|disposed`, expires_on,
+  note, archived_at). Không lưu key bản quyền / mật khẩu. `asset_assignments` = lịch sử cấp / thu hồi:
+  `holder_type` `employee|department|company` + đúng một cột `employee_id` / `department_id` (hoặc không cột nào
+  với công ty — check `asset_assignments_holder_check`), `issuer_employee_id` (người cấp), issued_on, note,
+  returned_on (không trước issued_on), returned_by, return_note; index `asset_assignments_open_key` — mỗi tài sản
+  tối đa một lượt đang mở. View `asset_assignment_rows` (lượt cấp + tên đối tượng, người cấp) và
+  `issued_asset_summaries` (tài sản + lượt đang mở). RPC `crm_create_issued_asset`, `crm_update_issued_asset`,
+  `crm_archive_issued_asset`, `crm_issue_asset`, `crm_return_asset` (chỉ Super Admin / HR Admin) ghi `audit_logs`
+  (`resource_type = 'issued_assets'`). Kiểm tra: `supabase/tests/issued_assets.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 
