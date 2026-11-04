@@ -102,6 +102,11 @@ done_this_week }`. Kiểm tra: `supabase/tests/my_task_status_filter.sql`.
   `issued_asset_summaries` (tài sản + lượt đang mở). RPC `crm_create_issued_asset`, `crm_update_issued_asset`,
   `crm_archive_issued_asset`, `crm_issue_asset`, `crm_return_asset` (chỉ Super Admin / HR Admin) ghi `audit_logs`
   (`resource_type = 'issued_assets'`). Kiểm tra: `supabase/tests/issued_assets.sql`.
+- Migration `20261104090000_task_links.sql` (link kết quả / tài liệu của công việc): `task_links` (task_id, url —
+  chỉ http(s) ≤ 2000 ký tự, title tuỳ chọn ≤ 120, deleted_at = xoá mềm), index `task_links_task_idx`. View
+  `task_cards` thêm cột `link_count` ở cuối. RPC `crm_add_task_link` (tối đa 10 link chưa xoá mỗi task —
+  `TASK_LINK_LIMIT`), `crm_remove_task_link` ghi `task_activities` (`attachment_added` / `attachment_removed`, giá
+  trị có `linkId`, `linkUrl`, `linkTitle`); chặn board chỉ đọc. Kiểm tra: `supabase/tests/task_links.sql`.
 - Kiểm tra bằng database thật: `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`,
   `supabase/tests/task_trash.sql` (tự ROLLBACK).
 

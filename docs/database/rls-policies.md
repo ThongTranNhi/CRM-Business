@@ -70,3 +70,9 @@ Không thêm policy cho `anon` / `authenticated`. Bảng và view mới đều t
   `crm_asset_actor`, `crm_assert_asset_person`, `crm_lock_issued_asset`, `crm_issued_asset_json`,
   `crm_log_issued_asset` không ai gọi trực tiếp được. Phạm vi xem (người khác chỉ thấy tài sản đang cấp cho mình,
   phòng mình, công ty) kiểm tra ở API.
+
+## Link kết quả / tài liệu của công việc
+
+- Bật RLS trên `task_links`, không policy cho `anon` / `authenticated` (giao diện đọc qua API).
+- `service_role` chỉ SELECT bảng; thêm / xoá qua RPC `security definer` (`crm_add_task_link`,
+  `crm_remove_task_link`). Quyền sửa task (`canEdit`) kiểm tra ở API; RPC chặn board của phòng đã xoá.
