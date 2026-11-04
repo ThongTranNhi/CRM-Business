@@ -102,8 +102,14 @@ export async function saveProfile(env: Env, userId: string, input: ProfileUpdate
       new_employee_code: input.employeeCode,
       new_avatar_path: input.avatarPath ?? null,
       replace_avatar: input.avatarPath !== undefined,
+      // Chỉ gửi khi đổi tên: lưu mã / ảnh vẫn chạy với RPC 4 tham số cũ (trước khi áp migration 20261105090000).
+      ...(input.fullName !== undefined ? { new_full_name: input.fullName } : {}),
     },
-    errors: { '23505': employeeCodeExists },
+    errors: {
+      '23505': employeeCodeExists,
+      INVALID_FULL_NAME: () =>
+        new AppError('VALIDATION_ERROR', 'Họ tên cần từ 1 đến 120 ký tự', 400),
+    },
   });
 }
 
