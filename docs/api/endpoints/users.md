@@ -60,10 +60,14 @@ GET `/api/users/me/profile`: JWT hợp lệ, tài khoản active. Chỉ trả h�
 id, fullName, employeeCode, jobTitle, departmentName, managerName, avatarPath, avatarUrl.
 avatarUrl là signed URL 300 giây. Không nhận ID người khác làm input.
 
-PATCH cùng URL: `{ employeeCode: string | null, avatarPath?: string | null }`.
+PATCH cùng URL: `{ employeeCode: string | null, fullName?: string, avatarPath?: string | null }`.
 Mã nhân viên trim, tối đa 50 ký tự, không trùng với người đang làm (không phân biệt hoa thường).
+fullName (chủ dự án cho phép tự đổi họ tên từ 05/11/2026, migration
+`20261105090000_employees_own_name_change.sql`): mọi role — kể cả CEO / Master (Super Admin) — tự đổi tên của
+chính mình; trim, 1–120 ký tự; không gửi = giữ tên cũ; sai →
+`400 VALIDATION_ERROR`. Tên mới hiện ở mọi nơi đọc `employees.full_name` (bình luận, thẻ việc, sơ đồ…).
 avatarPath phải thuộc thư mục UUID của người đang đăng nhập và có object tồn tại.
-Không nhận fullName, role, departmentId, jobTitle hoặc accountId: input strict.
+Không nhận role, departmentId, jobTitle hoặc accountId: input strict (chức danh, phòng ban vẫn do Super Admin sửa).
 Audit được ghi cùng giao dịch bằng RPC update_own_profile chỉ service_role gọi được.
 409 EMPLOYEE_CODE_EXISTS khi trùng mã; 403 khi khóa tài khoản hoặc sai owner;
 400 VALIDATION_ERROR; 503 DATABASE_UNAVAILABLE khi database/storage chưa sẵn sàng.

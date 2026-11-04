@@ -93,6 +93,18 @@ test('profile authorization and updates', async (t) => {
     await service.updateOwnProfile(env, userId, { employeeCode: 'NV01' });
     assert.equal(rpcCalls, 1);
   });
+  await t.test('renaming yourself sends the new name to the RPC (any role)', async () => {
+    let sentName;
+    globalThis.fetch = async (url, init) => {
+      if (String(url).includes('/rpc/')) {
+        sentName = JSON.parse(init.body).new_full_name;
+        return new Response(null, { status: 204 });
+      }
+      return Response.json(String(url).includes('/app_accounts?') ? [account] : [profile]);
+    };
+    await service.updateOwnProfile(env, userId, { employeeCode: null, fullName: 'Tên mới' });
+    assert.equal(sentName, 'Tên mới');
+  });
   await t.test('duplicate code maps to a safe conflict error', async () => {
     globalThis.fetch = async (url) =>
       String(url).includes('/rpc/')
