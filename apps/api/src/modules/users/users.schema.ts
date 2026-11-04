@@ -4,6 +4,13 @@ import { paginationSchema, searchSchema } from '../../lib/pagination';
 export const profileUpdateSchema = z
   .object({
     employeeCode: z.string().trim().min(1).max(50).nullable(),
+    // Tự đổi họ tên (không gửi = giữ tên cũ); khớp kiểm tra của RPC update_own_profile.
+    fullName: z
+      .string()
+      .trim()
+      .min(1, 'Vui lòng nhập họ tên')
+      .max(120, 'Họ tên tối đa 120 ký tự')
+      .optional(),
     avatarPath: z
       .string()
       .max(200)

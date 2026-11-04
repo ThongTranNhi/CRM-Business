@@ -17,6 +17,8 @@ export function useOwnProfile() {
     mutationFn: updateOwnProfile,
     onSuccess: (profile) => {
       queryClient.setQueryData(queryKey, profile);
+      // Tên mới hiện ngay ở Header / menu tài khoản; danh sách khác lấy tên mới khi tải lại.
+      void queryClient.invalidateQueries({ queryKey: ['account-state'] });
     },
   });
   return { query, mutation };
