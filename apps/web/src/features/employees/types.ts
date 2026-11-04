@@ -12,6 +12,8 @@ export interface OwnProfile {
 
 export interface ProfileUpdate {
   employeeCode: string | null;
+  /** Không gửi = giữ tên cũ. */
+  fullName?: string;
   avatarPath?: string | null;
 }
 
