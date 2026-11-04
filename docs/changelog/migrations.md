@@ -34,11 +34,12 @@ chưa thì dừng với thông báo `Chạy <tên file> trước`. Lỡ chạy l
 | 24  | `20261018090000_products.sql`                         |                            |
 | 25  | `20261022090000_product_kind.sql`                     |                            |
 | 26  | `20261023090000_executive_overview.sql`               |                            |
-| 27  | `20261105090000_employees_own_name_change.sql`        | 05/11/2026                 |
+| 27  | `20261103090000_issued_assets.sql`                    | 03/11/2026                 |
+| 28  | `20261105090000_employees_own_name_change.sql`        | 05/11/2026                 |
 
 Sau đó (chỉ môi trường dev): `supabase/seed.sql`, rồi chạy kiểm tra `supabase/tests/soft_delete_views.sql`
-`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql`, `supabase/tests/products.sql`, `supabase/tests/product_kind.sql`, `supabase/tests/executive_overview.sql`, `supabase/tests/employees_own_name_change.sql` (tự ROLLBACK, thấy
-thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt`, `products: đạt`, `product_kind: đạt`, `executive_overview: đạt`, `employees_own_name_change: đạt` là đúng).
+`supabase/tests/employee_restore_status.sql` và `supabase/tests/work_management_rpcs.sql`, `supabase/tests/task_restore.sql`, `supabase/tests/task_trash.sql`, `supabase/tests/projects.sql`, `supabase/tests/projects_review_fixes.sql`, `supabase/tests/my_tasks.sql`, `supabase/tests/project_owner_handover.sql`, `supabase/tests/notifications.sql`, `supabase/tests/workload.sql`, `supabase/tests/my_task_status_filter.sql`, `supabase/tests/products.sql`, `supabase/tests/product_kind.sql`, `supabase/tests/executive_overview.sql`, `supabase/tests/issued_assets.sql`, `supabase/tests/employees_own_name_change.sql` (tự ROLLBACK, thấy
+thông báo `soft_delete_views: đạt`, `employee_restore_status: đạt`, `work_management_rpcs: đạt`, `task_restore: đạt`, `task_trash: đạt`, `projects: đạt`, `projects_review_fixes: đạt`, `my_tasks: đạt`, `project_owner_handover: đạt`, `notifications: đạt`, `workload: đạt`, `my_task_status_filter: đạt`, `products: đạt`, `product_kind: đạt`, `executive_overview: đạt`, `issued_assets: đạt`, `employees_own_name_change: đạt` là đúng).
 
 Xem migration đã chạy:
 
@@ -52,6 +53,12 @@ select name, applied_at from app_private.applied_migrations order by name;
   (mặc định null = giữ tên) — nhân viên tự đổi họ tên ở Hồ sơ của tôi; tên 1–120 ký tự, audit qua trigger
   `employees_audit`. Bỏ chữ ký 4 tham số (API gọi theo tên tham số nên bản API cũ vẫn chạy). Áp **trước** khi deploy
   API mới. Kiểm tra: `supabase/tests/employees_own_name_change.sql`. Đã áp trên dev 05/11/2026.
+
+- `20261103090000_issued_assets.sql` (Tài sản → Tài sản được cấp, chốt 03/11/2026): bảng `issued_assets`,
+  `asset_assignments` (lịch sử cấp / thu hồi; đối tượng sử dụng là cá nhân, phòng ban hoặc công ty; người cấp là
+  một nhân viên), view `issued_asset_summaries`, `asset_assignment_rows`, RPC tạo / sửa / xoá / cấp / thu hồi chỉ
+  Super Admin / HR Admin, ghi audit. Kiểm tra file trước (`20261023090000`) đã chạy. Áp trước khi deploy API
+  (`/api/assets/issued`). Kiểm tra: `supabase/tests/issued_assets.sql`. Đã áp trên dev 03/11/2026.
 
 - `20261023090000_executive_overview.sql` (Đợt 4, Tổng quan điều hành, chốt 22/10/2026): hàm đọc
   `crm_executive_task_stats(period, department_uuid)` — việc tạo trong kỳ tuần / tháng / quý theo phòng; view

@@ -3,8 +3,7 @@
 Module `apps/api/src/modules/assets`. Trang `/app/assets` có 2 tab (chủ dự án chốt 17/10/2026):
 
 - **Sản phẩm** — sản phẩm công ty làm ra / sở hữu (website, ứng dụng…), có link bấm mở. Đã có (bên dưới).
-- **Tài sản được cấp** — phần mềm, thiết bị cấp cho nhân viên (frontend-spec 4.18 + loại Phần mềm / tài khoản). Làm
-  sau.
+- **Tài sản được cấp** — phần mềm, thiết bị cấp cho cá nhân, phòng ban hoặc công ty. Xem phần cuối file.
 
 Bảng `products`, `product_members`, view `product_summaries` (migration `20261018090000_products.sql`). Ghi qua RPC,
 mỗi thao tác ghi `audit_logs` (`resource_type = 'products'`, action `product.create` / `product.update` /
@@ -98,3 +97,142 @@ Lưu trữ (không xoá dòng) → `204`; sản phẩm ẩn khỏi danh sách, t
 | `PROJECT_NOT_IN_DEPARTMENT` | 422  | Dự án khác phòng với sản phẩm (BR-30)                      |
 | `PROJECT_NOT_FOUND`         | 404  | Dự án không có hoặc đã lưu trữ                             |
 | `DEPARTMENT_NOT_FOUND`      | 404  | Phòng không có hoặc đã xoá                                 |
+
+---
+
+# Tab Tài sản được cấp — `/api/assets/issued`
+
+Phần mềm, thiết bị của công ty cấp cho **cá nhân, phòng ban hoặc toàn công ty** (chủ dự án chốt 03/11/2026, mở rộng
+frontend-spec 4.18). Migration `20261103090000_issued_assets.sql`: bảng `issued_assets`, `asset_assignments` (lịch
+sử cấp / thu hồi), view `issued_asset_summaries`, `asset_assignment_rows`. Ghi qua RPC, mỗi thao tác ghi
+`audit_logs` (`resource_type = 'issued_assets'`, action `asset.create` / `asset.update` / `asset.archive` /
+`asset.issue` / `asset.return`). **Không lưu key bản quyền hay mật khẩu.**
+
+## Quyền (`lib/issued-asset-access.ts`)
+
+| Thao tác                                                       | Ai                                                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Xem danh sách                                                  | Super Admin, HR Admin: mọi tài sản. Role khác: tài sản đang cấp cho mình, phòng mình, công ty |
+| Thêm, sửa, xoá, cấp, thu hồi, xem lịch sử, `GET /form-options` | Super Admin, HR Admin (service và RPC đều kiểm tra)                                           |
+
+Không đủ quyền → `403 FORBIDDEN`.
+
+## GET `/api/assets/issued?q=&category=&status=&holderType=&page=&pageSize=`
+
+Tài sản chưa xoá, sắp theo tên. `q` tìm theo tên hoặc mã. `category`: `laptop` (Laptop) · `phone` (Điện thoại) ·
+`monitor` (Màn hình) · `sim` (SIM) · `access_card` (Thẻ ra vào) · `software` (Phần mềm / tài khoản) · `other`
+(Thiết bị khác). `status`: `in_stock` (Trong kho) · `issued` (Đang cấp) · `repair` (Sửa chữa) · `disposed`
+(Thanh lý). `holderType`: `employee` (Cá nhân) · `department` (Phòng ban) · `company` (Công ty).
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "code": "LT-01",
+      "name": "Laptop Dell",
+      "category": "laptop",
+      "status": "issued",
+      "expiresOn": "2027-12-31",
+      "note": null,
+      "updatedAt": "2026-11-03T03:00:00Z",
+      "assignment": {
+        "id": "uuid",
+        "holder": {
+          "type": "employee",
+          "id": "uuid",
+          "fullName": "Trần Bình",
+          "isArchived": false
+        },
+        "issuer": { "id": "uuid", "fullName": "Nguyễn An", "isArchived": false },
+        "issuedOn": "2026-11-03",
+        "note": null
+      },
+      "permissions": { "canManage": true }
+    }
+  ],
+  "meta": { "page": 1, "pageSize": 20, "total": 1 }
+}
+```
+
+`assignment` = lượt cấp đang mở (`null` khi chưa cấp). `holder`: `{ "type": "company" }` ·
+`{ "type": "department", "id", "name" }` · `{ "type": "employee", "id", "fullName", "isArchived" }`. `issuer` =
+người cấp (một nhân viên, chọn khi cấp).
+
+## GET `/api/assets/issued/form-options`
+
+`{ data: { people: [{ id, fullName, departmentName }] } }` — nhân viên đang làm (mọi phòng, tối đa 1000) cho ô
+nhân viên sử dụng và ô người cấp. Phòng ban lấy ở `GET /api/departments`.
+
+## POST `/api/assets/issued`
+
+```json
+{
+  "code": "LT-01",
+  "name": "Laptop Dell",
+  "category": "laptop",
+  "status": "in_stock",
+  "expiresOn": null,
+  "note": null,
+  "assignment": {
+    "holderType": "department",
+    "departmentId": "uuid",
+    "issuerEmployeeId": "uuid",
+    "issuedOn": "2026-11-03",
+    "note": null
+  }
+}
+```
+
+`201` + tài sản như một dòng của GET. `code` rỗng / null = không mã. `status` chỉ `in_stock` (mặc định) · `repair`
+· `disposed` — Đang cấp chỉ có được qua `/issue` hoặc `assignment`. `assignment` (tuỳ chọn, mặc định `null`): cấp
+luôn cho đối tượng đó trong cùng giao dịch (body như `POST /:id/issue`; lỗi cấp thì không tạo tài sản); khi có
+`assignment` thì `status` phải là `in_stock`.
+
+## PATCH `/api/assets/issued/:id`
+
+Chỉ gửi trường cần đổi: `code`, `name`, `category`, `status`, `expiresOn`, `note` (null = xoá). Tài sản đang cấp
+không đổi `status` → `409 ASSET_STATUS_LOCKED`. Body rỗng → `400`.
+
+## DELETE `/api/assets/issued/:id`
+
+Lưu trữ (không xoá dòng) → `204`. Tài sản đang cấp → `409 ASSET_IN_USE` (thu hồi trước). Lịch sử cấp giữ nguyên.
+
+## POST `/api/assets/issued/:id/issue`
+
+```json
+{
+  "holderType": "employee",
+  "employeeId": "uuid",
+  "issuerEmployeeId": "uuid",
+  "issuedOn": "2026-11-03",
+  "note": null
+}
+```
+
+`holderType: "department"` gửi `departmentId` thay cho `employeeId`; `"company"` không gửi id đối tượng. Chỉ cấp tài
+sản `in_stock`; trạng thái thành `issued`. Trả `200` + tài sản.
+
+## POST `/api/assets/issued/:id/return`
+
+`{ "returnedOn": "2026-11-10", "note": "Đổi máy" }` — đóng lượt cấp đang mở, tài sản về `in_stock`. Trả `200` + tài
+sản.
+
+## GET `/api/assets/issued/:id/history`
+
+`{ data: [AssetAssignment] }` mới nhất trước — như `assignment` ở trên, thêm `returnedOn` (null = đang cấp) và
+`returnNote`.
+
+## Lỗi
+
+| Mã                       | HTTP | Khi                                                                     |
+| ------------------------ | ---- | ----------------------------------------------------------------------- |
+| `VALIDATION_ERROR`       | 400  | Sai dữ liệu; ngày thu hồi trước ngày cấp; đối tượng không khớp loại     |
+| `ASSET_NOT_FOUND`        | 404  | Không có hoặc đã xoá                                                    |
+| `DEPARTMENT_NOT_FOUND`   | 404  | Phòng ban sử dụng không có hoặc đã xoá                                  |
+| `ASSET_CODE_EXISTS`      | 409  | Đã có tài sản chưa xoá dùng mã này (không phân biệt hoa thường)         |
+| `ASSET_NOT_AVAILABLE`    | 409  | Cấp tài sản không ở trạng thái Trong kho (kể cả hai người cấp cùng lúc) |
+| `ASSET_NOT_ISSUED`       | 409  | Thu hồi tài sản chưa được cấp                                           |
+| `ASSET_IN_USE`           | 409  | Xoá tài sản đang cấp                                                    |
+| `ASSET_STATUS_LOCKED`    | 409  | Đổi trạng thái tay khi đang cấp, hoặc đặt tay sang Đang cấp             |
+| `ASSET_PERSON_NOT_FOUND` | 422  | Nhân viên sử dụng hoặc người cấp không tồn tại / đã nghỉ                |

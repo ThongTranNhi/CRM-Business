@@ -3,6 +3,7 @@ import {
   addDays,
   formatDateTime,
   formatDayMonth,
+  formatIsoDate,
   formatRelativeTime,
   startOfWeek,
   todayInVietnam,
@@ -23,6 +24,9 @@ describe('Vietnam calendar dates', () => {
   });
   it('formats dd/MM', () => {
     expect(formatDayMonth('2026-10-09')).toBe('09/10');
+  });
+  it('formats dd/MM/yyyy from a date column', () => {
+    expect(formatIsoDate('2026-10-09')).toBe('09/10/2026');
   });
   it('formats time and date in Vietnam time', () => {
     expect(formatDateTime(new Date('2026-10-06T18:30:00Z'))).toBe('01:30 07/10/2026');

@@ -49,6 +49,12 @@ export function startOfWeek(isoDate: string): string {
   return addDays(isoDate, -((weekday + 6) % 7));
 }
 
+/** "09/10/2026" từ YYYY-MM-DD (cột date của DB, vd. ngày cấp tài sản). */
+export function formatIsoDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 /** "09/10" từ YYYY-MM-DD (badge hạn trên thẻ task). */
 export function formatDayMonth(isoDate: string): string {
   const [, month, day] = isoDate.split('-');
